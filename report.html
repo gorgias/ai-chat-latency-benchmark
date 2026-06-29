@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat Competitor Benchmark — Siena · Sierra · Ada · Yuma</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink:#15151f; --muted:#6b7280; --line:#e8eaed; --bg:#f4f5f7; --card:#fff;
+    --siena:#3b5bdb; --sierra:#0f766e; --ada:#b45309; --yuma:#9333ea;
+    --good:#059669; --warn:#d97706; --bad:#dc2626;
+  }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .header { background:var(--ink); color:#fff; padding:34px 48px; }
+  .header h1 { font-size:23px; font-weight:800; letter-spacing:-.5px; }
+  .header p { font-size:13px; color:#9aa0b4; margin-top:6px; }
+  .header .meta { margin-top:10px; font-size:12px; color:#c0c4d8; }
+  .main { max-width:1120px; margin:0 auto; padding:36px 24px; display:grid; gap:26px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .card-h { padding:18px 24px; border-bottom:1px solid #f0f2f5; }
+  .card-h h2 { font-size:16px; font-weight:700; }
+  .card-h .sub { font-size:12px; color:var(--muted); margin-top:3px; }
+  .card-b { padding:24px; }
+
+  /* exec summary */
+  .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .vcard { border:1px solid var(--line); border-radius:12px; padding:18px; position:relative; }
+  .vcard .vname { font-size:15px; font-weight:800; }
+  .vcard .vclient { font-size:11px; color:var(--muted); margin-top:2px; }
+  .vcard .vbig { font-size:30px; font-weight:800; letter-spacing:-1px; margin:12px 0 2px; }
+  .vcard .vunit { font-size:11px; color:var(--muted); }
+  .vcard .vtag { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; margin-top:10px; text-transform:uppercase; letter-spacing:.4px;}
+  .tag-live { background:#d1fae5; color:#065f46; }
+  .tag-down { background:#fee2e2; color:#991b1b; }
+  .tag-none { background:#ede9fe; color:#5b21b6; }
+  .bar-top { height:4px; }
+
+  /* comparison chart */
+  .chart { display:flex; flex-direction:column; gap:16px; }
+  .crow { display:flex; align-items:center; gap:14px; }
+  .clabel { width:90px; font-size:13px; font-weight:700; text-align:right; }
+  .ctrack { flex:1; height:38px; background:#f4f5f7; border-radius:8px; position:relative; overflow:hidden; }
+  .cfill { height:100%; border-radius:8px; display:flex; align-items:center; justify-content:flex-end; padding-right:12px; color:#fff; font-weight:700; font-size:13px; }
+  .cnote { width:120px; font-size:11px; color:var(--muted); }
+  .cdown { display:flex; align-items:center; padding-left:14px; color:var(--bad); font-weight:700; font-size:13px; height:100%; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:11px 12px; border-bottom:1px solid #f0f2f5; }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+  td.num { font-variant-numeric:tabular-nums; font-weight:600; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+
+  /* conversation */
+  .conv { display:flex; flex-direction:column; gap:14px; }
+  .turn { border:1px solid #f0f2f5; border-radius:12px; overflow:hidden; }
+  .turn-h { display:flex; align-items:center; gap:10px; padding:9px 14px; background:#f8f9fc; font-size:12px; color:var(--muted); }
+  .turn-n { background:var(--ink); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
+  .turn-lat { margin-left:auto; font-weight:700; font-size:12px; padding:3px 10px; border-radius:20px; }
+  .lat-fast{background:#d1fae5;color:#065f46;} .lat-mid{background:#dbeafe;color:#1e40af;} .lat-slow{background:#fef3c7;color:#92400e;}
+  .msg { display:flex; gap:11px; padding:13px 15px; }
+  .msg.u { background:#fafbfc; } .msg.b { background:#fff; }
+  .av { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .av.u { background:#e0e7ff; color:#3730a3; } .av.b { background:var(--ink); color:#fff; }
+  .mc { flex:1; } .mr { font-size:10px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+  .mt { font-size:13.5px; line-height:1.55; color:#374151; white-space:pre-line; }
+
+  .callout { border-left:3px solid var(--warn); background:#fffbeb; padding:14px 16px; border-radius:0 8px 8px 0; font-size:13px; line-height:1.6; }
+  .callout.purple { border-color:var(--yuma); background:#faf5ff; }
+  .callout.teal { border-color:var(--sierra); background:#f0fdfa; }
+  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:#eef2ff; color:#3730a3; margin:2px 4px 2px 0;}
+  .feat-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .feat { border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .feat h4 { font-size:13px; font-weight:700; margin-bottom:5px; }
+  .feat p { font-size:12px; color:var(--muted); line-height:1.5; }
+  .footer { text-align:center; font-size:12px; color:#9ca3af; padding:24px; }
+  h3.section { font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:2px 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>AI Chat Competitor Benchmark — Response Latency &amp; Shopping Assistant</h1>
+  <p>Live tests of competitor on-site AI chat widgets, measured end-to-end (send → full response)</p>
+  <div class="meta">Vendors: Siena · Sierra · Ada · Yuma&nbsp;&nbsp;|&nbsp;&nbsp;Test date: 2026-06-29&nbsp;&nbsp;|&nbsp;&nbsp;Prepared for Gorgias R&amp;D</div>
+</div>
+
+<div class="main">
+
+  <!-- EXEC SUMMARY -->
+  <div class="card">
+    <div class="card-h"><h2>Executive Summary</h2><div class="sub">Average end-to-end latency (send → full response). Lower is better.</div></div>
+    <div class="card-b">
+      <div class="summary-grid">
+        <div class="vcard"><div class="bar-top" style="background:var(--sierra);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
+          <div class="vname">Sierra</div><div class="vclient">Casper — "Luna"</div>
+          <div class="vbig" style="color:var(--sierra)">7.4<span style="font-size:15px">s</span></div>
+          <div class="vunit">avg · TTFB ~0.4s</div>
+          <div><span class="vtag tag-live">Live · native</span></div>
+        </div>
+        <div class="vcard"><div class="bar-top" style="background:var(--siena);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
+          <div class="vname">Siena</div><div class="vclient">Simple Modern — "Maddie"</div>
+          <div class="vbig" style="color:var(--siena)">9.8<span style="font-size:15px">s</span></div>
+          <div class="vunit">avg · delivered atomically</div>
+          <div><span class="vtag tag-live">Live · native</span></div>
+        </div>
+        <div class="vcard"><div class="bar-top" style="background:var(--ada);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
+          <div class="vname">Ada</div><div class="vclient">Loop Earplugs</div>
+          <div class="vbig" style="color:var(--ada)">—</div>
+          <div class="vunit">backend unavailable at test time</div>
+          <div><span class="vtag tag-down">Deployed · down</span></div>
+        </div>
+        <div class="vcard"><div class="bar-top" style="background:var(--yuma);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
+          <div class="vname">Yuma</div><div class="vclient">Glossier, EvryJewels…</div>
+          <div class="vbig" style="color:var(--yuma)">n/a</div>
+          <div class="vunit">no native storefront widget</div>
+          <div><span class="vtag tag-none">Backend-only</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px" class="callout">
+        <strong>Two structural findings beyond raw latency:</strong><br>
+        1. <strong>Yuma has no front-end chat widget of its own.</strong> On every Yuma reference customer checked (Glossier, EvryJewels) the on-site chat is <em>Gorgias Chat</em> — Yuma operates as a back-end automation layer on the helpdesk (Gorgias / Zendesk), not as a consumer-facing chat product. It is not directly comparable to Siena / Sierra / Ada on "chat latency".<br>
+        2. <strong>Ada was deployed but its bot backend returned "experiencing technical difficulties"</strong> across both EU and US Loop instances throughout the ~20-min test window — an availability data point in itself.
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON CHART -->
+  <div class="card">
+    <div class="card-h"><h2>Latency Comparison</h2><div class="sub">Average end-to-end response time per vendor (send → full answer rendered). Native-widget vendors only.</div></div>
+    <div class="card-b">
+      <div class="chart">
+        <div class="crow"><div class="clabel" style="color:var(--sierra)">Sierra</div>
+          <div class="ctrack"><div class="cfill" style="width:60%;background:var(--sierra)">7.4s</div></div>
+          <div class="cnote">Casper · 7 turns</div></div>
+        <div class="crow"><div class="clabel" style="color:var(--siena)">Siena</div>
+          <div class="ctrack"><div class="cfill" style="width:80%;background:var(--siena)">9.8s</div></div>
+          <div class="cnote">Simple Modern · 10 turns</div></div>
+        <div class="crow"><div class="clabel" style="color:var(--ada)">Ada</div>
+          <div class="ctrack"><div class="cdown">⚠ Bot backend down during test — no measurement</div></div>
+          <div class="cnote">Loop Earplugs</div></div>
+        <div class="crow"><div class="clabel" style="color:var(--yuma)">Yuma</div>
+          <div class="ctrack"><div class="cdown" style="color:var(--muted)">No native chat widget — runs behind Gorgias/Zendesk</div></div>
+          <div class="cnote">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS TABLE -->
+  <div class="card">
+    <div class="card-h"><h2>Latency Statistics</h2><div class="sub">All values in seconds. "Complete" = full response generated/rendered.</div></div>
+    <div class="card-b" style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Vendor</th><th>Client</th><th>Turns</th><th>Min</th><th>Avg</th><th>Median</th><th>Max</th><th>First byte</th><th>Delivery model</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot" style="background:var(--sierra)"></span>Sierra</td><td>Casper</td><td class="num">7</td><td class="num">4.6</td><td class="num">7.4</td><td class="num">7.4</td><td class="num">9.7</td><td class="num">0.4</td><td>Token streaming (SSE)</td></tr>
+          <tr><td><span class="dot" style="background:var(--siena)"></span>Siena</td><td>Simple Modern</td><td class="num">9*</td><td class="num">7.0</td><td class="num">9.8</td><td class="num">10.0</td><td class="num">11.3</td><td class="num">~9.8</td><td>Atomic (full message at once)</td></tr>
+          <tr><td><span class="dot" style="background:var(--ada)"></span>Ada</td><td>Loop Earplugs</td><td class="num">0</td><td colspan="5" style="color:var(--bad);font-weight:600">Bot backend unavailable ("experiencing technical difficulties") across EU + US</td></tr>
+          <tr><td><span class="dot" style="background:var(--yuma)"></span>Yuma</td><td>Glossier / EvryJewels</td><td class="num">—</td><td colspan="5" style="color:var(--muted)">No native storefront chat widget — back-end automation behind Gorgias Chat</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">* Siena: 10 turns run, 1 excluded as a measurement anomaly. Siena delivers the full message in one shot (no visible token streaming), so its "first byte" ≈ "complete". Sierra streams tokens, so it shows a low first-byte (~0.4s) and a later completion. Both "complete" columns are directly comparable.</p>
+    </div>
+  </div>
+
+  <!-- PRODUCT RECOMMENDATION FEATURES -->
+  <div class="card">
+    <div class="card-h"><h2>Product Recommendation &amp; Commerce Features Observed</h2><div class="sub">What each assistant does beyond answering — relevant for testing feature parity</div></div>
+    <div class="card-b">
+      <div class="feat-grid">
+        <div class="feat"><h4 style="color:var(--sierra)">Sierra (Casper) — richest commerce UI</h4>
+          <p>Renders <strong>interactive product cards inline in chat</strong>: product image, name, specs, a <strong>"Select Size" dropdown</strong>, <strong>"Learn More"</strong> and <strong>"Add to Cart"</strong> buttons. On "which mattress for a hot sleeper?" it surfaced Snow &amp; Snow Max cards. Closest to a true in-chat shopping/checkout flow.</p>
+          <div style="margin-top:8px"><span class="pill">Product cards</span><span class="pill">Add to Cart</span><span class="pill">Size selector</span><span class="pill">Streaming</span></div>
+        </div>
+        <div class="feat"><h4 style="color:var(--siena)">Siena (Simple Modern) — text + deep links</h4>
+          <p>Answers in rich text with <strong>linked product variants</strong> (each color links to its PDP). Recommends specific SKUs and points to PDP/collection pages, but does <em>not</em> render add-to-cart cards in-chat. Connected to a Gorgias helpdesk for human handoff.</p>
+          <div style="margin-top:8px"><span class="pill">Variant links</span><span class="pill">SKU recommendations</span><span class="pill">Helpdesk handoff</span></div>
+        </div>
+        <div class="feat"><h4 style="color:var(--ada)">Ada (Loop) — not testable</h4>
+          <p>Widget deployed (static.ada.support embed) but the bot would not initialize during the test window, so its recommendation behavior could not be observed. Re-test recommended.</p>
+          <div style="margin-top:8px"><span class="pill">Deployed</span><span class="pill">Backend down</span></div>
+        </div>
+        <div class="feat"><h4 style="color:var(--yuma)">Yuma — not a chat surface</h4>
+          <p>No consumer chat UI to test. Product recommendation, if any, would surface through the host helpdesk's chat (Gorgias) rather than a Yuma widget.</p>
+          <div style="margin-top:8px"><span class="pill">Backend automation</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIERRA CONVERSATION -->
+  <div class="card">
+    <div class="card-h"><h2>Conversation — Sierra (Casper · "Luna")</h2><div class="sub">7-turn shopping-assistant conversation · per-turn latency = network send → SSE stream close</div></div>
+    <div class="card-b"><div class="conv" id="sierra-conv"></div></div>
+  </div>
+
+  <!-- SIENA CONVERSATION -->
+  <div class="card">
+    <div class="card-h"><h2>Conversation — Siena (Simple Modern · "Maddie")</h2><div class="sub">10-turn shopping-assistant conversation · per-turn latency = send → full bot message</div></div>
+    <div class="card-b"><div class="conv" id="siena-conv"></div></div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="card">
+    <div class="card-h"><h2>Methodology &amp; Caveats</h2></div>
+    <div class="card-b" style="font-size:13px;line-height:1.7;color:#374151">
+      <p><strong>How latency was measured.</strong> Each widget was driven programmatically on the live customer site. Metric = wall-clock from message sent to the full response being available.</p>
+      <ul style="margin:10px 0 10px 20px">
+        <li><strong>Siena (Simple Modern):</strong> measured via the chat API — POST <code>/v1/live_chat/messages</code> then poll <code>/v1/live_chat/message</code> until the bot reply appears. Siena delivers the answer atomically.</li>
+        <li><strong>Sierra (Casper):</strong> measured at the network layer by intercepting the streaming endpoint <code>sierra.chat/-/api/chat</code> — first byte and stream-close timestamps. This is immune to browser tab throttling.</li>
+      </ul>
+      <p><strong>Caveats.</strong> (1) Different customers / product domains (water bottles vs mattresses) — treat as directional, not a controlled head-to-head. (2) Sierra ran on a warm (server-persisted) session with accumulated context, which tends to <em>slow</em> generation — its figures are conservative. (3) Latency varies strongly by query type: simple FAQs (~4.6s on Sierra) are much faster than product-recommendation queries that trigger retrieval (~9.7s). (4) Ada and Yuma could not be latency-tested for the reasons above. A re-test of Ada when its backend recovers is recommended.</p>
+    </div>
+  </div>
+
+</div>
+<div class="footer">Gorgias R&amp;D · Competitor intelligence · 2026-06-29</div>
+
+<script>
+const SIERRA = [
+  {q:"Do you offer free shipping?", lat:4963, a:"Casper offers free shipping on most products within the contiguous US, except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small items, $250 large. Return shipping is always free. In-home delivery & setup available for $249."},
+  {q:"What is your trial period and return policy?", lat:4581, a:"Casper mattresses come with a 100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 if bought with a mattress). Soft goods: no trial, return unused within 30 days."},
+  {q:"Do you offer financing or payment plans?", lat:8867, a:"Yes — Casper offers financing and payment plans through Affirm, Katapult and others at checkout."},
+  {q:"How long does delivery take once I order?", lat:7410, a:"Most in-stock Casper products are delivered within 2–8 business days after the order ships."},
+  {q:"Are your mattresses good for side sleepers?", lat:9245, a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
+  {q:"I'm a hot sleeper with back pain — which mattress do you recommend?", lat:9678, a:"For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology + strong support.  🛍️ [Rendered interactive product cards: image, Select Size, Learn More, Add to Cart]"},
+  {q:"Can you recommend a pillow to go with it?", lat:6721, a:"Absolutely! For hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."},
+];
+const SIENA = [
+  {q:"What colors does the Mesa Loop 30oz come in?", lat:null, a:"Lists 14+ colors (Iris Sage, Winter White Mix, Cricket, …) each linked to its product page.", note:"excluded (anomaly)"},
+  {q:"Does it fit in a standard car cup holder?", lat:10395, a:"Yes, the Mesa Loop 30oz is designed to fit most standard car cup holders!"},
+  {q:"Is the straw removable and dishwasher safe?", lat:9730, a:"The straw is not designed to be removed, but the lid (with straw) is top-rack dishwasher safe. Hand washing recommended."},
+  {q:"What is the difference between the 30oz and the 40oz?", lat:10610, a:"The 30oz is the largest Mesa Loop size — there isn't a 40oz Mesa Loop. Happy to compare other bottles (Trek, Summit)."},
+  {q:"Do you offer free shipping on orders?", lat:9989, a:"Yes — free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
+  {q:"How long does standard shipping usually take?", lat:6996, a:"5–11 business days total: 1–3 to fulfill + 4–8 to ship."},
+  {q:"Can I return it if I don't like the color?", lat:11256, a:"You may be able to — depends on your order. Could you share your email or order number so the team can confirm?"},
+  {q:"Is this bottle completely leak-proof when closed?", lat:9248, a:"Not 100% sure on full leak-proofing — recommend checking the product page or reaching out to support for a definitive answer."},
+  {q:"Does it keep drinks cold for 24 hours?", lat:10074, a:"Yes — designed to keep drinks cold for up to 24 hours thanks to double-wall insulation."},
+  {q:"Is the Almond Birch color currently in stock?", lat:9993, a:"No exact stock signal in chat — recommend checking the product page or signing up for a restock notification."},
+];
+
+function latClass(ms){ if(ms==null) return ''; if(ms<6000) return 'lat-fast'; if(ms<9000) return 'lat-mid'; return 'lat-slow'; }
+function render(arr, elId, botName){
+  const el = document.getElementById(elId);
+  arr.forEach((t,i)=>{
+    const lat = t.lat==null ? (t.note||'—') : (t.lat/1000).toFixed(1)+'s';
+    el.innerHTML += `
+      <div class="turn">
+        <div class="turn-h"><span class="turn-n">TURN ${i+1}</span><span>${t.q.slice(0,60)}${t.q.length>60?'…':''}</span>
+          <span class="turn-lat ${latClass(t.lat)}">${lat}</span></div>
+        <div class="msg u"><div class="av u">U</div><div class="mc"><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
+        <div class="msg b"><div class="av b">🤖</div><div class="mc"><div class="mr">${botName}</div><div class="mt">${t.a}</div></div></div>
+      </div>`;
+  });
+}
+render(SIERRA, 'sierra-conv', 'Luna · Sierra AI');
+render(SIENA, 'siena-conv', 'Maddie · Siena AI');
+</script>
+</body>
+</html>
