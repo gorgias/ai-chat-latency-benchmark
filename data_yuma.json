@@ -1,0 +1,13 @@
+{
+  "vendor": "Yuma",
+  "client": "EvryJewels",
+  "frontend": "Gorgias Chat (WebSocket transport)",
+  "note": "EvryJewels is a referenced Yuma customer. The on-site widget is Gorgias Chat; the AI auto-reply is delivered as a single block over the chat WebSocket (no token streaming). Client-side attribution between Yuma and Gorgias's own AI Agent is not verifiable; figures reflect the in-chat AI reply latency a shopper experiences.",
+  "metric": "send -> first agent (AI) message frame over WebSocket (fromAgent=true)",
+  "results": [
+    {"turn": 1, "q": "Do you offer free shipping?", "latency_ms": 6908, "a": "Yes, we do offer free shipping! To qualify, your order subtotal must be at least $35 USD after discounts and before taxes. Add-on services like Package Protection and the 1 Year Warranty are excluded from this minimum."},
+    {"turn": 2, "q": "What is your return policy?", "latency_ms": 16310, "a": "We do not offer any refunds, exchanges, or returns. This is stated on our website (refund-policy). Could you please let us know why you are requesting a return or refund?"},
+    {"turn": 3, "q": "Are your rings adjustable or do they come in fixed sizes?", "latency_ms": 18113, "a": "Our rings come in both adjustable and fixed sizes, depending on the design! Many pieces, like the Double Date Ring, feature an adjustable design; other styles come in fixed sizes ranging from 5 to 9."}
+  ],
+  "stats": {"turns": 3, "avg_ms": 13777, "min_ms": 6908, "median_ms": 16310, "max_ms": 18113}
+}

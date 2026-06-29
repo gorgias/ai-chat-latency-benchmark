@@ -3,259 +3,323 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chat Competitor Benchmark — Siena · Sierra · Ada · Yuma</title>
+<title>AI Chat Latency Benchmark — Siena · Sierra · Ada · Yuma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --ink:#15151f; --muted:#6b7280; --line:#e8eaed; --bg:#f4f5f7; --card:#fff;
-    --siena:#3b5bdb; --sierra:#0f766e; --ada:#b45309; --yuma:#9333ea;
-    --good:#059669; --warn:#d97706; --bad:#dc2626;
+  /* ============ Design tokens (UI-UX Pro Max: analytics-dashboard minimalism) ============ */
+  :root{
+    /* surface / text */
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f1f3f6; --line:#e6e8ee;
+    --on:#0e1116; --on-muted:#5a6473; --on-faint:#8b94a3;
+    /* primary + state (colorblind-safe, no red/green-only) */
+    --primary:#4f46e5; --primary-weak:#eef0fe;
+    --success:#0e7490; --warning:#b45309; --danger:#be123c;
+    /* vendor accents */
+    --sierra:#0f766e; --siena:#4f46e5; --ada:#b45309; --yuma:#9333ea;
+    /* elevation scale 0/2/4/8/16/24 */
+    --e1:0 1px 2px rgba(13,18,28,.04);
+    --e2:0 2px 4px rgba(13,18,28,.05);
+    --e4:0 4px 10px rgba(13,18,28,.06);
+    --e8:0 8px 24px rgba(13,18,28,.08);
+    /* radii + space (8px rhythm) */
+    --r:14px; --r-sm:10px; --s:8px;
   }
-  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
-  .header { background:var(--ink); color:#fff; padding:34px 48px; }
-  .header h1 { font-size:23px; font-weight:800; letter-spacing:-.5px; }
-  .header p { font-size:13px; color:#9aa0b4; margin-top:6px; }
-  .header .meta { margin-top:10px; font-size:12px; color:#c0c4d8; }
-  .main { max-width:1120px; margin:0 auto; padding:36px 24px; display:grid; gap:26px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-  .card-h { padding:18px 24px; border-bottom:1px solid #f0f2f5; }
-  .card-h h2 { font-size:16px; font-weight:700; }
-  .card-h .sub { font-size:12px; color:var(--muted); margin-top:3px; }
-  .card-b { padding:24px; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--on);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
 
-  /* exec summary */
-  .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-  .vcard { border:1px solid var(--line); border-radius:12px; padding:18px; position:relative; }
-  .vcard .vname { font-size:15px; font-weight:800; }
-  .vcard .vclient { font-size:11px; color:var(--muted); margin-top:2px; }
-  .vcard .vbig { font-size:30px; font-weight:800; letter-spacing:-1px; margin:12px 0 2px; }
-  .vcard .vunit { font-size:11px; color:var(--muted); }
-  .vcard .vtag { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; margin-top:10px; text-transform:uppercase; letter-spacing:.4px;}
-  .tag-live { background:#d1fae5; color:#065f46; }
-  .tag-down { background:#fee2e2; color:#991b1b; }
-  .tag-none { background:#ede9fe; color:#5b21b6; }
-  .bar-top { height:4px; }
+  /* ============ Header ============ */
+  .hero{background:linear-gradient(180deg,#0e1116 0%,#171c26 100%);color:#fff;padding:56px 0 64px}
+  .hero .eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8b94a3}
+  .hero h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:12px 0 14px;max-width:760px;line-height:1.12}
+  .hero p{font-size:15px;color:#aab2c0;max-width:640px}
+  .hero .chips{margin-top:24px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#d4d9e2}
 
-  /* comparison chart */
-  .chart { display:flex; flex-direction:column; gap:16px; }
-  .crow { display:flex; align-items:center; gap:14px; }
-  .clabel { width:90px; font-size:13px; font-weight:700; text-align:right; }
-  .ctrack { flex:1; height:38px; background:#f4f5f7; border-radius:8px; position:relative; overflow:hidden; }
-  .cfill { height:100%; border-radius:8px; display:flex; align-items:center; justify-content:flex-end; padding-right:12px; color:#fff; font-weight:700; font-size:13px; }
-  .cnote { width:120px; font-size:11px; color:var(--muted); }
-  .cdown { display:flex; align-items:center; padding-left:14px; color:var(--bad); font-weight:700; font-size:13px; height:100%; }
+  /* ============ Sections ============ */
+  main{padding:40px 0 64px}
+  section{margin-bottom:32px;scroll-margin-top:24px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+  .sec-head h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--on-muted)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e2)}
+  .card-pad{padding:24px}
 
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { text-align:left; padding:11px 12px; border-bottom:1px solid #f0f2f5; }
-  th { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
-  td.num { font-variant-numeric:tabular-nums; font-weight:600; }
-  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+  /* ============ KPI vendor cards ============ */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:-44px;position:relative;z-index:2}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e8);padding:20px;overflow:hidden;position:relative;transition:transform .2s ease,box-shadow .2s ease}
+  .kpi:hover{transform:translateY(-3px);box-shadow:var(--e8),0 14px 30px rgba(13,18,28,.10)}
+  .kpi .accent{position:absolute;top:0;left:0;right:0;height:4px}
+  .kpi .name{font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .kpi .client{font-size:12px;color:var(--on-faint);margin-top:2px}
+  .kpi .val{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:14px 0 0;line-height:1}
+  .kpi .val .u{font-size:15px;font-weight:600;color:var(--on-faint)}
+  .kpi .sub{font-size:11px;color:var(--on-muted);margin-top:4px}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-top:14px}
+  .b-live{background:#d1f5ee;color:#0f766e} .b-down{background:#fde4ea;color:#be123c} .b-none{background:#f0e6fe;color:#7c2db8}
+  .b-live .d{width:6px;height:6px;border-radius:50%;background:#0f766e;box-shadow:0 0 0 3px rgba(15,118,110,.18)}
 
-  /* conversation */
-  .conv { display:flex; flex-direction:column; gap:14px; }
-  .turn { border:1px solid #f0f2f5; border-radius:12px; overflow:hidden; }
-  .turn-h { display:flex; align-items:center; gap:10px; padding:9px 14px; background:#f8f9fc; font-size:12px; color:var(--muted); }
-  .turn-n { background:var(--ink); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
-  .turn-lat { margin-left:auto; font-weight:700; font-size:12px; padding:3px 10px; border-radius:20px; }
-  .lat-fast{background:#d1fae5;color:#065f46;} .lat-mid{background:#dbeafe;color:#1e40af;} .lat-slow{background:#fef3c7;color:#92400e;}
-  .msg { display:flex; gap:11px; padding:13px 15px; }
-  .msg.u { background:#fafbfc; } .msg.b { background:#fff; }
-  .av { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
-  .av.u { background:#e0e7ff; color:#3730a3; } .av.b { background:var(--ink); color:#fff; }
-  .mc { flex:1; } .mr { font-size:10px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
-  .mt { font-size:13.5px; line-height:1.55; color:#374151; white-space:pre-line; }
+  /* ============ Chart ============ */
+  .chart{display:flex;flex-direction:column;gap:14px}
+  .crow{display:grid;grid-template-columns:84px 1fr 130px;align-items:center;gap:14px}
+  .crow .cl{font-size:13px;font-weight:700;text-align:right}
+  .ctrack{height:40px;background:var(--surface-2);border-radius:var(--r-sm);position:relative;overflow:hidden}
+  .cfill{height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;padding-right:12px;color:#fff;font-weight:700;font-size:13px;width:0;animation:grow 1s cubic-bezier(.2,.7,.2,1) forwards}
+  .cfill.down{background:repeating-linear-gradient(45deg,#f1f3f6,#f1f3f6 8px,#e6e8ee 8px,#e6e8ee 16px);color:var(--danger);justify-content:flex-start;padding-left:14px;font-size:12px;width:100%!important;animation:none}
+  .cnote{font-size:11px;color:var(--on-faint)}
+  @keyframes grow{from{width:0}}
+  @media (prefers-reduced-motion: reduce){.cfill{animation:none!important;width:var(--w)!important}.kpi{transition:none}}
 
-  .callout { border-left:3px solid var(--warn); background:#fffbeb; padding:14px 16px; border-radius:0 8px 8px 0; font-size:13px; line-height:1.6; }
-  .callout.purple { border-color:var(--yuma); background:#faf5ff; }
-  .callout.teal { border-color:var(--sierra); background:#f0fdfa; }
-  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:#eef2ff; color:#3730a3; margin:2px 4px 2px 0;}
-  .feat-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .feat { border:1px solid var(--line); border-radius:10px; padding:14px; }
-  .feat h4 { font-size:13px; font-weight:700; margin-bottom:5px; }
-  .feat p { font-size:12px; color:var(--muted); line-height:1.5; }
-  .footer { text-align:center; font-size:12px; color:#9ca3af; padding:24px; }
-  h3.section { font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:2px 0 4px; }
+  /* ============ Table ============ */
+  .tbl-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+  th,td{text-align:left;padding:12px 12px;border-bottom:1px solid var(--line)}
+  thead th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--on-faint);font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.n{text-align:right}
+  .vdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .note{font-size:11.5px;color:var(--on-muted);margin-top:12px;line-height:1.6}
+
+  /* ============ Feature grid ============ */
+  .features{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .feat{border:1px solid var(--line);border-radius:var(--r-sm);padding:18px;background:var(--surface)}
+  .feat h4{font-size:13.5px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .feat p{font-size:12.5px;color:var(--on-muted);line-height:1.55}
+  .tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:6px;background:var(--surface-2);color:var(--on-muted)}
+
+  /* ============ Conversation ============ */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--on-muted);cursor:pointer;transition:all .15s ease}
+  .tab[aria-selected="true"]{background:var(--on);color:#fff;border-color:var(--on)}
+  .panel{display:none} .panel.active{display:block}
+  .conv{display:flex;flex-direction:column;gap:14px}
+  .turn{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface)}
+  .th{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface-2);font-size:12px;color:var(--on-muted)}
+  .tn{background:var(--on);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .tq{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lat{margin-left:auto;font-weight:700;font-size:12px;padding:4px 11px;border-radius:999px;letter-spacing:.01em}
+  .l-fast{background:#d1f5ee;color:#0f766e} .l-mid{background:#e0e7ff;color:#3730a3} .l-slow{background:#fef3c7;color:#92400e} .l-vslow{background:#fde4ea;color:#9f1239}
+  .msg{display:flex;gap:11px;padding:14px}
+  .msg.u{background:#fbfbfd} .msg.b{background:var(--surface)}
+  .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+  .av.u{background:#cbd2e0;color:#3a4456} .av.b{background:var(--on)}
+  .mr{font-size:10px;font-weight:700;color:var(--on-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+  .mt{font-size:13.5px;color:#2b3340;white-space:pre-line}
+
+  .callout{border-left:3px solid var(--warning);background:#fffaf0;padding:16px 18px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px;line-height:1.65}
+  .callout.p{border-color:var(--yuma);background:#fbf6ff}
+  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:32px 0}
+  a{color:var(--primary);text-decoration:none} a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    .kpis{grid-template-columns:1fr 1fr;margin-top:-32px}
+    .features{grid-template-columns:1fr}
+    .crow{grid-template-columns:64px 1fr;gap:8px}.cnote{display:none}
+    .hero h1{font-size:26px}
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>AI Chat Competitor Benchmark — Response Latency &amp; Shopping Assistant</h1>
-  <p>Live tests of competitor on-site AI chat widgets, measured end-to-end (send → full response)</p>
-  <div class="meta">Vendors: Siena · Sierra · Ada · Yuma&nbsp;&nbsp;|&nbsp;&nbsp;Test date: 2026-06-29&nbsp;&nbsp;|&nbsp;&nbsp;Prepared for Gorgias R&amp;D</div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Gorgias R&amp;D · Competitor Intelligence</div>
+    <h1>AI Chat Latency Benchmark</h1>
+    <p>Live, reproducible end-to-end latency tests of competitor on-site AI shopping assistants — measured from message sent to full response. With recorded conversations and feature observations.</p>
+    <div class="chips">
+      <span class="chip">Siena · Simple Modern</span>
+      <span class="chip">Sierra · Casper</span>
+      <span class="chip">Ada · Loop Earplugs</span>
+      <span class="chip">Yuma · EvryJewels</span>
+      <span class="chip">Test date 2026-06-29</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi"><div class="accent" style="background:var(--sierra)"></div>
+      <div class="name">Sierra</div><div class="client">Casper · "Luna"</div>
+      <div class="val mono">7.4<span class="u">s</span></div><div class="sub">avg · first byte ~0.4s</div>
+      <div class="badge b-live"><span class="d"></span>Live · native</div></div>
+    <div class="kpi"><div class="accent" style="background:var(--siena)"></div>
+      <div class="name">Siena</div><div class="client">Simple Modern · "Maddie"</div>
+      <div class="val mono">9.8<span class="u">s</span></div><div class="sub">avg · delivered atomically</div>
+      <div class="badge b-live"><span class="d"></span>Live · native</div></div>
+    <div class="kpi"><div class="accent" style="background:var(--yuma)"></div>
+      <div class="name">Yuma</div><div class="client">EvryJewels · via Gorgias Chat</div>
+      <div class="val mono">13.8<span class="u">s</span></div><div class="sub">avg of 3 · single-block reply</div>
+      <div class="badge b-none">Backend AI</div></div>
+    <div class="kpi"><div class="accent" style="background:var(--ada)"></div>
+      <div class="name">Ada</div><div class="client">Loop Earplugs</div>
+      <div class="val mono">—</div><div class="sub">backend unavailable at test time</div>
+      <div class="badge b-down">Deployed · down</div></div>
+  </div>
 </div>
 
-<div class="main">
+<main class="wrap">
 
-  <!-- EXEC SUMMARY -->
-  <div class="card">
-    <div class="card-h"><h2>Executive Summary</h2><div class="sub">Average end-to-end latency (send → full response). Lower is better.</div></div>
-    <div class="card-b">
-      <div class="summary-grid">
-        <div class="vcard"><div class="bar-top" style="background:var(--sierra);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
-          <div class="vname">Sierra</div><div class="vclient">Casper — "Luna"</div>
-          <div class="vbig" style="color:var(--sierra)">7.4<span style="font-size:15px">s</span></div>
-          <div class="vunit">avg · TTFB ~0.4s</div>
-          <div><span class="vtag tag-live">Live · native</span></div>
-        </div>
-        <div class="vcard"><div class="bar-top" style="background:var(--siena);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
-          <div class="vname">Siena</div><div class="vclient">Simple Modern — "Maddie"</div>
-          <div class="vbig" style="color:var(--siena)">9.8<span style="font-size:15px">s</span></div>
-          <div class="vunit">avg · delivered atomically</div>
-          <div><span class="vtag tag-live">Live · native</span></div>
-        </div>
-        <div class="vcard"><div class="bar-top" style="background:var(--ada);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
-          <div class="vname">Ada</div><div class="vclient">Loop Earplugs</div>
-          <div class="vbig" style="color:var(--ada)">—</div>
-          <div class="vunit">backend unavailable at test time</div>
-          <div><span class="vtag tag-down">Deployed · down</span></div>
-        </div>
-        <div class="vcard"><div class="bar-top" style="background:var(--yuma);position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0"></div>
-          <div class="vname">Yuma</div><div class="vclient">Glossier, EvryJewels…</div>
-          <div class="vbig" style="color:var(--yuma)">n/a</div>
-          <div class="vunit">no native storefront widget</div>
-          <div><span class="vtag tag-none">Backend-only</span></div>
-        </div>
-      </div>
-
-      <div style="margin-top:20px" class="callout">
-        <strong>Two structural findings beyond raw latency:</strong><br>
-        1. <strong>Yuma has no front-end chat widget of its own.</strong> On every Yuma reference customer checked (Glossier, EvryJewels) the on-site chat is <em>Gorgias Chat</em> — Yuma operates as a back-end automation layer on the helpdesk (Gorgias / Zendesk), not as a consumer-facing chat product. It is not directly comparable to Siena / Sierra / Ada on "chat latency".<br>
-        2. <strong>Ada was deployed but its bot backend returned "experiencing technical difficulties"</strong> across both EU and US Loop instances throughout the ~20-min test window — an availability data point in itself.
-      </div>
-    </div>
-  </div>
-
-  <!-- COMPARISON CHART -->
-  <div class="card">
-    <div class="card-h"><h2>Latency Comparison</h2><div class="sub">Average end-to-end response time per vendor (send → full answer rendered). Native-widget vendors only.</div></div>
-    <div class="card-b">
+  <!-- CHART -->
+  <section id="chart">
+    <div class="sec-head"><h2>Latency comparison</h2></div>
+    <div class="card card-pad">
+      <p style="font-size:13px;color:var(--on-muted);margin-bottom:18px">Average end-to-end response time (message sent → full answer available). Lower is better.</p>
       <div class="chart">
-        <div class="crow"><div class="clabel" style="color:var(--sierra)">Sierra</div>
-          <div class="ctrack"><div class="cfill" style="width:60%;background:var(--sierra)">7.4s</div></div>
+        <div class="crow"><div class="cl" style="color:var(--sierra)">Sierra</div>
+          <div class="ctrack"><div class="cfill" style="--w:37%;width:37%;background:var(--sierra)">7.4s</div></div>
           <div class="cnote">Casper · 7 turns</div></div>
-        <div class="crow"><div class="clabel" style="color:var(--siena)">Siena</div>
-          <div class="ctrack"><div class="cfill" style="width:80%;background:var(--siena)">9.8s</div></div>
+        <div class="crow"><div class="cl" style="color:var(--siena)">Siena</div>
+          <div class="ctrack"><div class="cfill" style="--w:49%;width:49%;background:var(--siena)">9.8s</div></div>
           <div class="cnote">Simple Modern · 10 turns</div></div>
-        <div class="crow"><div class="clabel" style="color:var(--ada)">Ada</div>
-          <div class="ctrack"><div class="cdown">⚠ Bot backend down during test — no measurement</div></div>
+        <div class="crow"><div class="cl" style="color:var(--yuma)">Yuma</div>
+          <div class="ctrack"><div class="cfill" style="--w:69%;width:69%;background:var(--yuma)">13.8s</div></div>
+          <div class="cnote">EvryJewels · 3 turns</div></div>
+        <div class="crow"><div class="cl" style="color:var(--ada)">Ada</div>
+          <div class="ctrack"><div class="cfill down">Bot backend down during test — no measurement</div></div>
           <div class="cnote">Loop Earplugs</div></div>
-        <div class="crow"><div class="clabel" style="color:var(--yuma)">Yuma</div>
-          <div class="ctrack"><div class="cdown" style="color:var(--muted)">No native chat widget — runs behind Gorgias/Zendesk</div></div>
-          <div class="cnote">—</div></div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- KEY FINDINGS -->
+  <section id="findings">
+    <div class="sec-head"><h2>Key findings</h2></div>
+    <div class="card card-pad">
+      <div class="callout p" style="margin-bottom:14px">
+        <strong>Yuma has no chat widget of its own.</strong> On EvryJewels (and Glossier) the on-site chat is <em>Gorgias Chat</em>; the AI auto-reply rides the Gorgias chat WebSocket and arrives as one block (no token streaming). It is a back-end automation layer, not a standalone chat product — and the slowest to a full answer (avg ~13.8s, up to ~18s).
+      </div>
+      <div class="callout">
+        <strong>Ada was deployed but unavailable.</strong> Its bot returned <em>"experiencing technical difficulties"</em> on both EU and US Loop instances throughout the ~20-min window — an availability signal in itself. <strong>Sierra is fastest</strong> and the only one to stream tokens (first words in ~0.4s) and render <strong>interactive product cards with Add-to-Cart</strong> in chat.
+      </div>
+    </div>
+  </section>
 
   <!-- STATS TABLE -->
-  <div class="card">
-    <div class="card-h"><h2>Latency Statistics</h2><div class="sub">All values in seconds. "Complete" = full response generated/rendered.</div></div>
-    <div class="card-b" style="overflow-x:auto">
+  <section id="stats">
+    <div class="sec-head"><h2>Latency statistics</h2></div>
+    <div class="card card-pad">
+      <div class="tbl-scroll">
       <table>
-        <thead><tr><th>Vendor</th><th>Client</th><th>Turns</th><th>Min</th><th>Avg</th><th>Median</th><th>Max</th><th>First byte</th><th>Delivery model</th></tr></thead>
+        <thead><tr><th>Vendor</th><th>Client</th><th class="n">Turns</th><th class="n">Min</th><th class="n">Avg</th><th class="n">Median</th><th class="n">Max</th><th>Delivery</th></tr></thead>
         <tbody>
-          <tr><td><span class="dot" style="background:var(--sierra)"></span>Sierra</td><td>Casper</td><td class="num">7</td><td class="num">4.6</td><td class="num">7.4</td><td class="num">7.4</td><td class="num">9.7</td><td class="num">0.4</td><td>Token streaming (SSE)</td></tr>
-          <tr><td><span class="dot" style="background:var(--siena)"></span>Siena</td><td>Simple Modern</td><td class="num">9*</td><td class="num">7.0</td><td class="num">9.8</td><td class="num">10.0</td><td class="num">11.3</td><td class="num">~9.8</td><td>Atomic (full message at once)</td></tr>
-          <tr><td><span class="dot" style="background:var(--ada)"></span>Ada</td><td>Loop Earplugs</td><td class="num">0</td><td colspan="5" style="color:var(--bad);font-weight:600">Bot backend unavailable ("experiencing technical difficulties") across EU + US</td></tr>
-          <tr><td><span class="dot" style="background:var(--yuma)"></span>Yuma</td><td>Glossier / EvryJewels</td><td class="num">—</td><td colspan="5" style="color:var(--muted)">No native storefront chat widget — back-end automation behind Gorgias Chat</td></tr>
+          <tr><td><span class="vdot" style="background:var(--sierra)"></span>Sierra</td><td>Casper</td><td class="n mono">7</td><td class="n mono">4.6</td><td class="n mono">7.4</td><td class="n mono">7.4</td><td class="n mono">9.7</td><td>Token streaming (SSE)</td></tr>
+          <tr><td><span class="vdot" style="background:var(--siena)"></span>Siena</td><td>Simple Modern</td><td class="n mono">9*</td><td class="n mono">7.0</td><td class="n mono">9.8</td><td class="n mono">10.0</td><td class="n mono">11.3</td><td>Atomic (full message)</td></tr>
+          <tr><td><span class="vdot" style="background:var(--yuma)"></span>Yuma</td><td>EvryJewels</td><td class="n mono">3</td><td class="n mono">6.9</td><td class="n mono">13.8</td><td class="n mono">16.3</td><td class="n mono">18.1</td><td>Single block (WebSocket)</td></tr>
+          <tr><td><span class="vdot" style="background:var(--ada)"></span>Ada</td><td>Loop Earplugs</td><td class="n mono">0</td><td colspan="5" style="color:var(--danger);font-weight:600">Bot backend unavailable ("technical difficulties") — EU + US</td></tr>
         </tbody>
       </table>
-      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">* Siena: 10 turns run, 1 excluded as a measurement anomaly. Siena delivers the full message in one shot (no visible token streaming), so its "first byte" ≈ "complete". Sierra streams tokens, so it shows a low first-byte (~0.4s) and a later completion. Both "complete" columns are directly comparable.</p>
+      </div>
+      <p class="note">All values in seconds. "Avg/Median/Max" = full response generated/rendered. * Siena: 10 turns run, 1 excluded as a measurement anomaly. Siena delivers the full message at once (first-byte ≈ complete); Sierra streams tokens (first byte ~0.4s, later completion); Yuma replies in a single WebSocket block after a back-end delay. The "complete" columns are directly comparable. Yuma = 3 turns (collection rate-limited); treat as directional.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- PRODUCT RECOMMENDATION FEATURES -->
-  <div class="card">
-    <div class="card-h"><h2>Product Recommendation &amp; Commerce Features Observed</h2><div class="sub">What each assistant does beyond answering — relevant for testing feature parity</div></div>
-    <div class="card-b">
-      <div class="feat-grid">
-        <div class="feat"><h4 style="color:var(--sierra)">Sierra (Casper) — richest commerce UI</h4>
-          <p>Renders <strong>interactive product cards inline in chat</strong>: product image, name, specs, a <strong>"Select Size" dropdown</strong>, <strong>"Learn More"</strong> and <strong>"Add to Cart"</strong> buttons. On "which mattress for a hot sleeper?" it surfaced Snow &amp; Snow Max cards. Closest to a true in-chat shopping/checkout flow.</p>
-          <div style="margin-top:8px"><span class="pill">Product cards</span><span class="pill">Add to Cart</span><span class="pill">Size selector</span><span class="pill">Streaming</span></div>
-        </div>
-        <div class="feat"><h4 style="color:var(--siena)">Siena (Simple Modern) — text + deep links</h4>
-          <p>Answers in rich text with <strong>linked product variants</strong> (each color links to its PDP). Recommends specific SKUs and points to PDP/collection pages, but does <em>not</em> render add-to-cart cards in-chat. Connected to a Gorgias helpdesk for human handoff.</p>
-          <div style="margin-top:8px"><span class="pill">Variant links</span><span class="pill">SKU recommendations</span><span class="pill">Helpdesk handoff</span></div>
-        </div>
-        <div class="feat"><h4 style="color:var(--ada)">Ada (Loop) — not testable</h4>
-          <p>Widget deployed (static.ada.support embed) but the bot would not initialize during the test window, so its recommendation behavior could not be observed. Re-test recommended.</p>
-          <div style="margin-top:8px"><span class="pill">Deployed</span><span class="pill">Backend down</span></div>
-        </div>
-        <div class="feat"><h4 style="color:var(--yuma)">Yuma — not a chat surface</h4>
-          <p>No consumer chat UI to test. Product recommendation, if any, would surface through the host helpdesk's chat (Gorgias) rather than a Yuma widget.</p>
-          <div style="margin-top:8px"><span class="pill">Backend automation</span></div>
-        </div>
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="sec-head"><h2>Product-recommendation &amp; commerce features</h2></div>
+    <div class="card card-pad">
+      <div class="features">
+        <div class="feat"><h4><span class="vdot" style="background:var(--sierra)"></span>Sierra — richest commerce UI</h4>
+          <p>Renders <strong>interactive product cards inline in chat</strong> — image, specs, a <strong>Select Size</strong> dropdown, <strong>Learn More</strong> and <strong>Add to Cart</strong>. On "which mattress for a hot sleeper?" it surfaced Snow &amp; Snow Max cards. Closest to true in-chat shopping.</p>
+          <div class="tags"><span class="tag">Product cards</span><span class="tag">Add to Cart</span><span class="tag">Size selector</span><span class="tag">Streaming</span></div></div>
+        <div class="feat"><h4><span class="vdot" style="background:var(--siena)"></span>Siena — text + deep links</h4>
+          <p>Rich text with <strong>linked product variants</strong> (each color → its PDP) and specific SKU recommendations, but no add-to-cart card in chat. Connected to a Gorgias helpdesk for human handoff.</p>
+          <div class="tags"><span class="tag">Variant links</span><span class="tag">SKU recs</span><span class="tag">Helpdesk handoff</span></div></div>
+        <div class="feat"><h4><span class="vdot" style="background:var(--yuma)"></span>Yuma — accurate, policy-grounded text</h4>
+          <p>Plain-text answers grounded in store policy (shipping minimum, no-returns policy with link) and product specifics (ring sizes 5–9, named styles). Signs off as "Evry Customer Specialist". No in-chat cards; slower to respond.</p>
+          <div class="tags"><span class="tag">Policy-grounded</span><span class="tag">Product detail</span><span class="tag">No cards</span></div></div>
+        <div class="feat"><h4><span class="vdot" style="background:var(--ada)"></span>Ada — not testable</h4>
+          <p>Widget deployed (static.ada.support) but the bot would not initialize during the window, so recommendation behavior could not be observed. Re-test recommended.</p>
+          <div class="tags"><span class="tag">Deployed</span><span class="tag">Backend down</span></div></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- SIERRA CONVERSATION -->
-  <div class="card">
-    <div class="card-h"><h2>Conversation — Sierra (Casper · "Luna")</h2><div class="sub">7-turn shopping-assistant conversation · per-turn latency = network send → SSE stream close</div></div>
-    <div class="card-b"><div class="conv" id="sierra-conv"></div></div>
-  </div>
-
-  <!-- SIENA CONVERSATION -->
-  <div class="card">
-    <div class="card-h"><h2>Conversation — Siena (Simple Modern · "Maddie")</h2><div class="sub">10-turn shopping-assistant conversation · per-turn latency = send → full bot message</div></div>
-    <div class="card-b"><div class="conv" id="siena-conv"></div></div>
-  </div>
+  <!-- CONVERSATIONS -->
+  <section id="conversations">
+    <div class="sec-head"><h2>Recorded conversations</h2></div>
+    <div class="card card-pad">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-p="p-sierra">Sierra · Casper</button>
+        <button class="tab" role="tab" aria-selected="false" data-p="p-siena">Siena · Simple Modern</button>
+        <button class="tab" role="tab" aria-selected="false" data-p="p-yuma">Yuma · EvryJewels</button>
+      </div>
+      <div class="panel active" id="p-sierra"><div class="conv"></div></div>
+      <div class="panel" id="p-siena"><div class="conv"></div></div>
+      <div class="panel" id="p-yuma"><div class="conv"></div></div>
+    </div>
+  </section>
 
   <!-- METHODOLOGY -->
-  <div class="card">
-    <div class="card-h"><h2>Methodology &amp; Caveats</h2></div>
-    <div class="card-b" style="font-size:13px;line-height:1.7;color:#374151">
-      <p><strong>How latency was measured.</strong> Each widget was driven programmatically on the live customer site. Metric = wall-clock from message sent to the full response being available.</p>
-      <ul style="margin:10px 0 10px 20px">
-        <li><strong>Siena (Simple Modern):</strong> measured via the chat API — POST <code>/v1/live_chat/messages</code> then poll <code>/v1/live_chat/message</code> until the bot reply appears. Siena delivers the answer atomically.</li>
-        <li><strong>Sierra (Casper):</strong> measured at the network layer by intercepting the streaming endpoint <code>sierra.chat/-/api/chat</code> — first byte and stream-close timestamps. This is immune to browser tab throttling.</li>
+  <section id="method">
+    <div class="sec-head"><h2>Methodology &amp; caveats</h2></div>
+    <div class="card card-pad" style="font-size:13px;color:#2b3340;line-height:1.7">
+      <p>Each widget was driven programmatically on the <strong>live customer site</strong>; the metric is wall-clock from message sent to the full response being available.</p>
+      <ul style="margin:12px 0 12px 20px">
+        <li><strong>Siena</strong> — chat API: <span class="mono" style="font-size:12px">POST /v1/live_chat/messages</span> then poll <span class="mono" style="font-size:12px">/v1/live_chat/message</span> until the bot reply appears (delivered atomically).</li>
+        <li><strong>Sierra</strong> — network layer: intercept the streaming endpoint <span class="mono" style="font-size:12px">sierra.chat/-/api/chat</span> for first-byte and stream-close timestamps (throttle-immune).</li>
+        <li><strong>Yuma</strong> — WebSocket layer: timestamp the first <span class="mono" style="font-size:12px">fromAgent</span> message frame on the Gorgias chat socket after each send.</li>
       </ul>
-      <p><strong>Caveats.</strong> (1) Different customers / product domains (water bottles vs mattresses) — treat as directional, not a controlled head-to-head. (2) Sierra ran on a warm (server-persisted) session with accumulated context, which tends to <em>slow</em> generation — its figures are conservative. (3) Latency varies strongly by query type: simple FAQs (~4.6s on Sierra) are much faster than product-recommendation queries that trigger retrieval (~9.7s). (4) Ada and Yuma could not be latency-tested for the reasons above. A re-test of Ada when its backend recovers is recommended.</p>
+      <p><strong>Caveats.</strong> Different customers / product domains (water bottles · mattresses · jewelry) → directional, not a controlled head-to-head. Sierra ran on a warm session (conservative). Latency varies by query type: simple FAQs (~4.6s Sierra) are far faster than retrieval-heavy product questions (~9.7s). Yuma collection was rate-limited to 3 turns. Ada could not be tested (backend down). Yuma vs Gorgias-AI attribution on EvryJewels is not verifiable client-side.</p>
     </div>
-  </div>
+  </section>
 
-</div>
-<div class="footer">Gorgias R&amp;D · Competitor intelligence · 2026-06-29</div>
+</main>
+<div class="foot">Gorgias R&amp;D · Competitor intelligence · 2026-06-29 · <a href="https://github.com/max-pruv/ai-chat-latency-benchmark">source on GitHub</a></div>
 
 <script>
-const SIERRA = [
-  {q:"Do you offer free shipping?", lat:4963, a:"Casper offers free shipping on most products within the contiguous US, except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small items, $250 large. Return shipping is always free. In-home delivery & setup available for $249."},
-  {q:"What is your trial period and return policy?", lat:4581, a:"Casper mattresses come with a 100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 if bought with a mattress). Soft goods: no trial, return unused within 30 days."},
-  {q:"Do you offer financing or payment plans?", lat:8867, a:"Yes — Casper offers financing and payment plans through Affirm, Katapult and others at checkout."},
-  {q:"How long does delivery take once I order?", lat:7410, a:"Most in-stock Casper products are delivered within 2–8 business days after the order ships."},
-  {q:"Are your mattresses good for side sleepers?", lat:9245, a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
-  {q:"I'm a hot sleeper with back pain — which mattress do you recommend?", lat:9678, a:"For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology + strong support.  🛍️ [Rendered interactive product cards: image, Select Size, Learn More, Add to Cart]"},
-  {q:"Can you recommend a pillow to go with it?", lat:6721, a:"Absolutely! For hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."},
+const SIERRA=[
+ {q:"Do you offer free shipping?",lat:4963,a:"Casper offers free shipping on most products within the contiguous US, except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small, $250 large. Return shipping is always free. In-home setup available for $249."},
+ {q:"What is your trial period and return policy?",lat:4581,a:"Casper mattresses come with a 100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 if bought with a mattress). Soft goods: no trial, return unused within 30 days."},
+ {q:"Do you offer financing or payment plans?",lat:8867,a:"Yes — Casper offers financing and payment plans through Affirm, Katapult and others at checkout."},
+ {q:"How long does delivery take once I order?",lat:7410,a:"Most in-stock Casper products are delivered within 2–8 business days after the order ships."},
+ {q:"Are your mattresses good for side sleepers?",lat:9245,a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
+ {q:"I'm a hot sleeper with back pain — which mattress do you recommend?",lat:9678,a:"For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology + strong support.  🛍️ [Rendered interactive product cards: image, Select Size, Learn More, Add to Cart]"},
+ {q:"Can you recommend a pillow to go with it?",lat:6721,a:"Absolutely! For hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."},
 ];
-const SIENA = [
-  {q:"What colors does the Mesa Loop 30oz come in?", lat:null, a:"Lists 14+ colors (Iris Sage, Winter White Mix, Cricket, …) each linked to its product page.", note:"excluded (anomaly)"},
-  {q:"Does it fit in a standard car cup holder?", lat:10395, a:"Yes, the Mesa Loop 30oz is designed to fit most standard car cup holders!"},
-  {q:"Is the straw removable and dishwasher safe?", lat:9730, a:"The straw is not designed to be removed, but the lid (with straw) is top-rack dishwasher safe. Hand washing recommended."},
-  {q:"What is the difference between the 30oz and the 40oz?", lat:10610, a:"The 30oz is the largest Mesa Loop size — there isn't a 40oz Mesa Loop. Happy to compare other bottles (Trek, Summit)."},
-  {q:"Do you offer free shipping on orders?", lat:9989, a:"Yes — free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
-  {q:"How long does standard shipping usually take?", lat:6996, a:"5–11 business days total: 1–3 to fulfill + 4–8 to ship."},
-  {q:"Can I return it if I don't like the color?", lat:11256, a:"You may be able to — depends on your order. Could you share your email or order number so the team can confirm?"},
-  {q:"Is this bottle completely leak-proof when closed?", lat:9248, a:"Not 100% sure on full leak-proofing — recommend checking the product page or reaching out to support for a definitive answer."},
-  {q:"Does it keep drinks cold for 24 hours?", lat:10074, a:"Yes — designed to keep drinks cold for up to 24 hours thanks to double-wall insulation."},
-  {q:"Is the Almond Birch color currently in stock?", lat:9993, a:"No exact stock signal in chat — recommend checking the product page or signing up for a restock notification."},
+const SIENA=[
+ {q:"What colors does the Mesa Loop 30oz come in?",lat:null,a:"Lists 14+ colors (Iris Sage, Winter White Mix, Cricket, …), each linked to its product page.",note:"excluded"},
+ {q:"Does it fit in a standard car cup holder?",lat:10395,a:"Yes, the Mesa Loop 30oz is designed to fit most standard car cup holders!"},
+ {q:"Is the straw removable and dishwasher safe?",lat:9730,a:"The straw isn't designed to be removed, but the lid (with straw) is top-rack dishwasher safe. Hand washing recommended."},
+ {q:"What is the difference between the 30oz and the 40oz?",lat:10610,a:"The 30oz is the largest Mesa Loop size — there isn't a 40oz Mesa Loop. Happy to compare other bottles (Trek, Summit)."},
+ {q:"Do you offer free shipping on orders?",lat:9989,a:"Yes — free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
+ {q:"How long does standard shipping usually take?",lat:6996,a:"5–11 business days total: 1–3 to fulfill + 4–8 to ship."},
+ {q:"Can I return it if I don't like the color?",lat:11256,a:"You may be able to — depends on your order. Could you share your email or order number so the team can confirm?"},
+ {q:"Is this bottle completely leak-proof when closed?",lat:9248,a:"Not 100% sure on full leak-proofing — recommend checking the product page or reaching out to support for a definitive answer."},
+ {q:"Does it keep drinks cold for 24 hours?",lat:10074,a:"Yes — designed to keep drinks cold for up to 24 hours thanks to double-wall insulation."},
+ {q:"Is the Almond Birch color currently in stock?",lat:9993,a:"No exact stock signal in chat — recommend checking the product page or signing up for a restock notification."},
 ];
-
-function latClass(ms){ if(ms==null) return ''; if(ms<6000) return 'lat-fast'; if(ms<9000) return 'lat-mid'; return 'lat-slow'; }
-function render(arr, elId, botName){
-  const el = document.getElementById(elId);
-  arr.forEach((t,i)=>{
-    const lat = t.lat==null ? (t.note||'—') : (t.lat/1000).toFixed(1)+'s';
-    el.innerHTML += `
-      <div class="turn">
-        <div class="turn-h"><span class="turn-n">TURN ${i+1}</span><span>${t.q.slice(0,60)}${t.q.length>60?'…':''}</span>
-          <span class="turn-lat ${latClass(t.lat)}">${lat}</span></div>
-        <div class="msg u"><div class="av u">U</div><div class="mc"><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
-        <div class="msg b"><div class="av b">🤖</div><div class="mc"><div class="mr">${botName}</div><div class="mt">${t.a}</div></div></div>
-      </div>`;
-  });
+const YUMA=[
+ {q:"Do you offer free shipping?",lat:6908,a:"Yes, we offer free shipping! To qualify, your order subtotal must be at least $35 USD after discounts and before taxes. Add-on services like Package Protection and the 1 Year Warranty are excluded from this minimum."},
+ {q:"What is your return policy?",lat:16310,a:"We do not offer any refunds, exchanges, or returns. This is stated on our website (refund-policy). Could you please let us know why you are requesting a return or refund?  — Evry Customer Specialist"},
+ {q:"Are your rings adjustable or do they come in fixed sizes?",lat:18113,a:"Our rings come in both adjustable and fixed sizes, depending on the design! Many pieces, like the Double Date Ring, feature an adjustable design; other styles come in fixed sizes ranging from 5 to 9."},
+];
+function lc(ms){if(ms==null)return'';if(ms<6000)return'l-fast';if(ms<10000)return'l-mid';if(ms<15000)return'l-slow';return'l-vslow';}
+function render(arr,panelId,bot){
+  const el=document.querySelector('#'+panelId+' .conv');
+  el.innerHTML=arr.map((t,i)=>{
+    const lat=t.lat==null?(t.note||'—'):(t.lat/1000).toFixed(1)+'s';
+    return `<div class="turn">
+      <div class="th"><span class="tn">T${i+1}</span><span class="tq">${t.q}</span><span class="lat ${lc(t.lat)}">${lat}</span></div>
+      <div class="msg u"><div class="av u">U</div><div><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
+      <div class="msg b"><div class="av b">AI</div><div><div class="mr">${bot}</div><div class="mt">${t.a}</div></div></div>
+    </div>`;
+  }).join('');
 }
-render(SIERRA, 'sierra-conv', 'Luna · Sierra AI');
-render(SIENA, 'siena-conv', 'Maddie · Siena AI');
+render(SIERRA,'p-sierra','Luna · Sierra');
+render(SIENA,'p-siena','Maddie · Siena');
+render(YUMA,'p-yuma','Evry Specialist · Yuma-backed');
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected','false'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.setAttribute('aria-selected','true');
+    document.getElementById(tab.dataset.p).classList.add('active');
+  });
+});
 </script>
 </body>
 </html>
