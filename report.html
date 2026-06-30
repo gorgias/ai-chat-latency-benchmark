@@ -143,7 +143,7 @@
 
 <section>
   <h2 class="sec">Recorded conversations — drill down by store</h2>
-  <p class="lead">Pick a store to see the actual ~10-turn shopping conversation, turn by turn, with the AI's answers and where a <span style="color:var(--danger);font-weight:700">human handover</span> occurred.</p>
+  <p class="lead">Pick a store to see the actual ~10-turn conversation, turn by turn, with the AI's answers, the <strong>per-message latency</strong>, and where a <span style="color:var(--danger);font-weight:700">human handover</span> occurred (human replies are never timed).</p>
   <div class="toggle-tabs" id="conv-tabs"></div>
   <div class="card">
     <div class="conv-head" id="conv-head"></div>
@@ -174,16 +174,16 @@ const STORES = [
    what:'Answered every turn: cards (price+rating+review count), dynamic quick replies, deep review citations, bundle, best-seller, add-to-bag, shipping.',
    caps:{qr:1,cards:1,reviews:1,completes:1},
    turns:[
-    {q:"Help me pick a sunscreen?",a:"Clarifying question + 5 follow-up quick-reply chips (water-resistant / high SPF sensitive / lightweight / daily use).",by:'ai'},
-    {q:"Oily, acne-prone skin, outdoors running, hate greasy white-cast.",a:"3 cards: Unseen SPF50 $38 ★4.7(5651) · Mineral Mattescreen SPF40 $24 ★4.7(1620) · Unseen Stick $32 ★4.8(271) + chips.",by:'ai'},
-    {q:"Keep under ~$40, also works under makeup.",a:"On-budget makeup-friendly cards (Unseen / Mattescreen / Unseen Stick) + comparison chips.",by:'ai'},
-    {q:"Compare Unseen vs Mineral Mattescreen for oily skin + running.",a:"Unseen = weightless/primer/chemical; Mattescreen = mattifies/blurs pores/mineral + cards + a verified-buyer review quote.",by:'ai'},
-    {q:"Worried it'll feel heavy / break me out — what do reviewers with oily skin say?",a:"Cited named reviewers (Starla P., Lupe, Helen M.) — silky, light, no breakout, no oily residue — with a verified-buyer quote.",by:'ai'},
-    {q:"Need something for my face for daily wear under makeup.",a:"3 face-specific cards: Unseen $38 · City Sunscreen Serum SPF30 $48 ★4.7(220) · Play Everyday Face Lotion.",by:'ai'},
-    {q:"A set or bundle that's better value?",a:"Recommended the Best of Supergoop! SPF Set $134 ★5.0 as a better-value bundle.",by:'ai'},
-    {q:"Which is your overall best seller, well reviewed?",a:"Best seller = Unseen Sunscreen SPF50 $38 ★4.7 (5651) — invisible, weightless, blends under makeup.",by:'ai'},
-    {q:"Add Unseen Sunscreen and Mineral Mattescreen to my bag.",a:"Confirmed both added to the bag + offered an 'I'm ready to checkout' chip.",by:'ai'},
-    {q:"My total, and free shipping / first-order discount?",a:"Free shipping over $50, free Glow Stick at $70+; defers exact total to the cart page.",by:'ai'}
+    {q:"Help me pick a sunscreen?",a:"Clarifying question + 5 follow-up quick-reply chips (water-resistant / high SPF sensitive / lightweight / daily use).",by:'ai',lat:8.0},
+    {q:"Oily, acne-prone skin, outdoors running, hate greasy white-cast.",a:"3 cards: Unseen SPF50 $38 ★4.7(5651) · Mineral Mattescreen SPF40 $24 ★4.7(1620) · Unseen Stick $32 ★4.8(271) + chips.",by:'ai',lat:8.0},
+    {q:"Keep under ~$40, also works under makeup.",a:"On-budget makeup-friendly cards (Unseen / Mattescreen / Unseen Stick) + comparison chips.",by:'ai',lat:10.0},
+    {q:"Compare Unseen vs Mineral Mattescreen for oily skin + running.",a:"Unseen = weightless/primer/chemical; Mattescreen = mattifies/blurs pores/mineral + cards + a verified-buyer review quote.",by:'ai',lat:7.0},
+    {q:"Worried it'll feel heavy / break me out — what do reviewers with oily skin say?",a:"Cited named reviewers (Starla P., Lupe, Helen M.) — silky, light, no breakout, no oily residue — with a verified-buyer quote.",by:'ai',lat:6.0},
+    {q:"Need something for my face for daily wear under makeup.",a:"3 face-specific cards: Unseen $38 · City Sunscreen Serum SPF30 $48 ★4.7(220) · Play Everyday Face Lotion.",by:'ai',lat:8.0},
+    {q:"A set or bundle that's better value?",a:"Recommended the Best of Supergoop! SPF Set $134 ★5.0 as a better-value bundle.",by:'ai',lat:7.0},
+    {q:"Which is your overall best seller, well reviewed?",a:"Best seller = Unseen Sunscreen SPF50 $38 ★4.7 (5651) — invisible, weightless, blends under makeup.",by:'ai',lat:7.0},
+    {q:"Add Unseen Sunscreen and Mineral Mattescreen to my bag.",a:"Confirmed both added to the bag + offered an 'I'm ready to checkout' chip.",by:'ai',lat:8.0},
+    {q:"My total, and free shipping / first-order discount?",a:"Free shipping over $50, free Glow Stick at $70+; defers exact total to the cart page.",by:'ai',lat:6.0}
    ]},
   {id:'spiffy-2', vendor:'Spiffy.ai', store:'(2nd store)', site:'pending', method:'pending', us:false, lat:'—', success:null, what:'A second Spiffy.ai store is being added.', caps:{qr:2,cards:2,reviews:2,completes:2}, turns:[]},
 
@@ -192,8 +192,8 @@ const STORES = [
    what:'AI answered 4 turns well (curtain guidance, neutral tones, blackout-vs-sheer), then a HUMAN agent "Sébastien" joined at ~turn 5 and repeated a canned macro — sale not completed.',
    caps:{qr:0,cards:0,reviews:0,completes:0},
    turns:[
-    {q:"Redoing my living room, need curtains — where to start?",a:"Opacity/size/finish framework; how to measure the rod; width recs by rod length.",by:'ai'},
-    {q:"Bright south-facing room, 2.5m windows, soften light, modern neutrals.",a:"Sheer / light-filtering; neutral palette (off-white, ecru, linen, sand, greige, taupe).",by:'ai'},
+    {q:"Redoing my living room, need curtains — where to start?",a:"Opacity/size/finish framework; how to measure the rod; width recs by rod length.",by:'ai',lat:14.2},
+    {q:"Bright south-facing room, 2.5m windows, soften light, modern neutrals.",a:"Sheer / light-filtering; neutral palette (off-white, ecru, linen, sand, greige, taupe).",by:'ai',lat:12.0},
     {q:"Under ~€200 for the pair, I rent so can't drill big fixtures.",a:"Sheer/light-filtering 280cm, lightweight for renters + curtain & sheer collection links.",by:'ai'},
     {q:"Compare blackout vs sheer voiles for a bright room I still want light in.",a:"Sheer voiles better for keeping light; ISISSE blackout lining (100% blackout) vs SHADOW linen voile; recommends SHADOW.",by:'ai'},
     {q:"Worried sheers won't give privacy in the evening — true?",a:"Human agent 'Sébastien' joined and replied with a canned no-drill macro — did NOT address the privacy question.",by:'human'},
@@ -249,11 +249,23 @@ const STORES = [
 // ---- SUPPORT mode: same stores, support questions (shipping/returns/policy) ----
 const SUPPORT = [
   {id:'gorgias-madura-sup', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
-   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
-   what:'Routes support to a human by configuration — a human agent ("Sébastien") owns the thread and new questions queue for the agent rather than getting a self-served AI answer. (Cross-origin warm session can\'t be reset from the page; a clean cold run needs a fresh browser profile.)', turns:[]},
+   lat:'~8.3s', latPct:42, success:60, successTxt:'6/10',
+   what:'Cold run: the AI self-served 6 support turns (shipping, delivery, returns, return process, damaged items, address change) in ~4.5–13.5s, then a human agent ("Sébastien") joined at turn 7 — turns 7–10 are human (not timed).',
+   turns:[
+    {q:"Order placed days ago, no tracking — how long to ship + get tracking?",a:"In-stock non-bulky items ship in 2–5 business days; tracking is emailed once the parcel reaches the carrier. Log in to look up your specific order.",by:'ai',lat:13.0},
+    {q:"How long does delivery take once it ships?",a:"Delivery via Colissimo / Mondial Relay; bulky items ~2–4 weeks; made-to-order furniture ~8–10 weeks production + 1–3 weeks delivery.",by:'ai',lat:9.6},
+    {q:"What is your return policy?",a:"Returns accepted — include your order number and a 'return for refund' note in the parcel; refund within ~14 working days once approved.",by:'ai',lat:4.6},
+    {q:"How do I start a return or an exchange?",a:"Send it back with the order number + 'return for refund' note; refund processed within 14 working days after the warehouse approves it.",by:'ai',lat:4.6},
+    {q:"What if an item arrives damaged or faulty?",a:"Handled via the same return-for-refund process; log in / share order details so the team can sort it out.",by:'ai',lat:4.5},
+    {q:"Can I change the shipping address on an order I just placed?",a:"Address changes are handled by the team — log in or share order number / name / email; possible within ~2h of ordering, not after it ships.",by:'ai',lat:13.5},
+    {q:"Can I cancel or modify an order after it's placed?",a:"🚩 Human agent 'Sébastien' joined: \"Could you please provide your full name and email address so we can check your order status…\" — handed off to a person.",by:'human'},
+    {q:"Do you ship internationally, and who covers customs/duties?",a:"Not self-served — the thread is now owned by the human agent.",by:'human'},
+    {q:"My discount code isn't applying — what are the usual reasons?",a:"Not self-served — the human agent owns the thread.",by:'human'},
+    {q:"How do I track my order?",a:"Not self-served — the human agent owns the thread.",by:'human'}
+   ]},
   {id:'gorgias-masderm-sup', vendor:'Gorgias', store:'Masderm', site:'masderm.com/fr', url:'https://masderm.com/fr', method:'new', us:true,
-   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
-   what:'Transfers to a human + email gate (same config as its shopping flow: "je transfère votre demande à un conseiller humain… laissez votre e-mail"). The AI does not self-serve support to completion.', turns:[]},
+   lat:'—', success:null, successTxt:'gated', successCls:'p-na',
+   what:'Spanish chip-first widget: the home screen requires picking a category ("Incidencia con pedido" / "Dudas Frecuentes") before free text, so the standardized support flow did not post in a cold headless run. Its shopping flow transfers to a human + email gate. Clean capture pending a chip-first harness tweak.', turns:[]},
   {id:'sierra-casper-sup', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
    lat:'~6.5s', latPct:33, success:'✓', successTxt:'completed', successCls:'p-ok',
    what:'Specific, complete shipping + 100-night trial/returns + financing answers; no handover.',
@@ -388,7 +400,11 @@ function showConv(id){
     '&nbsp;'+pillFor(s)+'<span class="lat" style="margin-left:auto">latency '+s.lat+'</span>';
   document.getElementById('conv-body').innerHTML = s.turns.map((t,i)=>{
     const human = t.by==='human';
-    return '<div class="turn"><div class="th"><span class="tn">T'+(i+1)+'</span><span class="tq">'+t.q+'</span>'+(human?'<span class="badge-h">🚩 human handover</span>':'')+'</div>'+
+    // per-message latency — human replies are never timed
+    const latChip = human
+      ? '<span class="lat" style="color:var(--danger);background:#fdeaea">🚩 human · not timed</span>'
+      : (t.lat!=null ? '<span class="lat">'+(typeof t.lat==='number'?t.lat.toFixed(1)+'s':t.lat)+'</span>' : '<span class="lat">— </span>');
+    return '<div class="turn"><div class="th"><span class="tn">T'+(i+1)+'</span><span class="tq">'+t.q+'</span>'+latChip+'</div>'+
       '<div class="msg"><div class="av u">U</div><div class="mt">'+t.q+'</div></div>'+
       '<div class="msg"><div class="av '+(human?'h':'b')+'">'+(human?'H':'AI')+'</div><div class="mt">'+t.a+'</div></div></div>';
   }).join('');

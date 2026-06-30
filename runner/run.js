@@ -23,7 +23,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { WIDGETS, STORES, readTranscript } from "./vendors.js";
 import { SUPPORT, SHOPPING } from "./pools.js";
 
-const POLL_MS = 250, STABLE_MS = 4000, TURN_TIMEOUT_MS = 60000, GROWTH = 60, SETTLE_MS = 2500;
+const POLL_MS = 250, STABLE_MS = 4000, GROWTH = 60, SETTLE_MS = 2500;
+const TURN_TIMEOUT_MS = Number(process.env.TURN_TIMEOUT_MS) || 60000;
+// Real desktop UA — some chat widgets refuse to load for the default headless UA.
+const REAL_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 // Unprompted handover = the assistant bailed to a human on its own (failure).
 const HANDOVER_PATTERNS = [
@@ -90,12 +93,13 @@ async function runStoreMode(browser, store, mode) {
   // IndexedDB/cache for ANY origin (the widget's cross-origin storage included),
   // so there is never a pre-existing conversation. storageState is left undefined
   // (no profile) and we clear cookies as belt-and-suspenders.
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: store.locale || "en-US", storageState: undefined });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: store.locale || "en-US", userAgent: REAL_UA, storageState: undefined });
   await context.clearCookies().catch(() => {});
   const page = await context.newPage();
   try {
     await page.goto(store.url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await w.open(page);
+    let handedOver = false;
     for (let i = 0; i < pool.length; i++) {
       const q = pool[i];
       let r;
@@ -103,8 +107,12 @@ async function runStoreMode(browser, store, mode) {
       catch (e) { r = { ttft_ms: null, complete_ms: null, error: String(e).slice(0, 120) }; }
       const tail = (await readTranscript(page, w.scope)).text.slice(-700);
       const handover = detectHandover(tail, w.handover);
-      out.turns.push({ turn: i + 1, q, ...r, handover: !!handover, handover_hit: handover, replyTail: tail.slice(-300) });
-      console.log(`  [${store.key}/${mode}] T${i + 1} ${r.complete_ms ?? "—"}ms${handover ? "  ⛔ HANDOVER: " + handover : ""}`);
+      if (handover) handedOver = true;
+      // Once a human owns the thread, every later turn is human too. We NEVER
+      // count a human reply's latency — only the AI's own responses are timed.
+      const by = handedOver ? "human" : "ai";
+      out.turns.push({ turn: i + 1, q, by, ...r, ai_latency_ms: by === "ai" ? r.complete_ms : null, handover: !!handover, handover_hit: handover, replyTail: tail.slice(-300) });
+      console.log(`  [${store.key}/${mode}] T${i + 1} ${by === "ai" ? (r.complete_ms ?? "—") + "ms" : "(human)"}${handover ? "  ⛔ HANDOVER: " + handover : ""}`);
       await sleep(SETTLE_MS);
     }
   } catch (e) {
@@ -112,16 +120,18 @@ async function runStoreMode(browser, store, mode) {
     console.log(`  [${store.key}/${mode}] FAILED: ${out.error}`);
   } finally { await context.close(); }
 
-  const valid = out.turns.map(t => t.complete_ms).filter(x => x != null);
+  // Latency is computed ONLY over AI turns — human replies are never timed.
+  const aiValid = out.turns.filter(t => t.by === "ai").map(t => t.complete_ms).filter(x => x != null);
   const firstHandover = out.turns.find(t => t.handover);
-  const answered = out.turns.filter(t => t.complete_ms != null && !t.handover).length;
+  const answered = out.turns.filter(t => t.by === "ai" && t.complete_ms != null).length;
   out.stats = {
     turns: out.turns.length,
     answered_no_handover: answered,
     success_rate: out.turns.length ? Math.round((answered / out.turns.length) * 100) : null,
-    avg_ms: valid.length ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : null,
-    min_ms: valid.length ? Math.min(...valid) : null,
-    max_ms: valid.length ? Math.max(...valid) : null,
+    avg_ms: aiValid.length ? Math.round(aiValid.reduce((a, b) => a + b, 0) / aiValid.length) : null,
+    min_ms: aiValid.length ? Math.min(...aiValid) : null,
+    max_ms: aiValid.length ? Math.max(...aiValid) : null,
+    latency_basis: "AI turns only (human replies excluded)",
     handover_turn: firstHandover ? firstHandover.turn : null,
   };
   return out;

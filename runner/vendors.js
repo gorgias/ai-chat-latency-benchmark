@@ -36,15 +36,26 @@ export const WIDGETS = {
     handover: [/joined the chat/i, /a rejoint (la )?(conversation|discussion|chat)/i, /\b\w+ (says|dit)\s*:/i,
                /conseiller humain/i, /transf[eè]re(r|z)?\b.*(humain|conseiller|agent|ticket)/i, /laissez(\-| )?(nous|moi)?\s*(votre)?\s*(e-?mail|adresse)/i],
     async open(page) {
-      await page.waitForTimeout(5000); await dismiss(page);
-      await page.evaluate(async () => { for (let i = 0; i < 10 && !window.GorgiasChat?.isOpen?.(); i++) { try { window.GorgiasChat?.open(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); } });
+      await dismiss(page);
+      // widget bundle loads a couple seconds after a real-UA 'load'; wait for it
+      await page.waitForFunction(() => typeof window.GorgiasChat !== "undefined", null, { timeout: 30000 }).catch(() => {});
+      await page.evaluate(async () => {
+        const isOpen = () => { try { return !!window.GorgiasChat.isOpen(); } catch (e) { return false; } };
+        for (let i = 0; i < 14 && !isOpen(); i++) { try { window.GorgiasChat.open(); } catch (e) {} await new Promise(r => setTimeout(r, 900)); }
+      });
       await page.waitForTimeout(3500);
     },
     async send(page, text) {
-      // Cold context: sendMessage starts a fresh conversation. Fall back to typing
-      // into the chat-input iframe if the programmatic API no-ops.
-      const ok = await page.evaluate(t => { try { window.GorgiasChat.sendMessage(t); return true; } catch (e) { return false; } }, text);
-      if (!ok) { const f = await findFrame(page, "chat-input"); if (f) { const i = f.locator('textarea,input,[contenteditable=true]').first(); await i.fill(text).catch(()=>{}); await page.keyboard.press("Enter"); } }
+      // The message box is the "Ask anything" textarea INSIDE the chat-window
+      // iframe; typing + Enter posts (GorgiasChat.sendMessage no-ops on the home
+      // screen in a cold context). Avoid the email-capture input if present.
+      const f = await findFrame(page, "chat-window");
+      if (!f) { try { await page.evaluate(t => window.GorgiasChat.sendMessage(t), text); } catch (e) {} return; }
+      let inp = f.locator('textarea').first();
+      if (!(await inp.count().catch(() => 0))) inp = f.locator('[contenteditable="true"], input[type="text"], input:not([type="email"])').first();
+      await inp.click({ timeout: 5000 }).catch(() => {});
+      await inp.fill(text).catch(async () => { await inp.type(text).catch(() => {}); });
+      await page.keyboard.press("Enter");
     },
   },
 
