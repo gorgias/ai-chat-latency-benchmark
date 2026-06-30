@@ -3,28 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chat Latency Benchmark — Siena · Sierra · Ada · Yuma</title>
+<title>AI Chat Benchmark — Shopping Assistant vs Support</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  /* ============ Design tokens (UI-UX Pro Max: analytics-dashboard minimalism) ============ */
   :root{
-    /* surface / text */
-    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f1f3f6; --line:#e6e8ee;
+    --bg:#f6f7f9; --surface:#fff; --surface-2:#f1f3f6; --line:#e6e8ee;
     --on:#0e1116; --on-muted:#5a6473; --on-faint:#8b94a3;
-    /* primary + state (colorblind-safe, no red/green-only) */
-    --primary:#4f46e5; --primary-weak:#eef0fe;
-    --success:#0e7490; --warning:#b45309; --danger:#be123c;
-    /* vendor accents */
+    --primary:#4f46e5; --success:#0e7490; --warning:#b45309; --danger:#be123c;
     --sierra:#0f766e; --siena:#4f46e5; --ada:#b45309; --yuma:#9333ea; --dg:#db2777; --gorgias:#15803d; --meta:#0891b2;
-    /* elevation scale 0/2/4/8/16/24 */
-    --e1:0 1px 2px rgba(13,18,28,.04);
-    --e2:0 2px 4px rgba(13,18,28,.05);
-    --e4:0 4px 10px rgba(13,18,28,.06);
-    --e8:0 8px 24px rgba(13,18,28,.08);
-    /* radii + space (8px rhythm) */
-    --r:14px; --r-sm:10px; --s:8px;
+    --e2:0 2px 4px rgba(13,18,28,.05); --e4:0 4px 10px rgba(13,18,28,.06); --e8:0 8px 24px rgba(13,18,28,.08);
+    --r:14px; --r-sm:10px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -32,98 +22,77 @@
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
 
-  /* ============ Header ============ */
-  .hero{background:linear-gradient(180deg,#0e1116 0%,#171c26 100%);color:#fff;padding:56px 0 64px}
+  .hero{background:linear-gradient(180deg,#0e1116,#171c26);color:#fff;padding:48px 0 28px}
   .hero .eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8b94a3}
-  .hero h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:12px 0 14px;max-width:760px;line-height:1.12}
-  .hero p{font-size:15px;color:#aab2c0;max-width:640px}
-  .hero .chips{margin-top:24px;display:flex;flex-wrap:wrap;gap:8px}
-  .chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#d4d9e2}
+  .hero h1{font-size:32px;font-weight:800;letter-spacing:-.02em;margin:12px 0 12px;max-width:780px;line-height:1.12}
+  .hero p{font-size:14px;color:#aab2c0;max-width:660px}
+  .hero .chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#d4d9e2}
 
-  /* ============ Sections ============ */
-  main{padding:40px 0 64px}
-  section{margin-bottom:32px;scroll-margin-top:24px}
-  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+  /* ===== Mode toggle ===== */
+  .togglebar{position:sticky;top:0;z-index:50;background:rgba(246,247,249,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 0}
+  .toggle{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:var(--e2);max-width:560px;margin:0 auto}
+  .toggle button{flex:1;border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:var(--on-muted);padding:12px 14px;border-radius:999px;transition:all .18s ease;display:flex;align-items:center;justify-content:center;gap:8px}
+  .toggle button .sub{font-size:11px;font-weight:500;opacity:.8}
+  .toggle button[aria-pressed="true"]{color:#fff}
+  .toggle button[aria-pressed="true"][data-mode="shopping"]{background:linear-gradient(135deg,#0f766e,#15803d)}
+  .toggle button[aria-pressed="true"][data-mode="support"]{background:linear-gradient(135deg,#4f46e5,#0891b2)}
+  .togglehint{text-align:center;font-size:12px;color:var(--on-muted);margin-top:8px}
+
+  main{padding:28px 0 64px}
+  section{margin-bottom:30px;scroll-margin-top:90px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
   .sec-head h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--on-muted)}
+  .sec-head .modetag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .modetag.shopping{background:#d1f5ee;color:#0f766e} .modetag.support{background:#e0e7ff;color:#3730a3}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e2)}
   .card-pad{padding:24px}
+  .lead{font-size:13px;color:var(--on-muted);margin-bottom:18px}
 
-  /* ============ KPI vendor cards ============ */
-  .kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:-44px;position:relative;z-index:2}
-  .kpi{padding:16px 12px}
-  .kpi .name{font-size:13px}
-  .kpi .val{font-size:26px}
-  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e8);padding:20px;overflow:hidden;position:relative;transition:transform .2s ease,box-shadow .2s ease}
-  .kpi:hover{transform:translateY(-3px);box-shadow:var(--e8),0 14px 30px rgba(13,18,28,.10)}
-  .kpi .accent{position:absolute;top:0;left:0;right:0;height:4px}
-  .kpi .name{font-size:15px;font-weight:800;letter-spacing:-.01em}
-  .kpi .client{font-size:12px;color:var(--on-faint);margin-top:2px}
-  .kpi .val{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:14px 0 0;line-height:1}
-  .kpi .val .u{font-size:15px;font-weight:600;color:var(--on-faint)}
-  .kpi .sub{font-size:11px;color:var(--on-muted);margin-top:4px}
-  .badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-top:14px}
-  .b-live{background:#d1f5ee;color:#0f766e} .b-down{background:#fde4ea;color:#be123c} .b-none{background:#f0e6fe;color:#7c2db8}
-  .b-live .d{width:6px;height:6px;border-radius:50%;background:#0f766e;box-shadow:0 0 0 3px rgba(15,118,110,.18)}
-
-  /* ============ Chart ============ */
-  .chart{display:flex;flex-direction:column;gap:14px}
-  .crow{display:grid;grid-template-columns:84px 1fr 130px;align-items:center;gap:14px}
+  /* chart */
+  .chart{display:flex;flex-direction:column;gap:13px}
+  .crow{display:grid;grid-template-columns:96px 1fr 150px;align-items:center;gap:14px}
   .crow .cl{font-size:13px;font-weight:700;text-align:right}
-  .ctrack{height:40px;background:var(--surface-2);border-radius:var(--r-sm);position:relative;overflow:hidden}
-  .cfill{height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;padding-right:12px;color:#fff;font-weight:700;font-size:13px;width:0;animation:grow 1s cubic-bezier(.2,.7,.2,1) forwards}
-  .cfill.down{background:repeating-linear-gradient(45deg,#f1f3f6,#f1f3f6 8px,#e6e8ee 8px,#e6e8ee 16px);color:var(--danger);justify-content:flex-start;padding-left:14px;font-size:12px;width:100%!important;animation:none}
+  .ctrack{height:38px;background:var(--surface-2);border-radius:var(--r-sm);position:relative;overflow:hidden}
+  .cfill{height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;padding-right:12px;color:#fff;font-weight:700;font-size:13px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .cfill.none{background:repeating-linear-gradient(45deg,#f1f3f6,#f1f3f6 8px,#e6e8ee 8px,#e6e8ee 16px);color:var(--danger);justify-content:flex-start;padding-left:14px;font-size:12px}
   .cnote{font-size:11px;color:var(--on-faint)}
-  @keyframes grow{from{width:0}}
-  @media (prefers-reduced-motion: reduce){.cfill{animation:none!important;width:var(--w)!important}.kpi{transition:none}}
+  @media (prefers-reduced-motion:reduce){.cfill{transition:none}}
 
-  /* ============ Table ============ */
+  /* table */
   .tbl-scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
-  th,td{text-align:left;padding:12px 12px;border-bottom:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
   thead th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--on-faint);font-weight:600}
   tbody tr:last-child td{border-bottom:none}
   td.n{text-align:right}
   .vdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle}
   .note{font-size:11.5px;color:var(--on-muted);margin-top:12px;line-height:1.6}
+  .us-row{background:#f0fdf4}
+  .us-tag{font-size:10px;color:var(--gorgias);font-weight:700}
 
-  /* ============ Feature grid ============ */
-  .features{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .feat{border:1px solid var(--line);border-radius:var(--r-sm);padding:18px;background:var(--surface)}
-  .feat h4{font-size:13.5px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-  .feat p{font-size:12.5px;color:var(--on-muted);line-height:1.55}
-  .tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
-  .tag{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:6px;background:var(--surface-2);color:var(--on-muted)}
-
-  /* ============ Conversation ============ */
+  /* conversations */
   .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--on-muted);cursor:pointer;transition:all .15s ease}
+  .tab{font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--on-muted);cursor:pointer}
   .tab[aria-selected="true"]{background:var(--on);color:#fff;border-color:var(--on)}
-  .panel{display:none} .panel.active{display:block}
-  .conv{display:flex;flex-direction:column;gap:14px}
-  .turn{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--surface)}
-  .th{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface-2);font-size:12px;color:var(--on-muted)}
+  .turn{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-bottom:12px}
+  .th{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface-2);font-size:12px;color:var(--on-muted)}
   .tn{background:var(--on);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
   .tq{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .lat{margin-left:auto;font-weight:700;font-size:12px;padding:4px 11px;border-radius:999px;letter-spacing:.01em}
-  .l-fast{background:#d1f5ee;color:#0f766e} .l-mid{background:#e0e7ff;color:#3730a3} .l-slow{background:#fef3c7;color:#92400e} .l-vslow{background:#fde4ea;color:#9f1239}
-  .msg{display:flex;gap:11px;padding:14px}
+  .lat{margin-left:auto;font-weight:700;font-size:12px;padding:4px 11px;border-radius:999px}
+  .l-fast{background:#d1f5ee;color:#0f766e} .l-mid{background:#e0e7ff;color:#3730a3} .l-slow{background:#fef3c7;color:#92400e} .l-vslow{background:#fde4ea;color:#9f1239} .l-none{background:#fde4ea;color:#9f1239}
+  .msg{display:flex;gap:11px;padding:13px 14px}
   .msg.u{background:#fbfbfd} .msg.b{background:var(--surface)}
   .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
   .av.u{background:#cbd2e0;color:#3a4456} .av.b{background:var(--on)}
   .mr{font-size:10px;font-weight:700;color:var(--on-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
   .mt{font-size:13.5px;color:#2b3340;white-space:pre-line}
+  .emptymsg{font-size:13px;color:var(--on-muted);padding:16px;text-align:center}
 
-  .callout{border-left:3px solid var(--warning);background:#fffaf0;padding:16px 18px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px;line-height:1.65}
-  .callout.p{border-color:var(--yuma);background:#fbf6ff}
-  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:32px 0}
+  .callout{border-left:3px solid var(--warning);background:#fffaf0;padding:14px 16px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px;line-height:1.6}
+  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:30px 0}
   a{color:var(--primary);text-decoration:none} a:hover{text-decoration:underline}
-
-  @media(max-width:760px){
-    .kpis{grid-template-columns:1fr 1fr;margin-top:-32px}
-    .features{grid-template-columns:1fr}
-    .crow{grid-template-columns:64px 1fr;gap:8px}.cnote{display:none}
-    .hero h1{font-size:26px}
-  }
+  @media(max-width:760px){.crow{grid-template-columns:74px 1fr;gap:9px}.cnote{display:none}.hero h1{font-size:25px}.toggle button{font-size:13px}}
 </style>
 </head>
 <body>
@@ -131,335 +100,199 @@
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">Gorgias R&amp;D · Competitor Intelligence</div>
-    <h1>AI Chat Latency Benchmark</h1>
-    <p>Live, reproducible end-to-end latency tests of competitor on-site AI shopping assistants — measured from message sent to full response. With recorded conversations and feature observations.</p>
+    <h1>AI Chat Benchmark — Shopping Assistant vs Support</h1>
+    <p>Live latency &amp; answer-quality tests of competitor on-site AI assistants, split into two jobs: selling (discovery → product recommendation) and supporting (FAQ &amp; policy). Toggle the mode below.</p>
     <div class="chips">
-      <span class="chip">Siena · Simple Modern</span>
-      <span class="chip">Sierra · Casper</span>
-      <span class="chip">Ada · Loop Earplugs</span>
-      <span class="chip">Yuma · EvryJewels</span>
-      <span class="chip">DigitalGenius · Bloom &amp; Wild</span>
-      <span class="chip">Gorgias · NouriVida (us)</span>
-      <span class="chip">Meta AI · Dermalogica</span>
-      <span class="chip">Tests 2026-06-29/30</span>
+      <span class="chip">Sierra · Casper</span><span class="chip">Siena · Simple Modern</span>
+      <span class="chip">Gorgias · NouriVida (us)</span><span class="chip">Yuma · EvryJewels</span>
+      <span class="chip">DigitalGenius · Bloom &amp; Wild</span><span class="chip">Meta AI · Dermalogica</span>
+      <span class="chip">Ada · Loop Earplugs</span><span class="chip">Tests 2026-06-29/30</span>
     </div>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="kpis">
-    <div class="kpi"><div class="accent" style="background:var(--sierra)"></div>
-      <div class="name">Sierra</div><div class="client">Casper · "Luna"</div>
-      <div class="val mono">7.4<span class="u">s</span></div><div class="sub">avg · first byte ~0.4s</div>
-      <div class="badge b-live"><span class="d"></span>Live · native</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--siena)"></div>
-      <div class="name">Siena</div><div class="client">Simple Modern · "Maddie"</div>
-      <div class="val mono">9.8<span class="u">s</span></div><div class="sub">avg · delivered atomically</div>
-      <div class="badge b-live"><span class="d"></span>Live · native</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--dg)"></div>
-      <div class="name">DigitalGenius</div><div class="client">Bloom &amp; Wild · "Willow"</div>
-      <div class="val mono">10.2<span class="u">s</span></div><div class="sub">avg FAQ · prechat gate · escalates recs</div>
-      <div class="badge b-none">Lead-gated</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--meta)"></div>
-      <div class="name">Meta AI*</div><div class="client">Dermalogica · Zendesk asst.</div>
-      <div class="val mono">~5<span class="u">s</span></div><div class="sub">FAQ only · escalates recs · no product rec</div>
-      <div class="badge b-none">No rec</div></div>
-    <div class="kpi" style="outline:2px solid var(--gorgias);outline-offset:-1px"><div class="accent" style="background:var(--gorgias)"></div>
-      <div class="name">Gorgias <span style="font-size:10px;font-weight:700;color:var(--gorgias)">· us</span></div><div class="client">NouriVida demo · AI Agent</div>
-      <div class="val mono">12.1<span class="u">s</span></div><div class="sub">avg · FAQ ~6.4s · rec ~17s</div>
-      <div class="badge b-live"><span class="d" style="background:var(--gorgias);box-shadow:0 0 0 3px rgba(21,128,61,.18)"></span>Live · native</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--yuma)"></div>
-      <div class="name">Yuma</div><div class="client">EvryJewels · via Gorgias Chat</div>
-      <div class="val mono">14.3<span class="u">s</span></div><div class="sub">avg of 6 · 1 no-reply · single block</div>
-      <div class="badge b-none">Backend AI</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--ada)"></div>
-      <div class="name">Ada</div><div class="client">Loop Earplugs</div>
-      <div class="val mono">—</div><div class="sub">backend down (retried 06-29 &amp; 06-30)</div>
-      <div class="badge b-down">Deployed · down</div></div>
+<div class="togglebar">
+  <div class="wrap">
+    <div class="toggle" role="group" aria-label="Benchmark mode">
+      <button data-mode="shopping" aria-pressed="true" onclick="setMode('shopping')">🛍️ Shopping Assistant<span class="sub">discovery → product rec</span></button>
+      <button data-mode="support" aria-pressed="false" onclick="setMode('support')">🎧 Support only<span class="sub">FAQ &amp; policy</span></button>
+    </div>
+    <div class="togglehint" id="togglehint"></div>
   </div>
 </div>
 
 <main class="wrap">
-
-  <!-- CHART -->
-  <section id="chart">
-    <div class="sec-head"><h2>Latency comparison</h2></div>
-    <div class="card card-pad">
-      <p style="font-size:13px;color:var(--on-muted);margin-bottom:18px">Average end-to-end response time (message sent → full answer available). Lower is better. <strong>*Meta AI (Dermalogica) and DigitalGenius don't do product recommendations</strong> — they escalate that to a human — so their numbers are FAQ-only and not directly comparable to vendors that answer the harder product-rec questions.</p>
-      <div class="chart">
-        <div class="crow"><div class="cl" style="color:var(--sierra)">Sierra</div>
-          <div class="ctrack"><div class="cfill" style="--w:37%;width:37%;background:var(--sierra)">7.4s</div></div>
-          <div class="cnote">Casper · 7 turns</div></div>
-        <div class="crow"><div class="cl" style="color:var(--siena)">Siena</div>
-          <div class="ctrack"><div class="cfill" style="--w:49%;width:49%;background:var(--siena)">9.8s</div></div>
-          <div class="cnote">Simple Modern · 10 turns</div></div>
-        <div class="crow"><div class="cl" style="color:var(--dg)">DigitalGenius</div>
-          <div class="ctrack"><div class="cfill" style="--w:51%;width:51%;background:var(--dg)">10.2s</div></div>
-          <div class="cnote">Bloom &amp; Wild · FAQ avg</div></div>
-        <div class="crow"><div class="cl" style="color:var(--meta)">Meta AI*</div>
-          <div class="ctrack"><div class="cfill" style="--w:25%;width:25%;background:var(--meta);opacity:.55">~5s</div></div>
-          <div class="cnote">Dermalogica · FAQ only*</div></div>
-        <div class="crow"><div class="cl" style="color:var(--gorgias)">Gorgias · us</div>
-          <div class="ctrack"><div class="cfill" style="--w:61%;width:61%;background:var(--gorgias)">12.1s</div></div>
-          <div class="cnote">NouriVida demo · 5 turns</div></div>
-        <div class="crow"><div class="cl" style="color:var(--yuma)">Yuma</div>
-          <div class="ctrack"><div class="cfill" style="--w:72%;width:72%;background:var(--yuma)">14.3s</div></div>
-          <div class="cnote">EvryJewels · 7 turns</div></div>
-        <div class="crow"><div class="cl" style="color:var(--ada)">Ada</div>
-          <div class="ctrack"><div class="cfill down">Bot backend down during test — no measurement</div></div>
-          <div class="cnote">Loop Earplugs</div></div>
-      </div>
-    </div>
+  <section id="latency">
+    <div class="sec-head"><h2>Latency</h2><span class="modetag" id="lat-modetag"></span></div>
+    <div class="card card-pad"><p class="lead" id="lat-lead"></p><div class="chart" id="chart"></div></div>
   </section>
 
-  <!-- KEY FINDINGS -->
-  <section id="findings">
-    <div class="sec-head"><h2>Key findings</h2></div>
-    <div class="card card-pad">
-      <div class="callout p" style="margin-bottom:14px">
-        <strong>Yuma has no chat widget of its own.</strong> On EvryJewels (and Glossier) the on-site chat is <em>Gorgias Chat</em>; the AI auto-reply rides the Gorgias chat WebSocket and arrives as one block (no token streaming). It is a back-end automation layer, not a standalone chat product — and the slowest to a full answer (avg ~14.3s, up to ~18s), with <strong>1 of 7 questions getting no in-chat reply at all</strong> within 70s.
-      </div>
-      <div class="callout">
-        <strong>Ada was deployed but unavailable.</strong> Its bot returned <em>"experiencing technical difficulties"</em> on both EU and US Loop instances throughout the ~20-min window — an availability signal in itself. <strong>Sierra is fastest</strong> and the only one to stream tokens (first words in ~0.4s) and render <strong>interactive product cards with Add-to-Cart</strong> in chat. <strong>DigitalGenius (Bloom &amp; Wild) gates its AI behind a name+email prechat form</strong> and escalated the product-recommendation question to a human — only Sierra, Siena and Yuma actually attempt in-chat product recommendations.
-      </div>
-    </div>
-  </section>
-
-  <!-- STATS TABLE -->
-  <section id="stats">
-    <div class="sec-head"><h2>Latency statistics</h2></div>
-    <div class="card card-pad">
-      <div class="tbl-scroll">
-      <table>
-        <thead><tr><th>Vendor</th><th>Client</th><th class="n">Turns</th><th class="n">Min</th><th class="n">Avg</th><th class="n">Median</th><th class="n">Max</th><th>Delivery</th></tr></thead>
-        <tbody>
-          <tr><td><span class="vdot" style="background:var(--sierra)"></span>Sierra</td><td>Casper</td><td class="n mono">7</td><td class="n mono">4.6</td><td class="n mono">7.4</td><td class="n mono">7.4</td><td class="n mono">9.7</td><td>Token streaming (SSE)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--siena)"></span>Siena</td><td>Simple Modern</td><td class="n mono">9*</td><td class="n mono">7.0</td><td class="n mono">9.8</td><td class="n mono">10.0</td><td class="n mono">11.3</td><td>Atomic (full message)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--dg)"></span>DigitalGenius</td><td>Bloom &amp; Wild</td><td class="n mono">4 / 5</td><td class="n mono">4.4</td><td class="n mono">10.2</td><td class="n mono">11.9</td><td class="n mono">14.3</td><td>Single block (WebSocket)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--meta)"></span>Meta AI*</td><td>Dermalogica</td><td class="n mono">2 FAQ</td><td class="n mono">~5</td><td class="n mono">~5</td><td class="n mono">~5</td><td class="n mono">~5</td><td>Zendesk asst. · escalates recs</td></tr>
-          <tr style="background:#f0fdf4"><td><span class="vdot" style="background:var(--gorgias)"></span>Gorgias <span style="font-size:10px;color:var(--gorgias);font-weight:700">us</span></td><td>NouriVida demo</td><td class="n mono">5</td><td class="n mono">5.5</td><td class="n mono">12.1</td><td class="n mono">13.5</td><td class="n mono">17.6</td><td>Single block (WebSocket)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--yuma)"></span>Yuma</td><td>EvryJewels</td><td class="n mono">6 / 7</td><td class="n mono">6.9</td><td class="n mono">14.3</td><td class="n mono">15.3</td><td class="n mono">18.1</td><td>Single block (WebSocket)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--ada)"></span>Ada</td><td>Loop Earplugs</td><td class="n mono">0</td><td colspan="5" style="color:var(--danger);font-weight:600">Bot backend unavailable ("technical difficulties") — EU + US</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <p class="note">All values in seconds. "Avg/Median/Max" = full response generated/rendered. * Siena: 10 turns run, 1 excluded as a measurement anomaly. Siena delivers the full message at once (first-byte ≈ complete); Sierra streams tokens (first byte ~0.4s, later completion); Yuma replies in a single WebSocket block after a back-end delay. The "complete" columns are directly comparable. Yuma = 7 turns (6 answered, 1 got no in-chat reply within 70s). DigitalGenius = avg of 3 cleanly-timed FAQs (range 4.4–14.3s); it is gated behind a name+email prechat form and <strong>escalated the product-recommendation question to a human</strong> instead of answering.</p>
-    </div>
-  </section>
-
-  <!-- LATENCY BY QUESTION TYPE -->
-  <section id="bytype">
-    <div class="sec-head"><h2>Latency by question type</h2></div>
-    <div class="card card-pad">
-      <p style="font-size:13px;color:var(--on-muted);margin-bottom:16px">The biggest driver of latency isn't the vendor — it's <strong>what you ask</strong>. Simple FAQs are fast; <strong>product-recommendation questions are consistently the slowest</strong>, because the agent has to retrieve over the catalog, reason about fit, and often render product cards.</p>
-      <div class="tbl-scroll">
-      <table>
-        <thead><tr><th>Vendor</th><th class="n">Simple FAQ<br><span style="font-weight:400;text-transform:none">(shipping, vegan…)</span></th><th class="n">Policy / returns</th><th class="n">Product recommendation</th><th>Recommendation behaviour</th></tr></thead>
-        <tbody>
-          <tr><td><span class="vdot" style="background:var(--sierra)"></span>Sierra</td><td class="n mono">~7.0</td><td class="n mono">4.6</td><td class="n mono" style="color:var(--sierra);font-weight:700">~8.2</td><td>Streams + renders product cards (Add to Cart)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--siena)"></span>Siena</td><td class="n mono">~9.0</td><td class="n mono">11.3</td><td class="n mono">~10.0</td><td>Recommends linked variants (text)</td></tr>
-          <tr style="background:#f0fdf4"><td><span class="vdot" style="background:var(--gorgias)"></span>Gorgias <span style="font-size:10px;color:var(--gorgias);font-weight:700">us</span></td><td class="n mono">6.4</td><td class="n mono">13.5</td><td class="n mono" style="color:var(--danger);font-weight:700">~17.1</td><td>Product cards + SKU links + discount code</td></tr>
-          <tr><td><span class="vdot" style="background:var(--yuma)"></span>Yuma</td><td class="n mono">~12.5</td><td class="n mono">16.3</td><td class="n mono">13.8</td><td>Text recommendation</td></tr>
-          <tr><td><span class="vdot" style="background:var(--dg)"></span>DigitalGenius</td><td class="n mono">~10.0</td><td class="n mono">—</td><td class="n mono" style="color:var(--danger)">escalated</td><td>Hands off to a human (no in-chat rec)</td></tr>
-          <tr><td><span class="vdot" style="background:var(--meta)"></span>Meta AI*</td><td class="n mono">~5</td><td class="n mono">~5</td><td class="n mono" style="color:var(--danger)">escalated</td><td>Hands off to a human lead form (no in-chat rec)</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <p class="note">All values in seconds (averages where multiple turns of a type were run). Product-recommendation = the slowest column for every vendor that answers it. <strong>Fair-comparison note:</strong> every vendor was asked the same standardized pool — a shipping/FAQ question, a returns/policy question, and a "which product do you recommend?" question. Vendors marked <span style="color:var(--danger)">escalated</span> (Meta AI, DigitalGenius) <strong>don't offer in-chat product recommendation at all</strong> — they hand off to a human — so it would be misleading to rank them as "fast" on an FAQ-only average against vendors that actually do the harder recommendation work.</p>
-      <div class="callout" style="margin-top:16px">
-        <strong>What the per-conversation timings show:</strong>
-        <ul style="margin:8px 0 0 18px;line-height:1.7">
-          <li><strong>Product recommendations cost the most.</strong> On the Gorgias demo a simple FAQ returns in ~6.4s, but "which product do you recommend?" took <strong>~17s</strong> (≈2.7× slower) — it retrieves the catalog, picks SKUs, renders cards and applies a discount code.</li>
-          <li><strong>Sierra is the outlier on recommendations</strong> (~8s) — it streams tokens (first words in ~0.4s) and uses a prebuilt product-card system, so a rec isn't much slower than an FAQ.</li>
-          <li><strong>Siena and Yuma look "flat" by type</strong> only because they deliver the whole answer in one block — that masks the work, but keeps them in the ~10s (Siena) / ~14s (Yuma) range regardless.</li>
-          <li><strong>DigitalGenius doesn't pay the rec cost — because it doesn't do it.</strong> It escalated the recommendation question to a human instead of answering.</li>
-          <li><strong>Within a vendor, FAQ &lt; policy &lt; product-rec</strong> is the consistent ordering. Policy answers land in the middle (the Gorgias agent even appends a product upsell to its returns answer, pushing it to ~13.5s).</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- ANSWER QUALITY (LLM-judge eval) -->
   <section id="quality">
-    <div class="sec-head"><h2>Answer quality — blind LLM-judge eval</h2></div>
+    <div class="sec-head"><h2>Answer quality — blind 3-judge eval</h2><span class="modetag" id="q-modetag"></span></div>
     <div class="card card-pad">
-      <p style="font-size:13px;color:var(--on-muted);margin-bottom:16px">Latency only matters if the answer is good. Each vendor's recorded answers were scored by a <strong>panel of 3 independent AI judges</strong>, with the vendors <strong>anonymized as "Store A–F"</strong> (judges didn't know which brand was which — including us) to remove bias. Rubric: directness, accuracy/specificity, helpfulness, and commerce effectiveness. Scores are the mean of the 3 judges, 1–5 (0 = didn't answer / escalated).</p>
-      <div class="tbl-scroll">
-      <table>
-        <thead><tr><th>Vendor</th><th class="n">FAQ</th><th class="n">Policy / returns</th><th class="n">Product rec</th><th class="n">Overall</th><th>Judge takeaway</th></tr></thead>
-        <tbody>
-          <tr><td><span class="vdot" style="background:var(--sierra)"></span>Sierra</td><td class="n mono">5.0</td><td class="n mono">5.0</td><td class="n mono">5.0</td><td class="n mono" style="font-weight:800;color:var(--success)">5.0</td><td>Specific &amp; complete everywhere; real rec with Add-to-Cart cards</td></tr>
-          <tr style="background:#f0fdf4"><td><span class="vdot" style="background:var(--gorgias)"></span>Gorgias <span style="font-size:10px;color:var(--gorgias);font-weight:700">us</span></td><td class="n mono">5.0</td><td class="n mono" style="color:var(--warning);font-weight:700">2.7</td><td class="n mono">5.0</td><td class="n mono" style="font-weight:800">4.0</td><td>Best-in-class product rec; but thin returns answer that jumps to an upsell</td></tr>
-          <tr><td><span class="vdot" style="background:var(--yuma)"></span>Yuma</td><td class="n mono">5.0</td><td class="n mono">3.7</td><td class="n mono">2.7</td><td class="n mono" style="font-weight:800">3.3</td><td>Solid FAQ; rec only gestures at collections, no specific item</td></tr>
-          <tr><td><span class="vdot" style="background:var(--siena)"></span>Siena</td><td class="n mono">5.0</td><td class="n mono" style="color:var(--danger)">1.7</td><td class="n mono" style="color:var(--danger)">1.0</td><td class="n mono" style="font-weight:800">2.7</td><td>Great shipping detail; deflects returns &amp; defers product Qs to PDPs</td></tr>
-          <tr><td><span class="vdot" style="background:var(--meta)"></span>Meta AI*</td><td class="n mono" style="color:var(--warning)">2.0</td><td class="n mono">5.0</td><td class="n mono" style="color:var(--danger)">0</td><td class="n mono" style="font-weight:800">2.0</td><td>Strong returns; vague shipping; escalates product rec to a lead form</td></tr>
-          <tr><td><span class="vdot" style="background:var(--dg)"></span>DigitalGenius</td><td class="n mono">4.3</td><td class="n mono">n/a</td><td class="n mono" style="color:var(--danger)">0</td><td class="n mono" style="font-weight:800">2.0</td><td>Good shipping; escalates product rec to an (unavailable) human</td></tr>
-          <tr><td><span class="vdot" style="background:var(--ada)"></span>Ada</td><td class="n mono">—</td><td class="n mono">—</td><td class="n mono">—</td><td class="n mono">—</td><td>Not evaluated — backend down both days</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <div class="callout" style="margin-top:16px">
-        <strong>What the quality eval shows:</strong>
-        <ul style="margin:8px 0 0 18px;line-height:1.7">
-          <li><strong>Speed ≠ quality.</strong> The <em>fastest</em> FAQ responder (Meta AI, ~5s) scored <em>lowest</em> on quality (2.0) — it's fast because it doesn't actually recommend. The best-quality assistant (Sierra, 5.0) is also the fastest one that genuinely does product recs.</li>
-          <li><strong>Sierra leads overall (5.0)</strong> — specific, complete, and the only one pairing a real recommendation with an in-chat Add-to-Cart path.</li>
-          <li><strong>Gorgias (us) is the runner-up (4.0)</strong> with the strongest product-recommendation quality (tied at 5.0). The gap is the <strong>returns/policy answer (2.7)</strong>: judges flagged it as thin and noted it pivots straight to an upsell instead of explaining the policy. That's our clearest quality fix.</li>
-          <li><strong>Judges agreed strongly</strong> (e.g., Sierra 5/5/5, Gorgias 4/4/4 on overall), so the ranking is stable, not noise.</li>
-        </ul>
-      </div>
-      <p class="note">Eval run on the recorded answers from the live tests; judges scored blind on anonymized stores. *Meta AI = Dermalogica's Zendesk assistant (labeled as requested).</p>
+      <p class="lead" id="q-lead"></p>
+      <div class="tbl-scroll"><table><thead id="q-head"></thead><tbody id="q-body"></tbody></table></div>
+      <p class="note">Vendors were anonymized as "Store A–F" and scored 1–5 by 3 independent AI judges (0 = didn't answer / escalated). Mean shown. *Meta AI = Dermalogica's Zendesk assistant (labeled as requested).</p>
     </div>
   </section>
 
-  <!-- FEATURES -->
-  <section id="features">
-    <div class="sec-head"><h2>Product-recommendation &amp; commerce features</h2></div>
-    <div class="card card-pad">
-      <div class="features">
-        <div class="feat"><h4><span class="vdot" style="background:var(--sierra)"></span>Sierra — richest commerce UI</h4>
-          <p>Renders <strong>interactive product cards inline in chat</strong> — image, specs, a <strong>Select Size</strong> dropdown, <strong>Learn More</strong> and <strong>Add to Cart</strong>. On "which mattress for a hot sleeper?" it surfaced Snow &amp; Snow Max cards. Closest to true in-chat shopping.</p>
-          <div class="tags"><span class="tag">Product cards</span><span class="tag">Add to Cart</span><span class="tag">Size selector</span><span class="tag">Streaming</span></div></div>
-        <div class="feat" style="outline:2px solid var(--gorgias);outline-offset:-1px"><h4><span class="vdot" style="background:var(--gorgias)"></span>Gorgias (us) — most sales-forward</h4>
-          <p>On its NouriVida demo, the AI Agent <strong>renders product cards, recommends specific SKUs with links, and applies a discount code</strong> — and proactively upsells (even on a returns question). Strongest commerce intent of the set, but <strong>product recommendations are the slowest turns (~17s)</strong>.</p>
-          <div class="tags"><span class="tag">Product cards</span><span class="tag">SKU links</span><span class="tag">Discount codes</span><span class="tag">Proactive upsell</span></div></div>
-        <div class="feat"><h4><span class="vdot" style="background:var(--siena)"></span>Siena — text + deep links</h4>
-          <p>Rich text with <strong>linked product variants</strong> (each color → its PDP) and specific SKU recommendations, but no add-to-cart card in chat. Connected to a Gorgias helpdesk for human handoff.</p>
-          <div class="tags"><span class="tag">Variant links</span><span class="tag">SKU recs</span><span class="tag">Helpdesk handoff</span></div></div>
-        <div class="feat"><h4><span class="vdot" style="background:var(--yuma)"></span>Yuma — accurate, policy-grounded text</h4>
-          <p>Plain-text answers grounded in store policy (shipping minimum, no-returns policy with link) and product specifics (ring sizes 5–9, named styles). Signs off as "Evry Customer Specialist". No in-chat cards; slower to respond.</p>
-          <div class="tags"><span class="tag">Policy-grounded</span><span class="tag">Product detail</span><span class="tag">No cards</span></div></div>
-        <div class="feat"><h4><span class="vdot" style="background:var(--dg)"></span>DigitalGenius — FAQ-strong, escalates recs</h4>
-          <p>Solid, accurate FAQ answers (delivery, cost, tracking) but <strong>gated behind a name+email prechat form</strong>, and it <strong>escalated the "recommend a bouquet" question to a human agent</strong> rather than recommending in-chat. When agents were unavailable it fell back to a support-ticket flow.</p>
-          <div class="tags"><span class="tag">Prechat lead-gate</span><span class="tag">FAQ-grounded</span><span class="tag">Human escalation</span><span class="tag">No in-chat recs</span></div></div>
-        <div class="feat"><h4><span class="vdot" style="background:var(--meta)"></span>Meta AI* (Dermalogica) — FAQ-only</h4>
-          <p>Fast, accurate FAQ/policy answers (free shipping, 30-day returns) via Zendesk's "Virtual Assistant · AI". But on "which product do you recommend?" it <strong>does not recommend</strong> — it replies "I'll connect you with someone from our team" and opens a human <strong>lead-capture form</strong> (Name/email), which then locks the chat. *Requested as "Meta AI"; client-side it's the Zendesk assistant.</p>
-          <div class="tags"><span class="tag">FAQ-strong</span><span class="tag">No product rec</span><span class="tag">Human escalation</span><span class="tag">Lead capture</span></div></div>
-        <div class="feat"><h4><span class="vdot" style="background:var(--ada)"></span>Ada — not testable</h4>
-          <p>Widget deployed (static.ada.support) but the bot would not initialize during the window, so recommendation behavior could not be observed. Re-test recommended.</p>
-          <div class="tags"><span class="tag">Deployed</span><span class="tag">Backend down</span></div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONVERSATIONS -->
   <section id="conversations">
-    <div class="sec-head"><h2>Recorded conversations</h2></div>
+    <div class="sec-head"><h2>Recorded conversations</h2><span class="modetag" id="c-modetag"></span></div>
     <div class="card card-pad">
-      <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-p="p-gorgias">Gorgias · NouriVida (us)</button>
-        <button class="tab" role="tab" aria-selected="false" data-p="p-sierra">Sierra · Casper</button><!--sierra-not-default-->
-        <button class="tab" role="tab" aria-selected="false" data-p="p-siena">Siena · Simple Modern</button>
-        <button class="tab" role="tab" aria-selected="false" data-p="p-dg">DigitalGenius · Bloom &amp; Wild</button>
-        <button class="tab" role="tab" aria-selected="false" data-p="p-meta">Meta AI · Dermalogica</button>
-        <button class="tab" role="tab" aria-selected="false" data-p="p-yuma">Yuma · EvryJewels</button>
-      </div>
-      <div class="panel active" id="p-gorgias"><div class="conv"></div></div>
-      <div class="panel" id="p-sierra"><div class="conv"></div></div>
-      <div class="panel" id="p-siena"><div class="conv"></div></div>
-      <div class="panel" id="p-dg"><div class="conv"></div></div>
-      <div class="panel" id="p-meta"><div class="conv"></div></div>
-      <div class="panel" id="p-yuma"><div class="conv"></div></div>
+      <div class="tabs" id="conv-tabs"></div>
+      <div id="conv-body"></div>
     </div>
   </section>
 
-  <!-- METHODOLOGY -->
   <section id="method">
-    <div class="sec-head"><h2>Methodology &amp; caveats</h2></div>
+    <div class="sec-head"><h2>Methodology</h2></div>
     <div class="card card-pad" style="font-size:13px;color:#2b3340;line-height:1.7">
-      <p>Each widget was driven programmatically on the <strong>live customer site</strong>; the metric is wall-clock from message sent to the full response being available.</p>
-      <ul style="margin:12px 0 12px 20px">
-        <li><strong>Siena</strong> — chat API: <span class="mono" style="font-size:12px">POST /v1/live_chat/messages</span> then poll <span class="mono" style="font-size:12px">/v1/live_chat/message</span> until the bot reply appears (delivered atomically).</li>
-        <li><strong>Sierra</strong> — network layer: intercept the streaming endpoint <span class="mono" style="font-size:12px">sierra.chat/-/api/chat</span> for first-byte and stream-close timestamps (throttle-immune).</li>
-        <li><strong>Yuma</strong> — WebSocket layer: timestamp the first <span class="mono" style="font-size:12px">fromAgent</span> message frame on the Gorgias chat socket after each send.</li>
-        <li><strong>DigitalGenius</strong> — same-origin widget iframe: timestamp reply text growth + stability in the <span class="mono" style="font-size:12px">dg-chat-widget-iframe</span> document. A throwaway test identity (reserved <span class="mono" style="font-size:12px">example.com</span> email) was used to clear its prechat form.</li>
-        <li><strong>Gorgias (us)</strong> — same-origin <span class="mono" style="font-size:12px">chat-window</span> iframe on the NouriVida demo store: reply text growth + stability. Each question type (FAQ, policy, product-recommendation) was timed separately. Note this is Gorgias's own sales-tuned demo, so treat as best-case.</li>
-        <li><strong>Meta AI* (Dermalogica)</strong> — Zendesk messaging widget. Its iframe re-mounts every turn, so timing is screenshot-observed and <strong>approximate (~5s for FAQ)</strong>. *Requested as "Meta AI"; client-side it is Zendesk's "Virtual Assistant · AI" — the underlying model can't be verified from the browser.</li>
-        <li><strong>Standardized pool:</strong> every live vendor was asked the same question types — a shipping/FAQ question, a returns/policy question, and a "which product do you recommend?" question (adapted to each store's catalog) — so the by-type comparison is apples-to-apples and vendors that don't do recommendations are flagged rather than rewarded.</li>
-      </ul>
-      <p><strong>Caveats.</strong> Different customers / product domains (water bottles · mattresses · jewelry) → directional, not a controlled head-to-head. Sierra ran on a warm session (conservative). Latency varies by query type: simple FAQs (~4.6s Sierra) are far faster than retrieval-heavy product questions (~9.7s). Yuma collection was rate-limited to 3 turns. Ada could not be tested (backend down). Yuma vs Gorgias-AI attribution on EvryJewels is not verifiable client-side.</p>
+      <p>Each assistant was driven on its <strong>live customer site</strong>. Latency = wall-clock from message sent to full response (network/WebSocket/DOM timing per vendor; Meta AI screenshot-approx). Two question pools were run: <strong>Shopping Assistant</strong> (discovery questions that ask for a product recommendation) and <strong>Support</strong> (shipping FAQ + returns/policy). Answer quality was scored by a blind 3-judge LLM panel on anonymized stores.</p>
+      <p style="margin-top:8px"><strong>Caveats:</strong> different stores/domains (treat as directional); Gorgias ran on its own NouriVida demo (sales-tuned, best-case); Ada's bot was down on both test days; Meta AI's underlying model isn't verifiable client-side (front-end is Zendesk's "Virtual Assistant").</p>
     </div>
   </section>
-
 </main>
-<div class="foot">Gorgias R&amp;D · Competitor intelligence · 2026-06-29 · <a href="https://github.com/max-pruv/ai-chat-latency-benchmark">source on GitHub</a></div>
+<div class="foot">Gorgias R&amp;D · Competitor intelligence · 2026-06-29/30 · <a href="https://github.com/max-pruv/ai-chat-latency-benchmark">source on GitHub</a></div>
 
 <script>
-const SIERRA=[
- {q:"Do you offer free shipping?",lat:4963,a:"Casper offers free shipping on most products within the contiguous US, except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small, $250 large. Return shipping is always free. In-home setup available for $249."},
- {q:"What is your trial period and return policy?",lat:4581,a:"Casper mattresses come with a 100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 if bought with a mattress). Soft goods: no trial, return unused within 30 days."},
- {q:"Do you offer financing or payment plans?",lat:8867,a:"Yes — Casper offers financing and payment plans through Affirm, Katapult and others at checkout."},
- {q:"How long does delivery take once I order?",lat:7410,a:"Most in-stock Casper products are delivered within 2–8 business days after the order ships."},
- {q:"Are your mattresses good for side sleepers?",lat:9245,a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
- {q:"I'm a hot sleeper with back pain — which mattress do you recommend?",lat:9678,a:"For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology + strong support.  🛍️ [Rendered interactive product cards: image, Select Size, Learn More, Add to Cart]"},
- {q:"Can you recommend a pillow to go with it?",lat:6721,a:"Absolutely! For hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."},
-];
-const SIENA=[
- {q:"What colors does the Mesa Loop 30oz come in?",lat:null,a:"Lists 14+ colors (Iris Sage, Winter White Mix, Cricket, …), each linked to its product page.",note:"excluded"},
- {q:"Does it fit in a standard car cup holder?",lat:10395,a:"Yes, the Mesa Loop 30oz is designed to fit most standard car cup holders!"},
- {q:"Is the straw removable and dishwasher safe?",lat:9730,a:"The straw isn't designed to be removed, but the lid (with straw) is top-rack dishwasher safe. Hand washing recommended."},
- {q:"What is the difference between the 30oz and the 40oz?",lat:10610,a:"The 30oz is the largest Mesa Loop size — there isn't a 40oz Mesa Loop. Happy to compare other bottles (Trek, Summit)."},
- {q:"Do you offer free shipping on orders?",lat:9989,a:"Yes — free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
- {q:"How long does standard shipping usually take?",lat:6996,a:"5–11 business days total: 1–3 to fulfill + 4–8 to ship."},
- {q:"Can I return it if I don't like the color?",lat:11256,a:"You may be able to — depends on your order. Could you share your email or order number so the team can confirm?"},
- {q:"Is this bottle completely leak-proof when closed?",lat:9248,a:"Not 100% sure on full leak-proofing — recommend checking the product page or reaching out to support for a definitive answer."},
- {q:"Does it keep drinks cold for 24 hours?",lat:10074,a:"Yes — designed to keep drinks cold for up to 24 hours thanks to double-wall insulation."},
- {q:"Is the Almond Birch color currently in stock?",lat:9993,a:"No exact stock signal in chat — recommend checking the product page or signing up for a restock notification."},
-];
-const YUMA=[
- {q:"Do you offer free shipping?",lat:6908,a:"Yes, we offer free shipping! To qualify, your order subtotal must be at least $35 USD after discounts and before taxes. Add-on services like Package Protection and the 1 Year Warranty are excluded from this minimum."},
- {q:"What is your return policy?",lat:16310,a:"We do not offer any refunds, exchanges, or returns. This is stated on our website (refund-policy). Could you please let us know why you are requesting a return or refund?  — Evry Customer Specialist"},
- {q:"Is your jewelry waterproof and safe to shower in?",lat:null,a:"⚠️ No in-chat reply within 70s — the question got no automated answer during the test window.",note:"no reply"},
- {q:"Is the gold real gold or gold plated?",lat:14708,a:"Our jewelry features 18K gold plating! It is designed to be waterproof and skin-safe — nickel-free and lead-free — making it perfect for daily wear."},
- {q:"How long does shipping take to the US?",lat:15909,a:"Provides the US shipping timeframe (fulfilment + transit window)."},
- {q:"Can you recommend a necklace for a birthday gift?",lat:13807,a:"A necklace is such a thoughtful birthday gift! I highly recommend our custom name necklaces or a piece from our best-sellers collection. Do you have a specific style in mind?"},
- {q:"Are your rings adjustable or do they come in fixed sizes?",lat:18113,a:"Our rings come in both adjustable and fixed sizes, depending on the design! Many pieces, like the Double Date Ring, feature an adjustable design; other styles come in fixed sizes ranging from 5 to 9."},
-];
-const DG=[
- {q:"Do you deliver flowers next day in the UK?",lat:14334,a:"Yes, we offer next-day delivery across most of the UK. For guaranteed next-day delivery, orders must be placed by 10pm for central postcodes or 5:30pm for peripheral ones."},
- {q:"How much does delivery cost?",lat:11916,a:"Delivery costs vary by service: Royal Mail Free (94% guaranteed); DPD All-day £5 Mon-Fri / £6 Sat-Sun; DPD Morning £6 Mon-Fri / £10 Sat; XEROE (London) Free. Ireland: free Tue-Fri, €3 Sat."},
- {q:"How do I track my order?",lat:4382,a:"Explains where to find your order/tracking — the order number is in your confirmation email or on your account."},
- {q:"Do you offer same-day delivery?",lat:null,a:"We don't offer same-day delivery in any market. The earliest option is next-day delivery if ordered before the cut-off. (answered; not timed)",note:"answered"},
- {q:"What is your most popular bouquet?",lat:12848,a:"⚠️ Did not answer — escalated: 'To ensure you get the best possible assistance, I will connect you with one of our agents.' With agents unavailable, it then offered a support ticket and stopped answering.",note:"escalated"},
-];
-const META=[
- {q:"Do you offer free shipping?",lat:null,a:"Yes, we offer free shipping as one of our shipping options. We strive to make your shopping experience as convenient and affordable as possible.",note:"~5s"},
- {q:"What is your return policy?",lat:null,a:"We gladly accept returns for any Dermalogica.com purchase within 30 days of your order date. New or gently used items in original packaging; no return shipping, handling, or restocking fees. (+ 'View article')",note:"~5s"},
- {q:"I have dry, dull skin. Which product do you recommend?",lat:null,a:"❌ Did not recommend a product. Replied 'Please share a few details and I'll connect you with someone from our team' and opened a human lead-capture form (Name/email, step 1 of 3). The escalation then locked the chat.",note:"escalated"},
-];
-const GORGIAS=[
- {q:"Do you offer free shipping?",lat:null,a:"Yes. Shipping is free on orders over $100 in North America ($9.99 under $100). International: free over $200, $19.99 under. Ready to pick your daytime energy boost?",note:"answered"},
- {q:"I have low energy in the afternoon. Which product do you recommend?",lat:17580,a:"🛍️ [Product card: Complete Meal Powder – Matcha $6.99] For an afternoon boost, go with Complete Meal Powder – Matcha — clean, steady fuel. [link] You can also use code …VK for 8% off at checkout. Ready to grab it now?"},
- {q:"What is your return policy?",lat:13454,a:"We accept returns — just let us know. (Then upsold: 'Complete Meal Powder – Matcha is still a strong pick. Ready to grab it with your 8% code?')"},
- {q:"Are your products vegan and gluten-free?",lat:5478,a:"🛍️ [Cards: Berry Boost, Complete Daily Essentials] Most of our range is plant-based, so vegan options are available. I don't have gluten-free confirmation for every product."},
- {q:"What do you recommend to help me sleep better?",lat:16607,a:"If you want something more calming in the evening, Golden Milk – Turmeric Glow looks like the best fit [link]. You can also browse our Functional Cartons collection."},
- {q:"How long does shipping take?",lat:7243,a:"Orders usually arrive in 5–7 business days within North America; international orders 14–21 business days."},
-];
-function lc(ms){if(ms==null)return'';if(ms<6000)return'l-fast';if(ms<10000)return'l-mid';if(ms<15000)return'l-slow';return'l-vslow';}
-function render(arr,panelId,bot){
-  const el=document.querySelector('#'+panelId+' .conv');
-  el.innerHTML=arr.map((t,i)=>{
-    const lat=t.lat==null?(t.note||'—'):(t.lat/1000).toFixed(1)+'s';
-    return `<div class="turn">
-      <div class="th"><span class="tn">T${i+1}</span><span class="tq">${t.q}</span><span class="lat ${lc(t.lat)}">${lat}</span></div>
-      <div class="msg u"><div class="av u">U</div><div><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
-      <div class="msg b"><div class="av b">AI</div><div><div class="mr">${bot}</div><div class="mt">${t.a}</div></div></div>
-    </div>`;
+// ===== DATA =====
+const V = {
+  sierra:{name:"Sierra",client:"Casper · Luna",color:"#0f766e",us:false},
+  siena:{name:"Siena",client:"Simple Modern · Maddie",color:"#4f46e5",us:false},
+  gorgias:{name:"Gorgias",client:"NouriVida · AI Agent",color:"#15803d",us:true},
+  yuma:{name:"Yuma",client:"EvryJewels",color:"#9333ea",us:false},
+  dg:{name:"DigitalGenius",client:"Bloom & Wild · Willow",color:"#db2777",us:false},
+  meta:{name:"Meta AI*",client:"Dermalogica",color:"#0891b2",us:false},
+  ada:{name:"Ada",client:"Loop Earplugs",color:"#b45309",us:false},
+};
+// per-mode: latency seconds (null=escalated/no-answer, 'down'), quality 1-5, conversation turns
+const DATA = {
+  shopping:{
+    order:["sierra","gorgias","yuma","siena","dg","meta","ada"],
+    rows:{
+      sierra:{lat:8.2, q:5.0, qnote:"Real rec + interactive Add-to-Cart cards"},
+      gorgias:{lat:17.1, q:5.0, qnote:"Best rec quality: card + SKU link + discount code + CTA"},
+      yuma:{lat:13.8, q:2.7, qnote:"Only gestures at collections, no specific item"},
+      siena:{lat:10.0, q:1.0, qnote:"Defers product questions to product pages"},
+      dg:{lat:null, q:0, qnote:"Escalates to a human (no in-chat rec)"},
+      meta:{lat:null, q:0, qnote:"Escalates to a human lead form (no rec)"},
+      ada:{lat:"down", q:null, qnote:"Backend down both test days"},
+    },
+    conv:{
+      sierra:[
+        {q:"I'm a hot sleeper with lower back pain — which mattress do you recommend?",lat:9.7,a:"🛍️ [Interactive product cards: Snow / Snow Max — image, Select Size, Add to Cart] For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology with strong support."},
+        {q:"Can you recommend a pillow to go with it?",lat:6.7,a:"Absolutely — for hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."}],
+      gorgias:[
+        {q:"I have low energy in the afternoon. Which product do you recommend?",lat:17.6,a:"🛍️ [Product card: Complete Meal Powder – Matcha $6.99] For an afternoon boost, go with Complete Meal Powder – Matcha — clean, steady fuel without the heavy slump. [product link] You can also use code …VK for 8% off. Ready to grab it now?"},
+        {q:"What do you recommend to help me sleep better?",lat:16.6,a:"For something calming in the evening, Golden Milk – Turmeric Glow looks like the best fit [link]. You can also browse our Functional Cartons collection."}],
+      yuma:[
+        {q:"Can you recommend a necklace for a birthday gift?",lat:13.8,a:"A necklace is such a thoughtful birthday gift! I highly recommend our custom name necklaces or a piece from our best-sellers collection. Do you have a specific style in mind?"}],
+      siena:[
+        {q:"Which colors does the Mesa Loop come in / what should I pick?",lat:10.0,a:"Lists 14+ color variants, each linked to its product page — but tends to point you to the product pages rather than make a single confident pick."}],
+      dg:[
+        {q:"What is your most popular bouquet?",lat:null,a:"❌ Did not recommend. 'To ensure you get the best possible assistance, I will connect you with one of our agents.' Agents unavailable → offered a support ticket and stopped answering."}],
+      meta:[
+        {q:"I have dry, dull skin. Which product do you recommend?",lat:null,a:"❌ Did not recommend. 'Please share a few details and I'll connect you with someone from our team' → opened a human lead-capture form (Name/email). The escalation locked the chat."}],
+      ada:[],
+    }
+  },
+  support:{
+    order:["sierra","meta","gorgias","siena","dg","yuma","ada"],
+    rows:{
+      sierra:{lat:6.5, q:5.0, qnote:"Specific, complete shipping + trial/returns"},
+      meta:{lat:5.0, q:3.5, qnote:"Great returns; vague shipping (no specifics)"},
+      gorgias:{lat:8.7, q:3.9, qnote:"Precise shipping; thin returns that pivots to upsell"},
+      siena:{lat:9.5, q:3.4, qnote:"Great shipping detail; deflects returns to 'share your email'"},
+      dg:{lat:10.2, q:4.3, qnote:"Specific delivery answers (returns not tested)"},
+      yuma:{lat:13.5, q:4.4, qnote:"Clear shipping + blunt no-returns policy"},
+      ada:{lat:"down", q:null, qnote:"Backend down both test days"},
+    },
+    conv:{
+      sierra:[
+        {q:"Do you offer free shipping?",lat:5.0,a:"Free shipping on most products (contiguous US), except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small, $250 large. Return shipping always free. In-home setup $249."},
+        {q:"What is your trial period and return policy?",lat:4.6,a:"100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 with a mattress). Soft goods: no trial, return unused within 30 days."}],
+      meta:[
+        {q:"Do you offer free shipping?",lat:5.0,a:"Yes, we offer free shipping as one of our shipping options. (Vague — no threshold or method.)"},
+        {q:"What is your return policy?",lat:5.0,a:"We gladly accept returns within 30 days of your order date. New or gently used items in original packaging; no return shipping, handling, or restocking fees. (+ View article)"}],
+      gorgias:[
+        {q:"Do you offer free shipping?",lat:6.4,a:"Free on orders over $100 in North America ($9.99 under). International: free over $200, $19.99 under."},
+        {q:"What is your return policy?",lat:13.5,a:"We accept returns — just let us know. (Then immediately upsells: 'Complete Meal Powder – Matcha is still a strong pick. Ready to grab it with your 8% code?')"},
+        {q:"How long does shipping take?",lat:7.2,a:"5–7 business days within North America; international 14–21 business days."}],
+      siena:[
+        {q:"Do you offer free shipping on orders?",lat:10.0,a:"Free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
+        {q:"Can I return it if I don't like the color?",lat:11.3,a:"You may be able to — it depends on your order. Could you share your email or order number so the team can confirm?"}],
+      dg:[
+        {q:"Do you deliver next day in the UK?",lat:14.3,a:"Yes, next-day across most of the UK. Order by 10pm for central postcodes / 5:30pm for peripheral ones."},
+        {q:"How much does delivery cost?",lat:11.9,a:"Royal Mail free; DPD All-day £5 Mon–Fri / £6 Sat–Sun; DPD Morning £6 / £10 Sat; XEROE (London) free; Ireland free Tue–Fri."},
+        {q:"How do I track my order?",lat:4.4,a:"Your order number is in your confirmation email or on your account."}],
+      yuma:[
+        {q:"Do you offer free shipping?",lat:6.9,a:"Yes — free shipping when your subtotal is at least $35 (after discounts, before taxes). Add-ons like Package Protection and the 1-Year Warranty are excluded."},
+        {q:"What is your return policy?",lat:16.3,a:"We do not offer any refunds, exchanges, or returns (stated on our refund-policy page). Could you let us know why you're requesting a return?"}],
+      ada:[],
+    }
+  }
+};
+
+let mode = "shopping";
+function latClass(s){ if(s==null) return 'l-none'; if(s<6) return 'l-fast'; if(s<10) return 'l-mid'; if(s<15) return 'l-slow'; return 'l-vslow'; }
+function fmtLat(v){ if(v==='down') return 'down'; if(v==null) return 'no rec'; return v.toFixed(1)+'s'; }
+
+function render(){
+  const D = DATA[mode];
+  const isShop = mode==='shopping';
+  // tags
+  document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===mode));
+  ['lat-modetag','q-modetag','c-modetag'].forEach(id=>{ const e=document.getElementById(id); e.className='modetag '+mode; e.textContent= isShop?'Shopping Assistant':'Support only'; });
+  document.getElementById('togglehint').textContent = isShop
+    ? 'Showing discovery conversations where the shopper asks for a product recommendation.'
+    : 'Showing pure support questions — shipping and returns/policy.';
+  document.getElementById('lat-lead').innerHTML = isShop
+    ? 'Time to a full <strong>product recommendation</strong>. Hatched = the assistant <strong>doesn\'t recommend</strong> (escalates to a human). Lower is better — but only if it actually recommends.'
+    : 'Time to a full answer on shipping / returns questions. Lower is better.';
+  document.getElementById('q-lead').innerHTML = isShop
+    ? 'Quality of the <strong>product recommendation</strong> (specificity + a real path to buy). 0 = escalated / no recommendation.'
+    : 'Quality of <strong>support answers</strong> (accuracy, completeness, clarity). Average of the FAQ + policy scores.';
+
+  // ---- chart ----
+  const maxLat = 20;
+  const chart = document.getElementById('chart');
+  chart.innerHTML = D.order.map(k=>{
+    const r=D.rows[k], v=V[k];
+    if(r.lat==='down') return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill none" style="width:100%">⚠ backend down — not measurable</div></div><div class="cnote">${v.client}</div></div>`;
+    if(r.lat==null) return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill none" style="width:100%">✋ doesn't recommend — escalates to a human</div></div><div class="cnote">${v.client}</div></div>`;
+    const pct=Math.min(100,(r.lat/maxLat)*100);
+    return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill" style="width:${pct}%;background:${v.color}">${r.lat.toFixed(1)}s</div></div><div class="cnote">${v.client}</div></div>`;
   }).join('');
+
+  // ---- quality table ----
+  document.getElementById('q-head').innerHTML = `<tr><th>Vendor</th><th class="n">${isShop?'Product-rec quality':'Support quality'}</th><th>Judge takeaway</th></tr>`;
+  document.getElementById('q-body').innerHTML = D.order.map(k=>{
+    const r=D.rows[k], v=V[k];
+    const qs = r.q==null ? '—' : r.q.toFixed(1);
+    const col = r.q==null?'':(r.q>=4.5?'var(--success)':r.q>=3?'':(r.q>=1?'var(--warning)':'var(--danger)'));
+    return `<tr class="${v.us?'us-row':''}"><td><span class="vdot" style="background:${v.color}"></span>${v.name} ${v.us?'<span class="us-tag">us</span>':''}</td><td class="n mono" style="font-weight:800;color:${col}">${qs}</td><td>${r.qnote}</td></tr>`;
+  }).join('');
+
+  // ---- conversations ----
+  const tabs=document.getElementById('conv-tabs');
+  const withConv = D.order.filter(k=>D.conv[k] && D.conv[k].length);
+  tabs.innerHTML = withConv.map((k,i)=>`<button class="tab" aria-selected="${i===0}" onclick="showConv('${k}')">${V[k].name}${V[k].us?' · us':''}</button>`).join('');
+  if(withConv.length) showConv(withConv[0]);
+  else document.getElementById('conv-body').innerHTML='<div class="emptymsg">No conversation recorded for this mode.</div>';
 }
-render(GORGIAS,'p-gorgias','Gorgias AI Agent · NouriVida');
-render(SIERRA,'p-sierra','Luna · Sierra');
-render(SIENA,'p-siena','Maddie · Siena');
-render(DG,'p-dg','Willow · DigitalGenius');
-render(META,'p-meta','Dermalogica Virtual Assistant · AI');
-render(YUMA,'p-yuma','Evry Specialist · Yuma-backed');
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected','false'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    tab.setAttribute('aria-selected','true');
-    document.getElementById(tab.dataset.p).classList.add('active');
-  });
-});
+function showConv(k){
+  document.querySelectorAll('#conv-tabs .tab').forEach(t=>t.setAttribute('aria-selected', t.textContent.startsWith(V[k].name)));
+  const turns=DATA[mode].conv[k]||[];
+  const bot = V[k].name+' · '+V[k].client.split('·').pop().trim();
+  document.getElementById('conv-body').innerHTML = turns.map((t,i)=>{
+    const lat = t.lat==null ? "no rec" : t.lat.toFixed(1)+'s';
+    return `<div class="turn"><div class="th"><span class="tn">T${i+1}</span><span class="tq">${t.q}</span><span class="lat ${latClass(t.lat)}">${lat}</span></div>
+      <div class="msg u"><div class="av u">U</div><div><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
+      <div class="msg b"><div class="av b">AI</div><div><div class="mr">${bot}</div><div class="mt">${t.a}</div></div></div></div>`;
+  }).join('') || '<div class="emptymsg">No conversation recorded.</div>';
+}
+function setMode(m){ mode=m; render(); }
+render();
 </script>
 </body>
 </html>
