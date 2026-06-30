@@ -52,6 +52,10 @@ const storeFilter = pick("--store");
 const vendorFilter = pick("--vendor");
 const modeFilter = pick("--mode");
 const skipCandidates = args.includes("--skip-candidates");
+// Parallelism: each (store,mode) runs in its own incognito context, so they're
+// independent. Latency is network/model-bound (not CPU-bound), so modest
+// concurrency doesn't skew timing. Default 4; tune with --concurrency N.
+const CONC = Math.max(1, Number((pick("--concurrency") || [])[0]) || Number(process.env.CONCURRENCY) || 4);
 const MODES = (modeFilter || ["shopping", "support"]);
 const STAMP = (process.env.RUN_DATE || new Date().toISOString().slice(0, 10));
 
@@ -82,7 +86,12 @@ async function runStoreMode(browser, store, mode) {
   const w = WIDGETS[store.widget];
   const pool = mode === "support" ? SUPPORT : SHOPPING;
   const out = { key: store.key, vendor: store.vendor, store: store.store, url: store.url, us: !!store.us, widget: store.widget, mode, date: STAMP, turns: [] };
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: store.locale || "en-US" });
+  // INCOGNITO/COLD: a brand-new Playwright context has zero cookies/localStorage/
+  // IndexedDB/cache for ANY origin (the widget's cross-origin storage included),
+  // so there is never a pre-existing conversation. storageState is left undefined
+  // (no profile) and we clear cookies as belt-and-suspenders.
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: store.locale || "en-US", storageState: undefined });
+  await context.clearCookies().catch(() => {});
   const page = await context.newPage();
   try {
     await page.goto(store.url, { waitUntil: "domcontentloaded", timeout: 45000 });
@@ -122,15 +131,25 @@ async function runStoreMode(browser, store, mode) {
   const browser = await chromium.launch({ headless: true });
   await mkdir(`results/${STAMP}`, { recursive: true });
   const summary = [];
-  for (const store of targets) {
-    for (const mode of MODES) {
-      console.log(`▶ ${store.vendor} · ${store.store} · ${mode}`);
-      const res = await runStoreMode(browser, store, mode);
-      await writeFile(`results/${STAMP}/${store.key}-${mode}.json`, JSON.stringify(res, null, 2));
-      summary.push({ key: store.key, vendor: store.vendor, store: store.store, us: res.us, mode, ...res.stats, error: res.error || null });
-      console.log(`  → success ${res.stats.success_rate ?? "n/a"}% · avg ${res.stats.avg_ms ?? "n/a"}ms${res.stats.handover_turn ? `  🚩 handover @T${res.stats.handover_turn}` : ""}\n`);
+
+  // Build the full (store,mode) task list and run it through a concurrency pool.
+  const tasks = [];
+  for (const store of targets) for (const mode of MODES) tasks.push({ store, mode });
+  console.log(`Running ${tasks.length} (store×mode) jobs at concurrency ${CONC}, each in a fresh incognito context.\n`);
+
+  let next = 0;
+  async function worker(wid) {
+    while (true) {
+      const t = tasks[next++];               // single-threaded event loop → no race
+      if (!t) break;
+      console.log(`▶ [w${wid}] ${t.store.vendor} · ${t.store.store} · ${t.mode}`);
+      const res = await runStoreMode(browser, t.store, t.mode);
+      await writeFile(`results/${STAMP}/${t.store.key}-${t.mode}.json`, JSON.stringify(res, null, 2));
+      summary.push({ key: t.store.key, vendor: t.store.vendor, store: t.store.store, us: res.us, mode: t.mode, ...res.stats, error: res.error || null });
+      console.log(`  ← [${t.store.key}/${t.mode}] success ${res.stats.success_rate ?? "n/a"}% · avg ${res.stats.avg_ms ?? "n/a"}ms${res.stats.handover_turn ? `  🚩 handover @T${res.stats.handover_turn}` : ""}`);
     }
   }
+  await Promise.all(Array.from({ length: Math.min(CONC, tasks.length) }, (_, i) => worker(i + 1)));
   await browser.close();
 
   // per-vendor rollup (one line per vendor per mode), matching the report's top table

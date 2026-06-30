@@ -43,11 +43,19 @@ same tech share code.
 npm install
 npm run install:browser        # playwright install chromium
 node run.js                     # all stores, both modes  → results/<date>/
+node run.js --concurrency 6     # run 6 stores at once (default 4)
 node run.js --vendor Sierra     # all of one vendor's stores
 node run.js --store gorgias-madura
 node run.js --mode shopping
 node run.js --skip-candidates   # only verified stores
 ```
+
+**Parallel + always incognito.** Jobs (one per store×mode) run through a concurrency
+pool (`--concurrency`, default 4) so the full pass finishes in roughly `total / N` time.
+Each job runs in its **own brand-new Playwright context** — zero cookies / localStorage /
+IndexedDB / cache for any origin (including the widget's cross-origin storage), so there is
+**never a pre-existing conversation**. Latency is network/model-bound, so modest concurrency
+doesn't skew the timing; push it higher on a beefy CI runner.
 
 ## Output
 
