@@ -69,18 +69,30 @@ if (skipCandidates) targets = targets.filter(s => !s.candidate);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-async function timeTurn(page, scope, sendFn) {
+// Generation/typing indicators — must NOT be treated as a finished reply.
+const GEN_RE = /(Thinking|Analyzing|Typing|Searching|Looking|Writing|Processing|Almost there|En train|Réflexion|Analyse|Recherche|escribiendo|pensando)\s*\.*\s*$/i;
+const isGen = (t) => GEN_RE.test((t || "").trim());
+
+// TRUE end-to-end latency: t0 = the instant the user message is sent; complete_ms
+// = the instant the AI's FULL reply finished rendering (last text change) − t0.
+// We skip the user-message echo (require growth past it) and never stop on a
+// "Thinking…/Almost there" indicator — that was making latencies look impossibly low.
+async function timeTurn(page, scope, sendFn, q) {
   const before = (await readTranscript(page, scope)).len;
+  const echoApprox = (q ? q.length : 80) + 70;   // "HH:MM. You said: <q> HH:MM"
+  const REPLY_MIN = echoApprox + 40;              // growth beyond this = a real reply, not the echo
   const t0 = Date.now();
   await sendFn();
-  let lastLen = before, lastChange = t0, ttft = null, grown = false, complete = null;
+  let lastLen = before, lastChange = t0, ttft = null, sawGen = false, grownReply = false, complete = null;
   const deadline = t0 + TURN_TIMEOUT_MS;
   while (Date.now() < deadline) {
     await sleep(POLL_MS);
-    const { len } = await readTranscript(page, scope);
-    if (len > before + GROWTH) { grown = true; if (ttft == null) ttft = Date.now() - t0; if (len !== lastLen) lastChange = Date.now(); }
-    lastLen = len;
-    if (grown && Date.now() - lastChange > STABLE_MS) { complete = lastChange - t0; break; }
+    const { len, text } = await readTranscript(page, scope);
+    if (len !== lastLen) { lastChange = Date.now(); lastLen = len; }
+    if (isGen(text)) sawGen = true;
+    if (len > before + REPLY_MIN) { grownReply = true; if (ttft == null) ttft = Date.now() - t0; }
+    const settled = Date.now() - lastChange > STABLE_MS;
+    if (settled && !isGen(text) && (grownReply || (sawGen && len > before + 40))) { complete = lastChange - t0; break; }
   }
   return { ttft_ms: ttft, complete_ms: complete, grew: lastLen - before };
 }
@@ -96,6 +108,34 @@ async function runStoreMode(browser, store, mode) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: store.locale || "en-US", userAgent: REAL_UA, storageState: undefined });
   await context.clearCookies().catch(() => {});
   const page = await context.newPage();
+
+  // Capture the Gorgias ticket id + account subdomain so we can build a direct
+  // agent-dashboard link to each conversation.
+  const cap = { shop: null, accountId: null, appId: null, conversations: new Set(), ticketIds: new Set(), hosts: new Set() };
+  if (store.widget === "gorgias") {
+    const scan = (s) => {
+      if (!s) return;
+      let m;
+      if (!cap.shop && (m = s.match(/"shopName"\s*:\s*"([^"]+)"/))) cap.shop = m[1];
+      if (!cap.accountId && (m = s.match(/"account"\s*:\s*\{\s*"id"\s*:\s*(\d+)/))) cap.accountId = m[1];
+      if (!cap.appId && (m = s.match(/"applicationId"\s*:\s*(\d+)/))) cap.appId = m[1];
+      let re = /"conversationId"\s*:\s*"([a-f0-9-]{36})"/g; while ((m = re.exec(s))) cap.conversations.add(m[1]);
+      re = /"ticket(?:_?[Ii]d)?"\s*:\s*(\d{4,})/g; while ((m = re.exec(s))) cap.ticketIds.add(m[1]);
+      re = /\/tickets\/(\d{4,})/g; while ((m = re.exec(s))) cap.ticketIds.add(m[1]);
+    };
+    page.on("websocket", (ws) => {
+      ws.on("framereceived", (f) => { try { scan(typeof f.payload === "string" ? f.payload : ""); } catch {} });
+      ws.on("framesent", (f) => { try { scan(typeof f.payload === "string" ? f.payload : ""); } catch {} });
+    });
+    page.on("response", async (resp) => {
+      try {
+        const u = resp.url(); if (!/gorgias/.test(u)) return;
+        cap.hosts.add(new URL(u).hostname);
+        if (/ticket|message|conversation|application|widget|config/i.test(u)) { const t = await resp.text(); scan(t.slice(0, 200000)); }
+      } catch {}
+    });
+  }
+
   try {
     await page.goto(store.url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await w.open(page);
@@ -103,7 +143,7 @@ async function runStoreMode(browser, store, mode) {
     for (let i = 0; i < pool.length; i++) {
       const q = pool[i];
       let r;
-      try { r = await timeTurn(page, w.scope, () => w.send(page, q)); }
+      try { r = await timeTurn(page, w.scope, () => w.send(page, q), q); }
       catch (e) { r = { ttft_ms: null, complete_ms: null, error: String(e).slice(0, 120) }; }
       const tail = (await readTranscript(page, w.scope)).text.slice(-700);
       const handover = detectHandover(tail, w.handover);
@@ -118,7 +158,21 @@ async function runStoreMode(browser, store, mode) {
   } catch (e) {
     out.error = String(e).slice(0, 200);
     console.log(`  [${store.key}/${mode}] FAILED: ${out.error}`);
-  } finally { await context.close(); }
+  } finally {
+    // Build the Gorgias agent-dashboard ticket link(s) from what we captured.
+    if (store.widget === "gorgias") {
+      const tids = [...cap.ticketIds], convs = [...cap.conversations];
+      const sub = cap.shop, tid = tids[tids.length - 1] || null;
+      out.ticket = {
+        subdomain: sub, account_id: cap.accountId, application_id: cap.appId,
+        ticket_id: tid, conversation_id: convs[convs.length - 1] || null,
+        url: (sub && tid) ? `https://${sub}.gorgias.com/app/ticket/${tid}` : (sub ? `https://${sub}.gorgias.com/app/tickets` : null),
+        all_ticket_ids: tids, all_conversations: convs, hosts: [...cap.hosts],
+      };
+      console.log(`  [${store.key}] ticket: shop=${sub} acct=${cap.accountId} tid=${tid} conv=${out.ticket.conversation_id}`);
+    }
+    await context.close();
+  }
 
   // Latency is computed ONLY over AI turns — human replies are never timed.
   const aiValid = out.turns.filter(t => t.by === "ai").map(t => t.complete_ms).filter(x => x != null);

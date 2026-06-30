@@ -218,10 +218,11 @@ export const WIDGETS = {
 export const STORES = [
   // Gorgias (us) — Glamnetic intentionally excluded
   { key: "gorgias-madura",   vendor: "Gorgias", store: "Madura",        url: "https://www.madura.com/en",            widget: "gorgias", us: true, locale: "en-US" },
-  { key: "gorgias-masderm",  vendor: "Gorgias", store: "Masderm",       url: "https://masderm.com/fr",               widget: "gorgias", us: true, locale: "fr-FR" },
-  { key: "gorgias-alpine",   vendor: "Gorgias", store: "Alpine Hearing Protection", url: "https://www.alpinehearingprotection.com/", widget: "gorgias", us: true },
   { key: "gorgias-jade",     vendor: "Gorgias", store: "Jade",          url: "https://shop.jadeofficial.com/",       widget: "gorgias", us: true },
   { key: "gorgias-jshealth", vendor: "Gorgias", store: "JSHealth Vitamins", url: "https://us.jshealthvitamins.com/", widget: "gorgias", us: true },
+  { key: "gorgias-beekman",  vendor: "Gorgias", store: "Beekman 1802",  url: "https://beekman1802.com/",             widget: "gorgias", us: true },
+  { key: "gorgias-babybee",  vendor: "Gorgias", store: "Baby Bee",      url: "https://babybeeonline.com/",           widget: "gorgias", us: true },
+  { key: "gorgias-shoebacca", vendor: "Gorgias", store: "Shoebacca",    url: "https://www.shoebacca.com/",           widget: "gorgias", us: true },
 
   // Spiffy.ai
   { key: "spiffy-supergoop", vendor: "Spiffy.ai", store: "Supergoop",  url: "https://supergoop.com/products/everyday-sunscreen?variant=31189086634082", widget: "spiffy" },

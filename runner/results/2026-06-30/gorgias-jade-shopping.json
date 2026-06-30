@@ -14,128 +14,150 @@
       "by": "ai",
       "ttft_ms": null,
       "complete_ms": null,
-      "grew": 25,
+      "grew": -18,
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "nd to personalize your experience. By chatting, you agree to this monitoring and recording (as described in our Privacy Notice).\nRead more\n6:32 PM. You said:\n\nHi! I'm shopping but not sure what's right for me — can you help me choose?\n\n⚠️\nMessage not delivered.\nClick to retry.\nMessage not delivered."
+      "replyTail": "security, to train employees and systems, and to personalize your experience. By chatting, you agree to this monitoring and recording (as described in our Privacy Notice).\nRead more\n8:02 PM. You said:\n\nHi! I'm shopping but not sure what's right for me — can you help me choose?\n\n08:02 PM\nAlmost there"
     },
     {
       "turn": 2,
       "q": "I want something for everyday use, good quality, and I care about value for money — what do you recommend?",
       "by": "ai",
-      "ttft_ms": 355,
-      "complete_ms": 17330,
-      "grew": 150,
-      "ai_latency_ms": 17330,
+      "ttft_ms": 7759,
+      "complete_ms": 11196,
+      "grew": 282,
+      "ai_latency_ms": 11196,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "u said:\n\nHi! I'm shopping but not sure what's right for me — can you help me choose?\n\n⚠️\nMessage not delivered.\nClick to retry.\nMessage not delivered.\n6:33 PM. You said:\n\nI want something for everyday use, good quality, and I care about value for money — what do you recommend?\n\n06:33 PM\nAlmost there"
+      "replyTail": "02 PM\n8:02 PM. You said:\n\nI want something for everyday use, good quality, and I care about value for money — what do you recommend?\n\n08:02 PM\n\nHi! Absolutely. Tell me what you’re shopping for, and I’ll narrow it down fast. Ready to find your best match?\n\n08:03 PM\nI'm ready\nNeed help\nExplore options"
     },
     {
       "turn": 3,
       "q": "I'd like to stay within a sensible budget. What are my best options in that range?",
       "by": "ai",
-      "ttft_ms": 341,
-      "complete_ms": 12341,
-      "grew": 113,
-      "ai_latency_ms": 12341,
+      "ttft_ms": 20872,
+      "complete_ms": 23783,
+      "grew": 478,
+      "ai_latency_ms": 23783,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "lick to retry.\nMessage not delivered.\n6:33 PM. You said:\n\nI want something for everyday use, good quality, and I care about value for money — what do you recommend?\n\n06:33 PM\n6:33 PM. You said:\n\nI'd like to stay within a sensible budget. What are my best options in that range?\n\n06:33 PM\nAlmost there"
+      "replyTail": "E & CHARMS. It’s a stainless steel 18 inch necklace set, so you get a durable daily-wear piece plus 15 charms in one. Want to go for a wearable jewelry piece, or would you rather I pick an everyday apparel option instead?\n\n08:03 PM\nTell me about the charms\nMore jewelry options\nApparel options please"
     },
     {
       "turn": 4,
       "q": "Can you compare your two most popular options and tell me which is better for me?",
       "by": "ai",
-      "ttft_ms": 352,
-      "complete_ms": 12416,
-      "grew": 112,
-      "ai_latency_ms": 12416,
+      "ttft_ms": 14402,
+      "complete_ms": 17880,
+      "grew": 577,
+      "ai_latency_ms": 17880,
       "handover": false,
       "handover_hit": null,
-      "replyTail": " care about value for money — what do you recommend?\n\n06:33 PM\n6:33 PM. You said:\n\nI'd like to stay within a sensible budget. What are my best options in that range?\n\n06:33 PM\n6:34 PM. You said:\n\nCan you compare your two most popular options and tell me which is better for me?\n\n06:34 PM\nAlmost there"
+      "replyTail": "want wearable everyday value, the strongest buy is the THAT'S SHOWBIZ BABY! BLACK T-SHIRT at £30, with L, XL, and 2XL in stock. Want to grab the tee, or keep it cheaper with one of the accessories?\n\n08:04 PM\nTell me more about the T-shirt\nWhat sizes for keyring charm?\nAre more accessories available?"
     },
     {
       "turn": 5,
       "q": "I'm a little worried about quality and whether it'll suit me — what do other customers say in their reviews?",
       "by": "ai",
-      "ttft_ms": 349,
-      "complete_ms": 13183,
-      "grew": 139,
-      "ai_latency_ms": 13183,
+      "ttft_ms": 14174,
+      "complete_ms": 14436,
+      "grew": 500,
+      "ai_latency_ms": 14436,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "est options in that range?\n\n06:33 PM\n6:34 PM. You said:\n\nCan you compare your two most popular options and tell me which is better for me?\n\n06:34 PM\n6:34 PM. You said:\n\nI'm a little worried about quality and whether it'll suit me — what do other customers say in their reviews?\n\n06:34 PM\nAlmost there"
+      "replyTail": "IRT and the JADE CHROME LOGO WHITE T-SHIRT. For you, the better buy is the THAT'S SHOWBIZ BABY! tee because it gives you the same oversized 100% combed cotton quality at £30 instead of £40, and it has more sizes in stock right now. Want to go for the black tee and lock in the better value?\n\n08:04 PM"
     },
     {
       "turn": 6,
       "q": "Is there anything that pairs well with it or completes the set?",
       "by": "ai",
-      "ttft_ms": 341,
-      "complete_ms": 13134,
-      "grew": 90,
-      "ai_latency_ms": 13134,
+      "ttft_ms": 18204,
+      "complete_ms": 21387,
+      "grew": 444,
+      "ai_latency_ms": 21387,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "ular options and tell me which is better for me?\n\n06:34 PM\n6:34 PM. You said:\n\nI'm a little worried about quality and whether it'll suit me — what do other customers say in their reviews?\n\n06:34 PM\n6:34 PM. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n06:34 PM\nThinking"
+      "replyTail": " best match to complete it is the THAT'S SHOWBIZ BABY! CAP for a clean set, or the THAT'S SHOWBIZ BABY! TOTE BAG if you want something more useful day to day. If you want the most polished combo, go with the cap and tee together.\n\n08:04 PM\nWhat color is the cap?\nTote bag details\nMore product options"
     },
     {
       "turn": 7,
       "q": "Is there a bundle or set that's better value than buying the pieces separately?",
       "by": "ai",
-      "ttft_ms": 326,
-      "complete_ms": 4307,
-      "grew": 106,
-      "ai_latency_ms": 4307,
+      "ttft_ms": 17930,
+      "complete_ms": 21118,
+      "grew": 525,
+      "ai_latency_ms": 21118,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "ity and whether it'll suit me — what do other customers say in their reviews?\n\n06:34 PM\n6:34 PM. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n06:34 PM\n6:35 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n06:35 PM\nThinking"
+      "replyTail": "c multi-buy discounts live either. If you want the best value, the black tee is still the strongest buy on its own, and the cap is the smartest add-on to complete the look. Want to go for the tee first, or build the set with the cap too?\n\n08:05 PM\nBlack Tee Details\nCap Details\nExplore Other Products"
     },
     {
       "turn": 8,
       "q": "Which one is your overall best seller, and is it well reviewed?",
       "by": "ai",
-      "ttft_ms": 322,
-      "complete_ms": 2189,
-      "grew": 85,
-      "ai_latency_ms": 2189,
+      "ttft_ms": 19799,
+      "complete_ms": 22473,
+      "grew": 477,
+      "ai_latency_ms": 22473,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "M. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n06:34 PM\n6:35 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n06:35 PM\n6:35 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n06:35 PM\nThinking"
+      "replyTail": "he best everyday buy because it gives you wearable quality and better value than the pricier white tee option. We do not have customer review details to quote here, so I would choose it on quality, versatility, and price. Ready to grab the black tee?\n\n08:05 PM\nProduct Details?\nOther T-Shirt Options?"
     },
     {
       "turn": 9,
       "q": "Okay, can you add your top recommendation to my cart?",
       "by": "ai",
-      "ttft_ms": 357,
-      "complete_ms": 2487,
-      "grew": 84,
-      "ai_latency_ms": 2487,
+      "ttft_ms": 12945,
+      "complete_ms": 12945,
+      "grew": 245,
+      "ai_latency_ms": 12945,
       "handover": false,
       "handover_hit": null,
-      "replyTail": " PM\n6:35 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n06:35 PM\n6:35 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n06:35 PM\n6:35 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n06:35 PM\nThinking"
+      "replyTail": " tee?\n\n08:05 PM\n8:05 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n08:05 PM\nTHAT'S SHOWBIZ BABY! BLACK T-SHIRT\n£30.00\n\nI can’t add it to your cart for you, but the best pick is the THAT'S SHOWBIZ BABY! BLACK T-SHIRT. Open it below and add your size to check out now.\n\n08:06 PM"
     },
     {
       "turn": 10,
       "q": "What's my total, and do you offer free shipping or a first-order discount?",
       "by": "ai",
-      "ttft_ms": 353,
-      "complete_ms": 1150,
-      "grew": 109,
-      "ai_latency_ms": 1150,
+      "ttft_ms": 22148,
+      "complete_ms": 22148,
+      "grew": 354,
+      "ai_latency_ms": 22148,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "5 PM\n6:35 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n06:35 PM\n6:35 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n06:35 PM\n6:35 PM. You said:\n\nWhat's my total, and do you offer free shipping or a first-order discount?\n\n06:35 PM\nAlmost there"
+      "replyTail": "ount?\n\n08:06 PM\nTHAT'S SHOWBIZ BABY! BLACK T-SHIRT\n£30.00\n\nThe tee is £30. We do not have free shipping or a first-order discount live right now, so your total stays £30 before any delivery charge at checkout. If you want the best-value size that is ready to buy, go with L, XL, or 2XL now.\n\n08:06 PM"
     }
   ],
+  "ticket": {
+    "subdomain": "b0qaeh-qf",
+    "account_id": "70478",
+    "application_id": "65431",
+    "ticket_id": null,
+    "conversation_id": "40c327b6-cb5f-411f-aab0-2d6b0f23c6a3",
+    "url": "https://b0qaeh-qf.gorgias.com/app/tickets",
+    "all_ticket_ids": [],
+    "all_conversations": [
+      "40c327b6-cb5f-411f-aab0-2d6b0f23c6a3"
+    ],
+    "hosts": [
+      "config.gorgias.help",
+      "config.gorgias.chat",
+      "assets.gorgias.chat",
+      "b0qaeh-qf.shopify-checkout.config.gorgias.chat",
+      "gorgias-convert.com",
+      "us-east1-898b.gorgias.chat",
+      "shop.jadeofficial.com",
+      "config.gorgias.io"
+    ]
+  },
   "stats": {
     "turns": 10,
     "answered_no_handover": 9,
     "success_rate": 90,
-    "avg_ms": 8726,
-    "min_ms": 1150,
-    "max_ms": 17330,
+    "avg_ms": 18596,
+    "min_ms": 11196,
+    "max_ms": 23783,
     "latency_basis": "AI turns only (human replies excluded)",
     "handover_turn": null
   }

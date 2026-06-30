@@ -1,0 +1,163 @@
+{
+  "key": "gorgias-shoebacca",
+  "vendor": "Gorgias",
+  "store": "Shoebacca",
+  "url": "https://www.shoebacca.com/",
+  "us": true,
+  "widget": "gorgias",
+  "mode": "shopping",
+  "date": "2026-06-30",
+  "turns": [
+    {
+      "turn": 1,
+      "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
+      "by": "ai",
+      "ttft_ms": 20336,
+      "complete_ms": 23117,
+      "grew": 492,
+      "ai_latency_ms": 23117,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "1 Walking Shoes for lightweight comfort, the Propet Stability Walking Shoes for extra support, and the adidas Pro Model High Top Sneakers if you want a sportier look. What matters most for you: all-day comfort, extra support, or style?\n\n08:03 PM\nAll-day Comfort\nExtra Support\nSporty Look\nMore Options"
+    },
+    {
+      "turn": 2,
+      "q": "I want something for everyday use, good quality, and I care about value for money — what do you recommend?",
+      "by": "ai",
+      "ttft_ms": 29040,
+      "complete_ms": 29589,
+      "grew": 544,
+      "ai_latency_ms": 29589,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "elWalker II Walking Shoes if you want lightweight comfort for daily wear, and the Stability Walking Shoes if you want a more supportive, sturdier feel that still gives you a lot for the price. Want the lighter everyday option or the more supportive one so you can grab the right pair today?\n\n08:03 PM"
+    },
+    {
+      "turn": 3,
+      "q": "I'd like to stay within a sensible budget. What are my best options in that range?",
+      "by": "ai",
+      "ttft_ms": null,
+      "complete_ms": 7228,
+      "grew": 113,
+      "ai_latency_ms": 7228,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "want a more supportive, sturdier feel that still gives you a lot for the price. Want the lighter everyday option or the more supportive one so you can grab the right pair today?\n\n08:03 PM\n8:03 PM. You said:\n\nI'd like to stay within a sensible budget. What are my best options in that range?\n\n08:03 PM"
+    },
+    {
+      "turn": 4,
+      "q": "Can you compare your two most popular options and tell me which is better for me?",
+      "by": "ai",
+      "ttft_ms": 13833,
+      "complete_ms": 14377,
+      "grew": 592,
+      "ai_latency_ms": 14377,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "le, and built for easy daily wear. Pick the adidas Daily 3.0 instead only if style matters more to you, since it gives you a more casual street look with lightweight cushioning. For everyday use and value for money, TravelBound is the better buy. Ready to grab the better everyday pair now?\n\n08:04 PM"
+    },
+    {
+      "turn": 5,
+      "q": "I'm a little worried about quality and whether it'll suit me — what do other customers say in their reviews?",
+      "by": "ai",
+      "ttft_ms": 21119,
+      "complete_ms": 21399,
+      "grew": 543,
+      "ai_latency_ms": 21399,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "er pick is Propet over adidas. Propet is built more around all-day comfort and walking support, while the adidas Daily 3.0 leans more casual and style-first. If you want dependable everyday wear and better comfort for the money, go with Propet. Want to lock in the better everyday pair now?\n\n08:04 PM"
+    },
+    {
+      "turn": 6,
+      "q": "Is there anything that pairs well with it or completes the set?",
+      "by": "ai",
+      "ttft_ms": 18255,
+      "complete_ms": 18528,
+      "grew": 524,
+      "ai_latency_ms": 18528,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "ke it a clean everyday outfit, and a simple second sneaker like the adidas Advantage Base also works if you want a rotation pair. Standard shipping is free on all orders in the continental US, so it is an easy time to complete the set. Want to grab the shoes and a matching extra piece now?\n\n08:05 PM"
+    },
+    {
+      "turn": 7,
+      "q": "Is there a bundle or set that's better value than buying the pieces separately?",
+      "by": "ai",
+      "ttft_ms": 17827,
+      "complete_ms": 20562,
+      "grew": 533,
+      "ai_latency_ms": 20562,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "rd shipping is free, so your total stays straightforward. If you want the best value set, stick with the main pair first and add one extra piece only if you know you will wear it often. Ready to grab the core pair now?\n\n08:05 PM\nWhat is the main pair?\nHow to add an extra piece?\nOther product options"
+    },
+    {
+      "turn": 8,
+      "q": "Which one is your overall best seller, and is it well reviewed?",
+      "by": "ai",
+      "ttft_ms": 18986,
+      "complete_ms": 18986,
+      "grew": 590,
+      "ai_latency_ms": 18986,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": " shock absorption. For your needs though, Easy Spirit Travelport is the better fit if you want easy everyday wear with arch support, while Romy is the safest pick if you want the proven crowd favorite. Want to go with the customer favorite or the more comfort-focused everyday option today?\n\n08:06 PM"
+    },
+    {
+      "turn": 9,
+      "q": "Okay, can you add your top recommendation to my cart?",
+      "by": "ai",
+      "ttft_ms": 22999,
+      "complete_ms": 25762,
+      "grew": 389,
+      "ai_latency_ms": 25762,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "elport Walking Shoes\n$75.00\n$59.95\n\nI can’t add it to your cart for you, but go with the Easy Spirit Travelport. It’s the best everyday pick here for comfort and value. Open the product card below and you can add it in a click. Ready to grab it now?\n\n08:06 PM\nProduct Details\nAdd to Cart\nMore Options"
+    },
+    {
+      "turn": 10,
+      "q": "What's my total, and do you offer free shipping or a first-order discount?",
+      "by": "ai",
+      "ttft_ms": 16290,
+      "complete_ms": 16290,
+      "grew": 509,
+      "ai_latency_ms": 16290,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "free, Express is $8, and Overnight is $25. For a first order, we offer $10 off $60 when you sign up for email or SMS, and there are no automatic discounts applying right now. Go with the Easy Spirit Travelport and you can check your final total right away at checkout. Ready to grab it now?\n\n08:07 PM"
+    }
+  ],
+  "ticket": {
+    "subdomain": "shoebacca-prod",
+    "account_id": "112738",
+    "application_id": "39473",
+    "ticket_id": null,
+    "conversation_id": "2528ffb3-c224-42b7-8bf2-ea4111b678b3",
+    "url": "https://shoebacca-prod.gorgias.com/app/tickets",
+    "all_ticket_ids": [],
+    "all_conversations": [
+      "2528ffb3-c224-42b7-8bf2-ea4111b678b3"
+    ],
+    "hosts": [
+      "cdn.shopify.com",
+      "config.gorgias.chat",
+      "assets.gorgias.chat",
+      "shoebacca-prod.shopify-checkout.config.gorgias.chat",
+      "gorgias-convert.com",
+      "us-east1-898b.gorgias.chat",
+      "www.shoebacca.com"
+    ]
+  },
+  "stats": {
+    "turns": 10,
+    "answered_no_handover": 10,
+    "success_rate": 100,
+    "avg_ms": 19584,
+    "min_ms": 7228,
+    "max_ms": 29589,
+    "latency_basis": "AI turns only (human replies excluded)",
+    "handover_turn": null
+  }
+}

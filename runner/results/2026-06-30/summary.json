@@ -2,6 +2,86 @@
   "date": "2026-06-30",
   "perStore": [
     {
+      "key": "gorgias-beekman",
+      "vendor": "Gorgias",
+      "store": "Beekman 1802",
+      "us": true,
+      "mode": "shopping",
+      "turns": 0,
+      "answered_no_handover": 0,
+      "success_rate": null,
+      "avg_ms": null,
+      "min_ms": null,
+      "max_ms": null,
+      "latency_basis": "AI turns only (human replies excluded)",
+      "handover_turn": null,
+      "error": "TimeoutError: page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://beekman1802.com/\", waiting until \"domcontentloaded\"\n"
+    },
+    {
+      "key": "gorgias-jade",
+      "vendor": "Gorgias",
+      "store": "Jade",
+      "us": true,
+      "mode": "shopping",
+      "turns": 10,
+      "answered_no_handover": 9,
+      "success_rate": 90,
+      "avg_ms": 18596,
+      "min_ms": 11196,
+      "max_ms": 23783,
+      "latency_basis": "AI turns only (human replies excluded)",
+      "handover_turn": null,
+      "error": null
+    },
+    {
+      "key": "gorgias-madura",
+      "vendor": "Gorgias",
+      "store": "Madura",
+      "us": true,
+      "mode": "shopping",
+      "turns": 10,
+      "answered_no_handover": 9,
+      "success_rate": 90,
+      "avg_ms": 15637,
+      "min_ms": 4825,
+      "max_ms": 25851,
+      "latency_basis": "AI turns only (human replies excluded)",
+      "handover_turn": null,
+      "error": null
+    },
+    {
+      "key": "gorgias-shoebacca",
+      "vendor": "Gorgias",
+      "store": "Shoebacca",
+      "us": true,
+      "mode": "shopping",
+      "turns": 10,
+      "answered_no_handover": 10,
+      "success_rate": 100,
+      "avg_ms": 19584,
+      "min_ms": 7228,
+      "max_ms": 29589,
+      "latency_basis": "AI turns only (human replies excluded)",
+      "handover_turn": null,
+      "error": null
+    },
+    {
+      "key": "gorgias-babybee",
+      "vendor": "Gorgias",
+      "store": "Baby Bee",
+      "us": true,
+      "mode": "shopping",
+      "turns": 10,
+      "answered_no_handover": 5,
+      "success_rate": 50,
+      "avg_ms": 18419,
+      "min_ms": 2753,
+      "max_ms": 30428,
+      "latency_basis": "AI turns only (human replies excluded)",
+      "handover_turn": null,
+      "error": null
+    },
+    {
       "key": "gorgias-jshealth",
       "vendor": "Gorgias",
       "store": "JSHealth Vitamins",
@@ -22,9 +102,9 @@
     {
       "vendor": "Gorgias",
       "mode": "shopping",
-      "stores": 1,
-      "avg_success_rate": 0,
-      "avg_latency_ms": null
+      "stores": 6,
+      "avg_success_rate": 66,
+      "avg_latency_ms": 18059
     }
   ]
 }

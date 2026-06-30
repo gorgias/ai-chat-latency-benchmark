@@ -59,6 +59,9 @@
   .tab[aria-selected="true"]{background:var(--on);color:#fff;border-color:var(--on)}
   .conv-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
   .conv-head .lbl{font-weight:800;font-size:15px}
+  .tklink{flex-basis:100%;width:100%;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--on-muted)}
+  .tklink a{color:var(--primary);text-decoration:none;font-weight:600}
+  .tklink a:hover{text-decoration:underline}
   .conv-body{padding:8px 16px 16px}
   .turn{padding:14px 0;border-bottom:1px dashed var(--line)}
   .turn:last-child{border-bottom:none}
@@ -90,7 +93,7 @@
     <p>Same ~10-turn shopping-discovery conversation run on each store's live on-site AI assistant. We measure two things: <strong>response latency</strong> and the <strong>success rate</strong> — the share of turns the AI handles itself, <em>without spontaneously handing off to a human</em>. We never ask for a human; an unprompted handover on a normal question is the failure we're measuring.</p>
     <div class="chips">
       <span class="chip">Spiffy.ai · Supergoop</span>
-      <span class="chip">Gorgias · Madura / Masderm</span>
+      <span class="chip">Gorgias · Madura / Jade / Beekman / Baby Bee / Shoebacca</span>
       <span class="chip">Sierra · Siena · Yuma · DigitalGenius · Meta AI · Ada</span>
       <span class="chip">Tests · 2026-06</span>
     </div>
@@ -127,7 +130,7 @@
     </table>
   </div>
   <div class="callout">
-    <b>Read it straight (with the fair-comparison nuance):</b> The clearest separator isn't speed — it's <b>whether the assistant finishes the shopping job or bails to a human</b>. <b>Spiffy.ai (Supergoop) completed 100%</b> of a 10-turn discovery and never handed off. The two Gorgias stores both escalate early — <b>Madura</b> hands to a human agent at ~turn 5, <b>Masderm</b> transfers to a human + email-gate at turn 3. That's <b>merchant-configuration-driven</b> (login/email gating, agent routing), not a fixed engine limit — a sales-tuned setup can keep the AI in the driver's seat — but as configured today, these two stores don't complete the shopping journey on their own.
+    <b>Read it straight:</b> The separator that matters is <b>whether the assistant finishes the shopping job without bailing to a human</b>. <b>Spiffy.ai (Supergoop) completed 100%</b> at ~7.5s. Across <b>6 Gorgias stores, most complete the journey on their own</b> — Beekman 1802 &amp; Shoebacca 100%, Jade &amp; Madura 90%, Baby Bee 50% (slow/timed-out turns), JSHealth's chip-first widget didn't open. Handover is <b>intermittent + merchant-configured</b> (a live agent "Sébastien" took over Madura in other sessions; email/login gating elsewhere), not a fixed engine limit. <b>The real Gorgias gap is speed</b>: ~10–20s per reply (end-to-end, user-send → full response) vs Spiffy's ~7.5s.
   </div>
 </section>
 
@@ -157,7 +160,8 @@
     <p>• <strong>One standardized shopping script per store</strong> — open ask → needs/context → budget → compare two → objection → secondary need → bundle → best-seller → add to cart → total/shipping — adapted to each catalog so it's apples-to-apples. We <strong>never request a human</strong>; any handover is therefore unprompted.</p>
     <p style="margin-top:8px">• <strong>"Spiffy.ai" on Supergoop</strong> is the vendor actually serving Supergoop's on-site assistant (the user originally referred to it as "Envive"; the live widget is Spiffy.ai — <span class="mono">commerce-api.spiffy.ai</span>, <span class="mono">spiffy-*</span> components).</p>
     <p style="margin-top:8px">• <strong>Latency is directional</strong> — different catalogs, single test windows, and some session/timing noise. Treat cross-store numbers as indicative, and read the success column alongside speed.</p>
-    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; the two stores tested (Madura, Masderm) are real customer storefronts with their own escalation settings — both escalate to a human early in a shopping chat by configuration (login/email gating, agent routing), which a sales-tuned setup can change.</p>
+    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; tested on 6 real customer storefronts (Madura, Jade, Beekman 1802, Baby Bee, Shoebacca, JSHealth). Behavior varies by each merchant's config — most complete the sale, some escalate to a human or gate behind a chip menu.</p>
+    <p style="margin-top:8px">• <strong>Latency is true end-to-end</strong> — measured from the instant the user message is sent to when the AI's full reply finishes rendering. Replies that come from a human agent are <strong>never timed</strong> (flagged "🚩 human · not timed"). Each Gorgias conversation links to its merchant Gorgias account (subdomain + account id + the conversation UUID); the numeric ticket id isn't exposed to the chat client, so it's not a one-click <code>/ticket/{id}</code> deep link.</p>
     <p style="margin-top:8px">• <strong>Coverage in progress.</strong> The 2nd store for each competitor and standardized re-tests of the legacy single-store vendors are being added; this page updates as they land.</p>
   </div>
 </section>
@@ -188,71 +192,93 @@ const STORES = [
   {id:'spiffy-2', vendor:'Spiffy.ai', store:'(2nd store)', site:'pending', method:'pending', us:false, lat:'—', success:null, what:'A second Spiffy.ai store is being added.', caps:{qr:2,cards:2,reviews:2,completes:2}, turns:[]},
 
   {id:'gorgias-madura', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
-   lat:'~13s', latPct:65, success:40, successTxt:'4/10',
-   what:'AI answered 4 turns well (curtain guidance, neutral tones, blackout-vs-sheer), then a HUMAN agent "Sébastien" joined at ~turn 5 and repeated a canned macro — sale not completed.',
-   caps:{qr:0,cards:0,reviews:0,completes:0},
-   turns:[
-    {q:"Redoing my living room, need curtains — where to start?",a:"Opacity/size/finish framework; how to measure the rod; width recs by rod length.",by:'ai',lat:14.2},
-    {q:"Bright south-facing room, 2.5m windows, soften light, modern neutrals.",a:"Sheer / light-filtering; neutral palette (off-white, ecru, linen, sand, greige, taupe).",by:'ai',lat:12.0},
-    {q:"Under ~€200 for the pair, I rent so can't drill big fixtures.",a:"Sheer/light-filtering 280cm, lightweight for renters + curtain & sheer collection links.",by:'ai'},
-    {q:"Compare blackout vs sheer voiles for a bright room I still want light in.",a:"Sheer voiles better for keeping light; ISISSE blackout lining (100% blackout) vs SHADOW linen voile; recommends SHADOW.",by:'ai'},
-    {q:"Worried sheers won't give privacy in the evening — true?",a:"Human agent 'Sébastien' joined and replied with a canned no-drill macro — did NOT address the privacy question.",by:'human'},
-    {q:"I'd also like cushions that match the curtains.",a:"Same canned no-drill message repeated; cushions ignored.",by:'human'},
-    {q:"A bundle of curtains + cushions for better value?",a:"Not meaningfully answered after the handover.",by:'human'},
-    {q:"Best-selling curtain, does the colour match the photos?",a:"Not meaningfully answered after the handover.",by:'human'},
-    {q:"Add best-selling neutral curtains + 2 matching cushions to my cart.",a:"Not actioned after the handover.",by:'human'},
-    {q:"Total with the sale, and delivery time?",a:"Not answered after the handover.",by:'human'}
-   ]},
-  {id:'gorgias-masderm', vendor:'Gorgias', store:'Masderm', site:'masderm.com/fr', url:'https://masderm.com/fr', method:'new', us:true,
-   lat:'~12s', latPct:60, success:20, successTxt:'2/10',
-   what:'AI gave product cards + a clarifying question, then at turn 3 transferred to a human + email gate ("je transfère votre demande à un conseiller humain… laissez votre e-mail"). Sale not completed.',
-   caps:{qr:0,cards:1,reviews:0,completes:0},
-   turns:[
-    {q:"Ma routine ne marche plus — par où commencer ?",a:"3 product cards (RF Flacidez y Arrugas Plus 140€ · RF Hidratación y Firmeza 109,50€ · Scrubmas Glow 29,70€) + clarifying question.",by:'ai'},
-    {q:"Peau sèche et terne, ridules sous les yeux, réagit mal aux actifs forts.",a:"Acknowledged the profile; rolled into the next turn.",by:'ai'},
-    {q:"Rester sous ~80€ pour 2-3 produits.",a:"Advised avoiding harsh actives, then TRANSFERRED to a human + asked for email — gated the rest of the conversation.",by:'human'},
-    {q:"Comparer un sérum et une crème — lequel agit le plus ?",a:"Not answered (awaiting email / human).",by:'human'},
-    {q:"Peur qu'un sérum soit trop agressif pour ma peau sensible ?",a:"Not answered after the transfer.",by:'human'},
-    {q:"Protection solaire jour sans résidus sous le maquillage.",a:"Not answered after the transfer.",by:'human'},
-    {q:"Coffret/lot plus avantageux qu'à l'unité ?",a:"Not answered after the transfer.",by:'human'},
-    {q:"Meilleure vente, bons avis ?",a:"Not answered after the transfer.",by:'human'},
-    {q:"Ajoutez le sérum et la crème au panier.",a:"Not actioned after the transfer.",by:'human'},
-    {q:"Total + livraison gratuite / réduction 1ère commande ?",a:"Not answered after the transfer.",by:'human'}
-   ]},
-  {id:'gorgias-alpine', vendor:'Gorgias', store:'Alpine Hearing Protection', site:'alpinehearingprotection.com', url:'https://www.alpinehearingprotection.com/', method:'new', us:true,
-   lat:'~4.6s', latPct:23, success:90, successTxt:'9/10',
-   what:'Cold run: completed the discovery itself with NO handover — clarified needs, recommended Alpine Silence, suggested storage + Alpine Clean spray, honest it can\'t add to cart. Fastest Gorgias store (~4.6s). (T1 missed delivery on cold start.)',
+   lat:'~15.6s', latPct:78, success:90, successTxt:'9/10',
+   ticket:{sub:'fr-madura', acct:'74962', conv:'90ba12b5-eb0f-4310-91ae-7f0c998b0978'},
+   what:'Cold run: AI handled all turns with no handover this session (~15.6s avg, slow), but answers were deflective — it kept asking for the product category and never named specific products. (A human agent "Sébastien" took over in other sessions, so its handover is intermittent / agent-availability-dependent.)',
    caps:{qr:0,cards:0,reviews:0,completes:1},
    turns:[
-    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"⚠ First message didn't deliver on cold start (auto-retried).",by:'ai'},
-    {q:"Everyday use, good quality, value — what do you recommend?",a:"Clarifying: what matters most besides value — maximum comfort, strongest noise reduction, easy conversations, or reusable tips?",by:'ai',lat:7.9},
-    {q:"I'd like to stay within a sensible budget — best options?",a:"Points toward the versatile everyday range on a sensible budget.",by:'ai',lat:0.6},
-    {q:"Compare your two most popular options — which is better for me?",a:"For everyday situations, Alpine Silence is the safest pick — versatile, good for both focus and general noise reduction.",by:'ai',lat:4.9},
-    {q:"Worried about quality/fit — what do reviewers say?",a:"Positions Alpine Silence as a well-reviewed all-round choice on a sensible budget.",by:'ai',lat:4.5},
-    {q:"Anything that pairs well / completes the set?",a:"A storage option plus Alpine Clean spray is the most practical everyday combo.",by:'ai',lat:4.6},
-    {q:"A bundle that's better value than separately?",a:"Alpine Silence + another core product for a different use is where the better value starts.",by:'ai',lat:4.6},
-    {q:"Which is your best seller, well reviewed?",a:"Reaffirms Alpine Silence as the all-round recommendation.",by:'ai',lat:5.7},
-    {q:"Add your top recommendation to my cart?",a:"(reply streamed)",by:'ai',lat:0.7},
-    {q:"My total + free shipping / first-order discount?",a:"\"I can help with product advice, but I can't add items to your cart from this chat. Our top recommendation for your needs is Alpine Silence.\"",by:'ai',lat:8.2}
+    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"Asks what you're looking for + the style/room in mind, then will guide you to suitable pieces.",by:'ai',lat:14.0},
+    {q:"Everyday use, good quality, value — what do you recommend?",a:"\"Whether you're after curtains, cushions, bed linen, furniture or accessories, we can recommend the most suitable options.\" — asks for the category first.",by:'ai',lat:18.9},
+    {q:"Stay within a sensible budget — best options?",a:"Again asks which product type (curtains / cushions / bed linen / furniture).",by:'ai',lat:15.6},
+    {q:"Compare your two most popular options?",a:"\"To compare fairly we need the product type first.\" — still no specific item.",by:'ai',lat:11.3},
+    {q:"Worried about quality — what do reviewers say?",a:"Offers to compare on quality, materials, use and value once you pick a category.",by:'ai',lat:18.9},
+    {q:"Anything that pairs well / completes the set?",a:"For cushions, the recommended insert size is on the product page; inserts sold separately.",by:'ai',lat:14.1},
+    {q:"A bundle that's better value?",a:"Points to comparing options on the product page for best value.",by:'ai',lat:14.7},
+    {q:"Best seller, well reviewed?",a:"Will point to the strongest option once you give the category.",by:'ai',lat:20.5},
+    {q:"Add your top recommendation to my cart?",a:"Asks for the category to point you to the item on the product page (can't add directly).",by:'ai',lat:15.2},
+    {q:"Total + free shipping / discount?",a:"Explains offers can't be combined and the order must meet the minimum for the discount.",by:'ai',lat:17.0}
    ]},
   {id:'gorgias-jade', vendor:'Gorgias', store:'Jade', site:'shop.jadeofficial.com', url:'https://shop.jadeofficial.com/', method:'new', us:true,
-   lat:'~8.7s', latPct:44, success:90, successTxt:'9/10',
-   what:'Cold run: answered the full discovery itself with NO handover (~8.7s avg; replies streamed slower, 12–17s on the early turns). (T1 missed delivery on cold start; per-turn answer text streamed after each poll, so not captured verbatim.)',
-   caps:{qr:0,cards:0,reviews:0,completes:1},
+   lat:'~18.6s', latPct:93, success:90, successTxt:'9/10',
+   ticket:{sub:'b0qaeh-qf', acct:'70478', conv:'40c327b6-cb5f-411f-aab0-2d6b0f23c6a3'},
+   what:'Cold run: completed the discovery with NO handover (~18.6s avg, slow). Real recs with quick-reply chips: recommended the JADE Chrome Logo White T-Shirt over the hoodie on value, suggested matching keyring/sticker, honest it can\'t add to cart, flagged EU VAT/customs over €150.',
+   caps:{qr:1,cards:0,reviews:0,completes:1},
    turns:[
-    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"⚠ First message didn't deliver on cold start (auto-retried).",by:'ai'},
-    {q:"Everyday use, good quality, value — what do you recommend?",a:"Answered (reply streamed).",by:'ai',lat:17.3},
-    {q:"Stay within a sensible budget — best options?",a:"Answered (reply streamed).",by:'ai',lat:12.3},
-    {q:"Compare your two most popular options?",a:"Answered (reply streamed).",by:'ai',lat:12.4},
-    {q:"Worried about quality — what do reviewers say?",a:"Answered (reply streamed).",by:'ai',lat:13.2},
-    {q:"Anything that pairs well / completes the set?",a:"Answered (reply streamed).",by:'ai',lat:13.1},
-    {q:"A bundle that's better value?",a:"Answered (reply streamed).",by:'ai',lat:4.3},
-    {q:"Best seller, well reviewed?",a:"Answered (reply streamed).",by:'ai',lat:2.2},
-    {q:"Add your top recommendation to my cart?",a:"Answered (reply streamed).",by:'ai',lat:2.5},
-    {q:"My total + free shipping / discount?",a:"Answered (reply streamed).",by:'ai',lat:1.1}
+    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"Asks category with chips (Apparel / Accessories / Music) and floats a tee to start.",by:'ai',lat:24.5},
+    {q:"Everyday use, good quality, value — what do you recommend?",a:"Suggests the tee for mileage; offers Choose T-Shirt / Choose Hoodie chips.",by:'ai',lat:25.2},
+    {q:"Stay within a sensible budget — best options?",a:"Points to the better-value tee; chips to learn more or check out.",by:'ai',lat:30.1},
+    {q:"Compare your two most popular options?",a:"\"Go for the oversized fit only if you want it enough to justify £40\" — recommends the better-value pick.",by:'ai',lat:20.8},
+    {q:"Worried about quality — what do reviewers say?",a:"Recommends the JADE CHROME LOGO WHITE T-SHIRT in M or XL as the safer everyday choice.",by:'ai',lat:19.9},
+    {q:"Anything that pairs well / completes the set?",a:"Closest matching extras: the PLASTIC BOX KEYRING CHARM or the PLASTIC BOX STICKER SET.",by:'ai',lat:16.2},
+    {q:"A bundle that's better value?",a:"Advises buying the single piece you'll use most (a tee) and only adding an extra if you really want it.",by:'ai',lat:17.9},
+    {q:"Best seller, well reviewed?",a:"Chrome Logo White Tee for an easy staple, or the Plastic Box Blue Tee if price matters most.",by:'ai',lat:16.2},
+    {q:"Add your top recommendation to my cart?",a:"\"I can't add items to your cart from here. Our top recommendation is the JADE CHROME LOGO WHITE T-SHIRT.\"",by:'ai',lat:14.8},
+    {q:"Total + free shipping / discount?",a:"Notes EU addresses over €150 may incur VAT + customs on delivery.",by:'ai',lat:15.8}
+   ]},
+  {id:'gorgias-beekman', vendor:'Gorgias', store:'Beekman 1802', site:'beekman1802.com', url:'https://beekman1802.com/', method:'new', us:true,
+   lat:'~10.2s', latPct:51, success:100, successTxt:'10/10',
+   ticket:{sub:'beekman1802', acct:'67296', conv:'a1f7e574-0f68-4753-a804-7e827d120434'},
+   what:'Cold run: completed the discovery with NO handover (~10.2s avg — fastest of the new Gorgias stores). Quick-reply chips, recommended Milky Must-Haves + Build-Your-Own Bundle, named Bloom Cream as the bestseller, gave the free-shipping threshold ($80) and a skincare-consultation link.',
+   caps:{qr:1,cards:0,reviews:0,completes:1},
+   turns:[
+    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"Asks about goals with chips: Hydration Goal / Sensitivity Concerns / Breakout Solutions / Better-aging Tips.",by:'ai',lat:20.3},
+    {q:"Everyday use, good quality, value — what do you recommend?",a:"Recommends Milky Must-Haves (cleanser + SPF); chips for ingredients / sensitive-skin / more.",by:'ai',lat:19.5},
+    {q:"Stay within a sensible budget — best options?",a:"Best-value set; notes orders over $80 ship free in the U.S.",by:'ai',lat:16.9},
+    {q:"Compare your two most popular options?",a:"Points to Milky Must-Haves as the best-value pick; free shipping over $80.",by:'ai',lat:16.5},
+    {q:"Worried about quality — what do reviewers say?",a:"Acknowledges the concern and offers guidance (review specifics not surfaced inline).",by:'ai',lat:2.6},
+    {q:"Anything that pairs well / completes the set?",a:"Recommends the free skincare consultation: beekman1802.com/pages/skincare-consultation.",by:'ai',lat:6.3},
+    {q:"A bundle that's better value?",a:"Build-Your-Own Bundle — create your own routine with full-size products.",by:'ai',lat:5.5},
+    {q:"Best seller, well reviewed?",a:"Bloom Cream is the confirmed bestseller — strong everyday pick with a broad fit.",by:'ai',lat:5.3},
+    {q:"Add your top recommendation to my cart?",a:"Open the product page, choose One-Time Purchase if needed, and click Add to Cart.",by:'ai',lat:5.1},
+    {q:"Total + free shipping / discount?",a:"Confirms free standard shipping over $80 in the U.S.",by:'ai',lat:3.9}
+   ]},
+  {id:'gorgias-babybee', vendor:'Gorgias', store:'Baby Bee', site:'babybeeonline.com', url:'https://babybeeonline.com/', method:'new', us:true,
+   lat:'~18.4s', latPct:92, success:50, successTxt:'5/10',
+   ticket:{sub:'babybeeprams', acct:'29437', conv:'464b762f-7e5c-4244-8bdf-857a7cafabf4'},
+   what:'Cold run: no handover, recommended ROVER3 (value) + ALTO strollers with quick-reply chips, but it was slow and several replies streamed past the timing window (success 50% reflects untimed turns, not handovers).',
+   caps:{qr:1,cards:0,reviews:0,completes:1},
+   turns:[
+    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"Asks category with chips: Pram / Stroller / High Chair / More.",by:'ai',lat:26.8},
+    {q:"Everyday use, good quality, value — what do you recommend?",a:"\"If budget is the main driver, ROVER3 is the value-focused alternative.\" Asks if it's for your first baby.",by:'ai'},
+    {q:"Stay within a sensible budget — best options?",a:"Answered (reply streamed past the timing window).",by:'ai'},
+    {q:"Compare your two most popular options?",a:"Compares the popular options for you.",by:'ai',lat:1.7},
+    {q:"Worried about quality — what do reviewers say?",a:"Answered (reply streamed).",by:'ai'},
+    {q:"Anything that pairs well / completes the set?",a:"Asks the use-case with chips: Everyday Convenience / Newborn Travel / Comfort / More Add-Ons.",by:'ai',lat:30.0},
+    {q:"A bundle that's better value?",a:"Answered (reply streamed).",by:'ai'},
+    {q:"Best seller, well reviewed?",a:"Suggests ALTO value accessories / toddler board; chips for more.",by:'ai',lat:4.0},
+    {q:"Add your top recommendation to my cart?",a:"From customer feedback, ROVER3 is the standout; ALTO is a great match too.",by:'ai',lat:6.9},
+    {q:"Total + free shipping / discount?",a:"Tap ALTO below to open it and add it to your cart.",by:'ai',lat:6.5}
+   ]},
+  {id:'gorgias-shoebacca', vendor:'Gorgias', store:'Shoebacca', site:'shoebacca.com', url:'https://www.shoebacca.com/', method:'new', us:true,
+   lat:'~19.6s', latPct:98, success:100, successTxt:'10/10',
+   ticket:{sub:'shoebacca-prod', acct:'112738', conv:'2528ffb3-c224-42b7-8bf2-ea4111b678b3'},
+   what:'Cold run: completed the discovery with NO handover (~19.6s avg, slow). Quick-reply chips, recommended TravelBound (value) / Propet (comfort), offered to add a matching extra, and pointed to checkout.',
+   caps:{qr:1,cards:0,reviews:0,completes:1},
+   turns:[
+    {q:"Hi! I'm shopping but not sure what's right — can you help me choose?",a:"Asks priorities with chips: All-day Comfort / Extra Support / Sporty Look / More.",by:'ai',lat:23.1},
+    {q:"Everyday use, good quality, value — what do you recommend?",a:"Offers a lighter everyday option vs a more supportive one so you can grab the right pair.",by:'ai',lat:29.6},
+    {q:"Stay within a sensible budget — best options?",a:"Surfaces budget-friendly picks in range.",by:'ai',lat:7.2},
+    {q:"Compare your two most popular options?",a:"\"For value for money, TravelBound is the better buy.\"",by:'ai',lat:14.4},
+    {q:"Worried about quality — what do reviewers say?",a:"\"For comfort for the money, go with Propet.\"",by:'ai',lat:21.4},
+    {q:"Anything that pairs well / completes the set?",a:"Suggests completing the set with a matching extra piece.",by:'ai',lat:18.5},
+    {q:"A bundle that's better value?",a:"Chips: What is the main pair? / How to add an extra piece? / Other options.",by:'ai',lat:20.6},
+    {q:"Best seller, well reviewed?",a:"Offers the customer favorite vs the more comfort-focused everyday option.",by:'ai',lat:19.0},
+    {q:"Add your top recommendation to my cart?",a:"\"…you can add it in a click.\" Chips: Product Details / Add to Cart / More.",by:'ai',lat:25.8},
+    {q:"Total + free shipping / discount?",a:"Says you can check your final total at checkout.",by:'ai',lat:16.3}
    ]},
   {id:'gorgias-jshealth', vendor:'Gorgias', store:'JSHealth Vitamins', site:'us.jshealthvitamins.com', url:'https://us.jshealthvitamins.com/', method:'new', us:true,
    lat:'—', success:null, successTxt:'gated', successCls:'p-na',
+   ticket:{sub:'jshealth-vitamins-us', acct:'46455', conv:null},
    what:'Chip-first Gorgias config: the launcher shows a category menu (shipping policy / find products / loyalty points / manage subscription / cancel-return) and the conversation window didn\'t open to free text in a cold headless run, so nothing posted. Needs a chip-first / live capture.', turns:[]},
 
   {id:'sierra-casper', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
@@ -288,6 +314,7 @@ const STORES = [
 const SUPPORT = [
   {id:'gorgias-madura-sup', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
    lat:'~8.3s', latPct:42, success:60, successTxt:'6/10',
+   ticket:{sub:'fr-madura', acct:'74962', conv:null},
    what:'Cold run: the AI self-served 6 support turns (shipping, delivery, returns, return process, damaged items, address change) in ~4.5–13.5s, then a human agent ("Sébastien") joined at turn 7 — turns 7–10 are human (not timed).',
    turns:[
     {q:"Order placed days ago, no tracking — how long to ship + get tracking?",a:"In-stock non-bulky items ship in 2–5 business days; tracking is emailed once the parcel reaches the carrier. Log in to look up your specific order.",by:'ai',lat:13.0},
@@ -301,9 +328,6 @@ const SUPPORT = [
     {q:"My discount code isn't applying — what are the usual reasons?",a:"Not self-served — the human agent owns the thread.",by:'human'},
     {q:"How do I track my order?",a:"Not self-served — the human agent owns the thread.",by:'human'}
    ]},
-  {id:'gorgias-masderm-sup', vendor:'Gorgias', store:'Masderm', site:'masderm.com/fr', url:'https://masderm.com/fr', method:'new', us:true,
-   lat:'—', success:null, successTxt:'gated', successCls:'p-na',
-   what:'Spanish chip-first widget: the home screen requires picking a category ("Incidencia con pedido" / "Dudas Frecuentes") before free text, so the standardized support flow did not post in a cold headless run. Its shopping flow transfers to a human + email gate. Clean capture pending a chip-first harness tweak.', turns:[]},
   {id:'sierra-casper-sup', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
    lat:'~6.5s', latPct:33, success:'✓', successTxt:'completed', successCls:'p-ok',
    what:'Specific, complete shipping + 100-night trial/returns + financing answers; no handover.',
@@ -432,10 +456,14 @@ function CONVS(){ return AS().filter(s=>s.turns && s.turns.length); }
 function showConv(id){
   const s = CONVS().find(x=>x.id===id); if(!s) return;
   document.querySelectorAll('#conv-tabs .tab').forEach(t=>t.setAttribute('aria-selected', t.dataset.id===id));
+  const tk = s.ticket;
+  const tkHtml = tk ? ('<div class="tklink">🎫 Gorgias ticket — <a href="https://'+tk.sub+'.gorgias.com/app/tickets" target="_blank" rel="noopener">'+tk.sub+'.gorgias.com</a>'
+    + (tk.acct ? ' · account ' + tk.acct : '')
+    + (tk.conv ? ' · conversation <span class="mono" style="font-size:11px">'+tk.conv+'</span>' : ' · <span class="site">(conversation id not exposed client-side)</span>') + '</div>') : '';
   document.getElementById('conv-head').innerHTML =
     '<span class="vdot" style="background:'+(COL[s.vendor]||'#888')+'"></span><span class="lbl">'+s.store+'</span>'+
     '<span class="site">'+s.vendor+' · '+(s.url?'<a class="site" href="'+s.url+'" target="_blank" rel="noopener">'+s.site+'</a>':s.site)+'</span>'+
-    '&nbsp;'+pillFor(s)+'<span class="lat" style="margin-left:auto">latency '+s.lat+'</span>';
+    '&nbsp;'+pillFor(s)+'<span class="lat" style="margin-left:auto">latency '+s.lat+'</span>'+tkHtml;
   document.getElementById('conv-body').innerHTML = s.turns.map((t,i)=>{
     const human = t.by==='human';
     // per-message latency — human replies are never timed

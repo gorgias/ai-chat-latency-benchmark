@@ -18,7 +18,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 2,
@@ -30,7 +30,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 3,
@@ -42,7 +42,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 4,
@@ -54,7 +54,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 5,
@@ -66,7 +66,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 6,
@@ -78,7 +78,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 7,
@@ -90,7 +90,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 8,
@@ -102,7 +102,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 9,
@@ -114,7 +114,7 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     },
     {
       "turn": 10,
@@ -126,9 +126,28 @@
       "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": ""
+      "replyTail": " your shipping policy?\nHow do I find the right products for my goals?\nHow do I redeem my JSHealth Loyalty points?\nI need help managing my subscription\nCan I cancel or return my order?\nI haven’t received my order\nTrack and manage my orders\nJSHealth Vitamins Wellness Hub\nHere to help! Leave a message."
     }
   ],
+  "ticket": {
+    "subdomain": "jshealth-vitamins-us",
+    "account_id": "46455",
+    "application_id": null,
+    "ticket_id": null,
+    "conversation_id": null,
+    "url": "https://jshealth-vitamins-us.gorgias.com/app/tickets",
+    "all_ticket_ids": [],
+    "all_conversations": [],
+    "hosts": [
+      "config.gorgias.chat",
+      "config.gorgias.help",
+      "assets.gorgias.chat",
+      "jshealth-vitamins-us.shopify-checkout.config.gorgias.chat",
+      "gorgias-convert.com",
+      "config.gorgias.io",
+      "us-east1-898b.gorgias.chat"
+    ]
+  },
   "stats": {
     "turns": 10,
     "answered_no_handover": 0,
