@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 results_*.json
 .DS_Store
+
+runner/node_modules/
+runner/package-lock.json
