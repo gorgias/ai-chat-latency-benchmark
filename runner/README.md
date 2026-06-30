@@ -1,40 +1,71 @@
-# Headless benchmark runner
+# Cold headless runner — the monthly engine
 
-Runs the competitor AI-chat benchmark **cold and unattended** — the thing the in-browser extension can't do (it gets a warm session and its background tab is throttled, which corrupts at-depth latency).
+Drives each store's **live on-site AI assistant** through a standardized ~10-turn
+conversation in a **fresh browser context (cold session)** and records, per store:
 
-## Why headless solves the problems we hit
+- **latency** (time to a full reply, per turn), and
+- **success rate** = % of turns the AI answered **itself, with no human handover**.
 
-| Problem with the manual/extension runs | How the runner fixes it |
-|---|---|
-| Warm sessions (widget state persists in cross-origin storage; parent can't clear it) | **Fresh `browser.newContext()` per vendor+mode** = isolated storage = genuinely cold |
-| Background-tab timer throttling → `null`/inflated latency at 10 turns | **Headless** has no background throttling → reliable per-turn timing |
-| Can't reach into cross-origin chat iframes from page JS | **Playwright reads cross-origin frames directly** |
-| Manual, ~40 clicks/vendor | Scripted: 10-turn Support + 10-turn Shopping pools per vendor |
+A fresh context per store means **no warm-session carryover** — the thing a single
+live Chrome window can't give us (the widget's session lives in cross-origin storage
+the page can't reset). Headless also has no background-tab timer throttling, so timing
+is reliable at depth.
+
+## Why cold matters
+
+Re-running a store live reuses its warm session (the assistant "remembers" the prior
+chat, or a human agent already owns the thread), which contaminates both latency and
+the handover signal. CI runs in a fresh container every time → cold by construction.
+
+## What it measures
+
+- **No turn asks for a human** ([`pools.js`](pools.js)). So any handover the assistant
+  initiates is **unprompted = a failure** (it couldn't finish the job). The detector
+  catches escalations, ticket flows, lead-capture/email gates, and **a human agent
+  joining the thread** ("… joined the chat", "X says:", "je transfère … conseiller
+  humain", "laissez votre e-mail").
+- Two modes: **shopping** (discovery → recommendation) and **support** (shipping /
+  returns / policy).
+
+## Stores
+
+2–3 storefronts per vendor (see `STORES` in [`vendors.js`](vendors.js)). Stores marked
+`candidate: true` still need their widget verified — the runner attempts them and records
+an error if the chat isn't found, rather than guessing. Harness logic is keyed by **widget
+type** (`gorgias`, `spiffy`, `sierra`, `siena`, `dg`, `zendesk`, `ada`) so stores on the
+same tech share code.
+
+> Gorgias (us) is tested on **Madura** and **Masderm** — **Glamnetic is intentionally excluded.**
 
 ## Run it
 
 ```bash
-cd runner
 npm install
-npm run install:browser      # playwright install chromium
-node run.js                  # all vendors, both modes
-node run.js --vendor gorgias sierra
+npm run install:browser        # playwright install chromium
+node run.js                     # all stores, both modes  → results/<date>/
+node run.js --vendor Sierra     # all of one vendor's stores
+node run.js --store gorgias-madura
 node run.js --mode shopping
+node run.js --skip-candidates   # only verified stores
 ```
 
-Output: `runner/results/<YYYY-MM-DD>/<vendor>-<mode>.json` — per-turn `ttft_ms` / `complete_ms`, a reply tail for spot-checking, and summary `stats` (n / avg / min / max).
+## Output
 
-## Files
-- `pools.js` — the standardized question pools (10 Support turns shared; 10 Shopping discovery turns adapted per store catalog).
-- `vendors.js` — per-vendor harness (open chat, send, where to read the transcript). Built from the reverse-engineering in the main report.
-- `run.js` — orchestrator: fresh cold context per vendor+mode, sends each turn, times reply by transcript growth+stability.
-
-## Conversations & the handover red flag
-- Pools are deliberately **complex**: compound, multi-constraint turns that build on prior answers, with objections and edge cases — a demanding shopper, not one-line FAQs.
-- **No turn ever asks for a human.** So if the assistant initiates a handover ("I'll connect you with our team", "submit a support ticket", a lead-capture form, "all our agents are unavailable"…), the runner detects it and marks `handover: true` on that turn and `red_flag: true` on the vendor — a real capability limitation (it couldn't handle the conversation / couldn't complete the sale). Genuine answers (e.g. a blunt no-returns policy) are *not* flagged.
-
-## Maintenance note
-Chat widgets change their DOM/SDK over time, so `vendors.js` selectors are the part to keep current. Each vendor fails soft (records `null` + an `error`) so one broken widget never aborts the run. Ada is included but its bot was down during initial testing — expect nulls until it recovers.
+- `results/<date>/<store>-<mode>.json` — per-turn latency, handover flag + hit, reply tail,
+  and a `stats` block (`success_rate`, `avg_ms`, `min/max_ms`, `handover_turn`).
+- `results/<date>/summary.json` — `perStore` rows + a `perVendor` rollup (avg success rate
+  + avg latency per vendor per mode), matching the report's top **Summary by vendor** table.
 
 ## Monthly automation
-`.github/workflows/monthly-benchmark.yml` runs this on the 1st of each month, commits the JSON results, and (optionally) regenerates the report. Each CI run is a brand-new container → every vendor starts cold by construction.
+
+[`.github/workflows/monthly-benchmark.yml`](../.github/workflows/monthly-benchmark.yml)
+runs `node run.js` on the 1st of each month in a fresh Ubuntu container (cold) and commits
+the results. One broken widget doesn't fail the run.
+
+## Adding / verifying a store
+
+1. Add a row to `STORES` in `vendors.js` (`vendor`, `store`, `url`, `widget`, optional
+   `us`, `locale`).
+2. If it's a new widget tech, add a harness to `WIDGETS` (`scope`, `open`, `send`, optional
+   `handover` regexes).
+3. `node run.js --store <key> --mode shopping` and check the JSON / console for handover hits.
