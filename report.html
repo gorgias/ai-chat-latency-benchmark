@@ -3,327 +3,307 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chat Benchmark — Shopping Assistant vs Support</title>
+<title>AI Shopping Assistant Benchmark — Latency & No-Handover Success Rate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f7f9; --surface:#fff; --surface-2:#f1f3f6; --line:#e6e8ee;
-    --on:#0e1116; --on-muted:#5a6473; --on-faint:#8b94a3;
-    --primary:#4f46e5; --success:#0e7490; --warning:#b45309; --danger:#be123c;
-    --sierra:#0f766e; --siena:#4f46e5; --ada:#b45309; --yuma:#9333ea; --dg:#db2777; --gorgias:#15803d; --meta:#0891b2;
-    --e2:0 2px 4px rgba(13,18,28,.05); --e4:0 4px 10px rgba(13,18,28,.06); --e8:0 8px 24px rgba(13,18,28,.08);
-    --r:14px; --r-sm:10px;
+    --bg:#f6f7f9;--surface:#fff;--surface-2:#f1f3f6;--line:#e6e8ee;
+    --on:#0e1116;--on-muted:#5a6473;--on-faint:#8b94a3;--primary:#4f46e5;
+    --success:#15803d;--warning:#b45309;--danger:#dc2626;
+    --spiffy:#7c3aed;--gorgias:#15803d;--sierra:#0f766e;--siena:#4f46e5;--yuma:#9333ea;--dg:#db2777;--meta:#0891b2;--ada:#b45309;
+    --e8:0 8px 24px rgba(13,18,28,.08);--r:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--on);line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--on);-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
-
-  .hero{background:linear-gradient(180deg,#0e1116,#171c26);color:#fff;padding:48px 0 28px}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+  .hero{background:linear-gradient(180deg,#0e1116,#171c26);color:#fff;padding:56px 0 64px;text-align:center}
   .hero .eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8b94a3}
-  .hero h1{font-size:32px;font-weight:800;letter-spacing:-.02em;margin:12px 0 12px;max-width:780px;line-height:1.12}
-  .hero p{font-size:14px;color:#aab2c0;max-width:660px}
-  .hero .chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:7px}
-  .chip{font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#d4d9e2}
-
-  /* ===== Mode toggle ===== */
-  .togglebar{position:sticky;top:0;z-index:50;background:rgba(246,247,249,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 0}
-  .toggle{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:var(--e2);max-width:560px;margin:0 auto}
-  .toggle button{flex:1;border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:var(--on-muted);padding:12px 14px;border-radius:999px;transition:all .18s ease;display:flex;align-items:center;justify-content:center;gap:8px}
-  .toggle button .sub{font-size:11px;font-weight:500;opacity:.8}
-  .toggle button[aria-pressed="true"]{color:#fff}
-  .toggle button[aria-pressed="true"][data-mode="shopping"]{background:linear-gradient(135deg,#0f766e,#15803d)}
-  .toggle button[aria-pressed="true"][data-mode="support"]{background:linear-gradient(135deg,#4f46e5,#0891b2)}
-  .togglehint{text-align:center;font-size:12px;color:var(--on-muted);margin-top:8px}
-
-  main{padding:28px 0 64px}
-  section{margin-bottom:30px;scroll-margin-top:90px}
-  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
-  .sec-head h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--on-muted)}
-  .sec-head .modetag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
-  .modetag.shopping{background:#d1f5ee;color:#0f766e} .modetag.support{background:#e0e7ff;color:#3730a3}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e2)}
-  .card-pad{padding:24px}
-  .lead{font-size:13px;color:var(--on-muted);margin-bottom:18px}
-
-  /* chart */
-  .chart{display:flex;flex-direction:column;gap:13px}
-  .crow{display:grid;grid-template-columns:96px 1fr 150px;align-items:center;gap:14px}
-  .crow .cl{font-size:13px;font-weight:700;text-align:right}
-  .ctrack{height:38px;background:var(--surface-2);border-radius:var(--r-sm);position:relative;overflow:hidden}
-  .cfill{height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;padding-right:12px;color:#fff;font-weight:700;font-size:13px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
-  .cfill.none{background:repeating-linear-gradient(45deg,#f1f3f6,#f1f3f6 8px,#e6e8ee 8px,#e6e8ee 16px);color:var(--danger);justify-content:flex-start;padding-left:14px;font-size:12px}
-  .cnote{font-size:11px;color:var(--on-faint)}
-  @media (prefers-reduced-motion:reduce){.cfill{transition:none}}
-
-  /* table */
-  .tbl-scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
-  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
-  thead th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--on-faint);font-weight:600}
+  .hero h1{font-size:34px;font-weight:800;letter-spacing:-.025em;margin:14px auto 14px;max-width:760px;line-height:1.12}
+  .hero p{font-size:15px;color:#aab2c0;max-width:680px;margin:0 auto;line-height:1.6}
+  .hero .chips{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .chip{font-size:12px;background:rgba(255,255,255,.08);color:#cfd6e2;border:1px solid rgba(255,255,255,.12);padding:5px 11px;border-radius:999px}
+  section{padding:34px 0}
+  h2.sec{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--on-muted);margin-bottom:6px}
+  .lead{font-size:14px;color:var(--on-muted);max-width:780px;line-height:1.6;margin-bottom:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e8)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--on-faint);padding:12px 14px;border-bottom:1px solid var(--line)}
+  thead th.n{text-align:right}
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
   tbody tr:last-child td{border-bottom:none}
-  td.n{text-align:right}
-  .vdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle}
-  .note{font-size:11.5px;color:var(--on-muted);margin-top:12px;line-height:1.6}
-  .us-row{background:#f0fdf4}
-  .us-tag{font-size:10px;color:var(--gorgias);font-weight:700}
-
-  /* conversations */
-  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .tab{font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--on-muted);cursor:pointer}
+  tbody td.n{text-align:right}
+  .vdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:baseline}
+  .vname{font-weight:700}
+  .us-tag{font-size:9.5px;font-weight:800;color:#fff;background:var(--gorgias);padding:1px 6px;border-radius:5px;margin-left:6px;letter-spacing:.04em;vertical-align:middle}
+  .site{font-size:11.5px;color:var(--on-faint)}
+  a.site{color:var(--primary);text-decoration:none}
+  a.site:hover{text-decoration:underline}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .p-ok{background:#e8f6ee;color:var(--success)}
+  .p-mid{background:#fdf2e3;color:var(--warning)}
+  .p-bad{background:#fdeaea;color:var(--danger)}
+  .p-na{background:var(--surface-2);color:var(--on-faint)}
+  .bar{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;min-width:60px}
+  .bar>i{display:block;height:100%;border-radius:6px}
+  .grp-row td{background:#fafbfc;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--on-muted);padding:8px 14px}
+  .legacy{opacity:.86}
+  .matrix td .y{color:var(--success);font-weight:700}
+  .matrix td .n{color:var(--danger);font-weight:700}
+  .matrix td .p{color:var(--on-faint)}
+  .toggle-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--on-muted)}
   .tab[aria-selected="true"]{background:var(--on);color:#fff;border-color:var(--on)}
-  .turn{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-bottom:12px}
-  .th{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface-2);font-size:12px;color:var(--on-muted)}
-  .tn{background:var(--on);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
-  .tq{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .lat{margin-left:auto;font-weight:700;font-size:12px;padding:4px 11px;border-radius:999px}
-  .l-fast{background:#d1f5ee;color:#0f766e} .l-mid{background:#e0e7ff;color:#3730a3} .l-slow{background:#fef3c7;color:#92400e} .l-vslow{background:#fde4ea;color:#9f1239} .l-none{background:#fde4ea;color:#9f1239}
-  .msg{display:flex;gap:11px;padding:13px 14px}
-  .msg.u{background:#fbfbfd} .msg.b{background:var(--surface)}
-  .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
-  .av.u{background:#cbd2e0;color:#3a4456} .av.b{background:var(--on)}
-  .mr{font-size:10px;font-weight:700;color:var(--on-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-  .mt{font-size:13.5px;color:#2b3340;white-space:pre-line}
-  .emptymsg{font-size:13px;color:var(--on-muted);padding:16px;text-align:center}
-
-  .callout{border-left:3px solid var(--warning);background:#fffaf0;padding:14px 16px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px;line-height:1.6}
-  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:30px 0}
-  a{color:var(--primary);text-decoration:none} a:hover{text-decoration:underline}
-  @media(max-width:760px){.crow{grid-template-columns:74px 1fr;gap:9px}.cnote{display:none}.hero h1{font-size:25px}.toggle button{font-size:13px}}
+  .conv-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .conv-head .lbl{font-weight:800;font-size:15px}
+  .conv-body{padding:8px 16px 16px}
+  .turn{padding:14px 0;border-bottom:1px dashed var(--line)}
+  .turn:last-child{border-bottom:none}
+  .th{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .tn{font-size:10px;font-weight:800;color:#fff;background:var(--on);border-radius:5px;padding:2px 6px}
+  .tq{font-size:12.5px;color:var(--on-muted);flex:1}
+  .lat{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--on-muted)}
+  .msg{display:flex;gap:10px;margin:6px 0}
+  .av{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff}
+  .av.u{background:#94a3b8}.av.b{background:var(--primary)}.av.h{background:var(--danger)}
+  .mt{font-size:13px;line-height:1.5;background:var(--surface-2);border-radius:10px;padding:9px 12px}
+  .badge-h{font-size:10.5px;font-weight:800;color:var(--danger);background:#fdeaea;padding:2px 7px;border-radius:5px;margin-left:auto}
+  .note{font-size:12.5px;color:var(--on-muted);line-height:1.6}
+  .callout{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;color:#7c2d12;margin-top:14px}
+  .callout b{color:#9a3412}
+  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:30px}
+  .foot a{color:var(--primary);text-decoration:none}
+  @media(max-width:720px){.hide-sm{display:none}.hero h1{font-size:26px}}
 </style>
 </head>
 <body>
-
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">Gorgias R&amp;D · Competitor Intelligence</div>
-    <h1>AI Chat Benchmark — Shopping Assistant vs Support</h1>
-    <p>Live latency &amp; answer-quality tests of competitor on-site AI assistants, split into two jobs: selling (discovery → product recommendation) and supporting (FAQ &amp; policy). Toggle the mode below.</p>
+    <h1>AI Shopping Assistant Benchmark — Latency &amp; "Did it finish the job?"</h1>
+    <p>Same ~10-turn shopping-discovery conversation run on each store's live on-site AI assistant. We measure two things: <strong>response latency</strong> and the <strong>success rate</strong> — the share of turns the AI handles itself, <em>without spontaneously handing off to a human</em>. We never ask for a human; an unprompted handover on a normal question is the failure we're measuring.</p>
     <div class="chips">
-      <span class="chip">Sierra · Casper</span><span class="chip">Siena · Simple Modern</span>
-      <span class="chip">Gorgias · Glamnetic (us)</span><span class="chip">Yuma · EvryJewels</span>
-      <span class="chip">DigitalGenius · Bloom &amp; Wild</span><span class="chip">Meta AI · Dermalogica</span>
-      <span class="chip">Ada · Loop Earplugs</span><span class="chip">Tests 2026-06-29/30</span>
+      <span class="chip">Spiffy.ai · Supergoop</span>
+      <span class="chip">Gorgias · Glamnetic / Madura / Masderm</span>
+      <span class="chip">Sierra · Siena · Yuma · DigitalGenius · Meta AI · Ada</span>
+      <span class="chip">Tests · 2026-06</span>
     </div>
   </div>
 </header>
 
-<div class="togglebar">
-  <div class="wrap">
-    <div class="toggle" role="group" aria-label="Benchmark mode">
-      <button data-mode="shopping" aria-pressed="true" onclick="setMode('shopping')">🛍️ Shopping Assistant<span class="sub">discovery → product rec</span></button>
-      <button data-mode="support" aria-pressed="false" onclick="setMode('support')">🎧 Support only<span class="sub">FAQ &amp; policy</span></button>
-    </div>
-    <div class="togglehint" id="togglehint"></div>
+<div class="wrap">
+
+<section>
+  <h2 class="sec">Results — per store</h2>
+  <p class="lead">Each row is one live store. <strong>Latency</strong> = time to a full answer. <strong>Success</strong> = % of the 10 turns the AI answered itself with no human handover. Stores marked <span class="pill p-na">legacy</span> were measured earlier on a single conversation and are pending a standardized re-test; their success figure reflects observed handover behavior, not a precise 10-turn rate.</p>
+  <div class="card" style="overflow:hidden">
+    <table id="results">
+      <thead><tr>
+        <th>Vendor / store</th><th class="hide-sm">Method</th><th class="n">Latency</th><th>Success (no handover)</th><th class="hide-sm">What happened</th>
+      </tr></thead>
+      <tbody id="results-body"></tbody>
+    </table>
   </div>
+  <div class="callout">
+    <b>Read it straight (with the fair-comparison nuance):</b> The clearest separator isn't speed — it's <b>whether the assistant finishes the shopping job or bails to a human</b>. <b>Spiffy.ai (Supergoop) completed 100%</b> of a 10-turn discovery. For Gorgias, the result is <b>merchant-configuration-driven, not a fixed capability</b>: <b>Glamnetic (Gorgias) also completed 100%</b> with Add-to-Cart cards, while <b>Madura</b> hands to a human agent at ~turn 5 and <b>Masderm</b> transfers to a human + email-gate at turn 3. Same vendor, opposite outcomes — the difference is how each merchant configured escalation, not the engine.
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">Capabilities — what the assistant actually does</h2>
+  <p class="lead">Beyond answering: does it use <strong>quick replies</strong> (suggested chips), render <strong>product cards</strong> ("pull cards" with price/links), surface <strong>reviews</strong>, and <strong>complete the sale</strong> itself? <span class="matrix"><span class="y">●</span> yes · <span class="n">●</span> no · <span class="p">●</span> not yet tested</span></p>
+  <div class="card" style="overflow:hidden">
+    <table class="matrix"><thead><tr>
+      <th>Store</th><th>Quick replies</th><th>Product cards</th><th>Reviews</th><th>Completes sale (no handoff)</th>
+    </tr></thead><tbody id="matrix-body"></tbody></table>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">Recorded conversations — drill down by store</h2>
+  <p class="lead">Pick a store to see the actual ~10-turn shopping conversation, turn by turn, with the AI's answers and where a <span style="color:var(--danger);font-weight:700">human handover</span> occurred.</p>
+  <div class="toggle-tabs" id="conv-tabs"></div>
+  <div class="card">
+    <div class="conv-head" id="conv-head"></div>
+    <div class="conv-body" id="conv-body"></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="sec">Method &amp; caveats</h2>
+  <div class="note card" style="padding:16px 18px">
+    <p>• <strong>One standardized shopping script per store</strong> — open ask → needs/context → budget → compare two → objection → secondary need → bundle → best-seller → add to cart → total/shipping — adapted to each catalog so it's apples-to-apples. We <strong>never request a human</strong>; any handover is therefore unprompted.</p>
+    <p style="margin-top:8px">• <strong>"Spiffy.ai" on Supergoop</strong> is the vendor actually serving Supergoop's on-site assistant (the user originally referred to it as "Envive"; the live widget is Spiffy.ai — <span class="mono">commerce-api.spiffy.ai</span>, <span class="mono">spiffy-*</span> components).</p>
+    <p style="margin-top:8px">• <strong>Latency is directional</strong> — different catalogs, single test windows, and some session/timing noise. Treat cross-store numbers as indicative, and read the success column alongside speed.</p>
+    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; its three stores are real customer storefronts with their own escalation settings — Glamnetic completes the sale, Madura/Masderm escalate early by configuration.</p>
+    <p style="margin-top:8px">• <strong>Coverage in progress.</strong> The 2nd store for each competitor and standardized re-tests of the legacy single-store vendors are being added; this page updates as they land.</p>
+  </div>
+</section>
+
 </div>
-
-<main class="wrap">
-  <section id="latency">
-    <div class="sec-head"><h2>Latency</h2><span class="modetag" id="lat-modetag"></span></div>
-    <div class="card card-pad"><p class="lead" id="lat-lead"></p><div class="chart" id="chart"></div></div>
-  </section>
-
-  <section id="quality">
-    <div class="sec-head"><h2>Answer quality — blind 3-judge eval</h2><span class="modetag" id="q-modetag"></span></div>
-    <div class="card card-pad">
-      <p class="lead" id="q-lead"></p>
-      <div class="tbl-scroll"><table><thead id="q-head"></thead><tbody id="q-body"></tbody></table></div>
-      <p class="note">Vendors were anonymized as "Store A–F" and scored 1–5 by 3 independent AI judges (0 = didn't answer / escalated). Mean shown. *Meta AI = Dermalogica's Zendesk assistant (labeled as requested).</p>
-    </div>
-  </section>
-
-  <section id="conversations">
-    <div class="sec-head"><h2>Recorded conversations</h2><span class="modetag" id="c-modetag"></span></div>
-    <div class="card card-pad">
-      <div class="tabs" id="conv-tabs"></div>
-      <div id="conv-body"></div>
-    </div>
-  </section>
-
-  <section id="method">
-    <div class="sec-head"><h2>Methodology</h2></div>
-    <div class="card card-pad" style="font-size:13px;color:#2b3340;line-height:1.7">
-      <p>Each assistant was driven on its <strong>live customer site</strong>. Latency = wall-clock from message sent to full response (network/WebSocket/DOM timing per vendor; Meta AI screenshot-approx). Two question pools were run: <strong>Shopping Assistant</strong> (discovery questions that ask for a product recommendation) and <strong>Support</strong> (shipping FAQ + returns/policy). Answer quality was scored by a blind 3-judge LLM panel on anonymized stores.</p>
-      <p style="margin-top:8px"><strong>Caveats:</strong> different stores/domains (treat as directional); Gorgias ran on <strong>Glamnetic</strong>, a <em>live production storefront</em> (real catalog + production guardrails — not a demo); Ada's bot was down on both test days; Meta AI's underlying model isn't verifiable client-side (front-end is Zendesk's "Virtual Assistant").</p>
-      <p style="margin-top:8px"><strong>Cold vs warm sessions.</strong> Each widget persists its conversation in its own <em>cross-origin</em> storage (gorgias.chat, siena.cx, …), which a page script can't clear, and the automation can't drive a true incognito window — so re-runs reuse a "warm" session that slightly inflates latency (measured: DigitalGenius next-day answer <span class="mono" style="font-size:12px">12.7s cold vs 14.3s warm</span>). We therefore test each vendor <strong>cold-first</strong> (one clean pass, no re-runs in the same window). <strong>The recurring monthly run must spin up a fresh browser profile/container per execution</strong> — that's the only reliable way to guarantee a cold session for every vendor.</p>
-    </div>
-  </section>
-</main>
-<div class="foot">Gorgias R&amp;D · Competitor intelligence · 2026-06-29/30 · <a href="https://github.com/gorgias/ai-chat-latency-benchmark">source on GitHub</a></div>
+<div class="foot">Gorgias R&amp;D · Competitor intelligence · 2026 · <a href="https://github.com/gorgias/ai-chat-latency-benchmark">source on GitHub</a></div>
 
 <script>
-// ===== DATA =====
-const V = {
-  sierra:{name:"Sierra",client:"Casper · Luna",color:"#0f766e",us:false},
-  siena:{name:"Siena",client:"Simple Modern · Maddie",color:"#4f46e5",us:false},
-  gorgias:{name:"Gorgias",client:"Glamnetic · Gina",color:"#15803d",us:true},
-  yuma:{name:"Yuma",client:"EvryJewels",color:"#9333ea",us:false},
-  dg:{name:"DigitalGenius",client:"Bloom & Wild · Willow",color:"#db2777",us:false},
-  meta:{name:"Meta AI*",client:"Dermalogica",color:"#0891b2",us:false},
-  ada:{name:"Ada",client:"Loop Earplugs",color:"#b45309",us:false},
-};
-// per-mode: latency seconds (null=escalated/no-answer, 'down'), quality 1-5, conversation turns
-const DATA = {
-  shopping:{
-    order:["sierra","gorgias","yuma","siena","dg","meta","ada"],
-    rows:{
-      sierra:{lat:8.2, q:5.0, qnote:"Real rec + interactive Add-to-Cart cards"},
-      gorgias:{lat:20.2, q:4.7, qnote:"Interactive Add-to-Cart cards + multi-item & cross-category recs (nails→lashes→liner); honest on limits (can't add to cart, no shipping ETA)"},
-      yuma:{lat:13.8, q:2.7, qnote:"Only gestures at collections, no specific item"},
-      siena:{lat:10.0, q:1.0, qnote:"Defers product questions to product pages"},
-      dg:{lat:null, q:0, qnote:"🚩 Hands off to a human (no in-chat rec)"},
-      meta:{lat:null, q:0, qnote:"🚩 Hands off to a human lead form (no rec)"},
-      ada:{lat:"down", q:null, qnote:"Backend down both test days"},
-    },
-    conv:{
-      sierra:[
-        {q:"I'm a hot sleeper with lower back pain — which mattress do you recommend?",lat:9.7,a:"🛍️ [Interactive product cards: Snow / Snow Max — image, Select Size, Add to Cart] For hot sleepers with back pain, I recommend the Snow / Snow Max — cooling technology with strong support."},
-        {q:"Are your mattresses good for side sleepers?",lat:9.2,a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
-        {q:"Can you recommend a pillow to go with it?",lat:6.7,a:"Absolutely — for hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."}],
-      gorgias:[
-        {q:"Hi! I'm totally new to press-on nails and my natural nails are weak and short. Which of your sets last the longest and won't damage my nails?",lat:null,a:"🛍️ [Cards: Think Pink $15.99 · Pinky Promise $17.99 · Short & Suite $34.18] For longest wear use standard glue-on press-ons (last up to 2 weeks), not Quick Press Mani. For weak/short nails the gentlest option is nail tabs instead of glue (easier removal). Start with a short shape — beginner picks: Think Pink, Pinky Promise, Short & Suite."},
-        {q:"I love a natural, neutral look — nothing too long or flashy. Between those, which is most natural and truly beginner-friendly?",lat:null,a:"🛍️ [Card: Ma Damn $15.99] Ma Damn is the most natural & beginner-friendly: classic short almond shape, semi-transparent natural base with a white French tip — polished without feeling flashy."},
-        {q:"How long does Ma Damn actually last, and how do I apply and remove it safely so I don't wreck my weak nails?",lat:null,a:"🛍️ [Card: Ma Damn $15.99] Up to 2 weeks. Apply: a small amount of glue, avoid the skin, press 10s; prep by pushing back cuticles + lightly buffing. Remove: soak in warm water + oil + soap 10–15 min, lift from the sides, never pry; buff off leftover glue and moisturize."},
-        {q:"My nails are quite small and narrow. How do I make sure Ma Damn fits, and what if a size doesn't fit?",lat:27.5,a:"🛍️ [Card: Ma Damn $15.99] Short Almond runs ~6.3–14.01mm; 24 nails in 12 sizes (numbered on the back), file the sides for a custom fit. Test each nail sidewall-to-sidewall before applying — size down/file if too wide, size up if too narrow. You can send a photo of bare nails for fit help."},
-        {q:"Do I need anything else to apply them safely as a beginner — a prep kit, the right glue, or those nail tabs?",lat:20.7,a:"🛍️ [Cards: Pressed to Perfection $16.18 · Brush-On Nail Glue $7.99 · Press-On Nail Remover $12.99] The set already includes glue, an alcohol pad, a file & a cuticle stick. For weak nails, Adhesive Nail Tabs are gentler; Brush-On Glue is the easiest to control. Best one-stop beginner kit: the Pressed to Perfection bundle."},
-        {q:"If I get Ma Damn plus the Pressed to Perfection bundle, what's my total, and is there a first-order discount?",lat:19.7,a:"🛍️ [Cards: Ma Damn $15.99 · Pressed to Perfection $16.18] Total $32.17 before tax & shipping. There's a 20% new-customer offer (link) — but no first-order code is confirmed in chat and no automatic discounts apply right now."},
-        {q:"How fast is shipping to the US, and do I get free shipping if I add both items?",lat:14.7,a:"\"I don't have the US shipping timing or free-shipping threshold confirmed here yet.\" — deflects back to product questions.",note:"⚠ knowledge gap during the buy flow"},
-        {q:"Okay, I'm sold — can you add Ma Damn and the bundle to my cart?",lat:15.3,a:"🛍️ [Cards: Ma Damn · Pressed to Perfection] \"I can't add items to your cart for you\" — but surfaces the product cards (add from each page) + checkout quick-replies (Check product details / Need help with checkout?).",note:"⚠ can't add to cart"},
-        {q:"I also wear lashes. Do you have a magnetic lash that would match this soft natural look?",lat:23.0,a:"🛍️ [Card: Virgo $19.99] Virgo is the most natural-looking magnetic lash, good for everyday — it needs a magnetic liner (sold separately). Offers liner options: Natural Look / Classic Black Liner / Hybrid Liner."},
-        {q:"Let's go with the classic black liner. Best way to check out, and can I use the 20% new-customer offer?",lat:20.5,a:"🛍️ [Cards: Magnetic Eyeliner Pen $27.99 · Pressed to Perfection $16.18] Best classic black liner: Magnetic Eyeliner Pen in Black $27.99 (in stock). Open the cards → add → checkout from the cart; 20% new-customer offer link provided. Offers to line up the full set."}],
-      yuma:[
-        {q:"Can you recommend a necklace for a birthday gift?",lat:13.8,a:"A necklace is such a thoughtful birthday gift! I highly recommend our custom name necklaces or a piece from our best-sellers collection. Do you have a specific style in mind?"},
-        {q:"Are your rings adjustable or do they come in fixed sizes?",lat:18.1,a:"Our rings come in both adjustable and fixed sizes, depending on the design! Many pieces (like the Double Date Ring) are adjustable; others come in fixed sizes 5–9."}],
-      siena:[
-        {q:"Does the Mesa Loop fit in a standard car cup holder?",lat:10.4,a:"Yes, the Mesa Loop 30oz is designed to fit most standard car cup holders!"},
-        {q:"Is the straw removable and dishwasher safe?",lat:9.7,a:"The straw isn't designed to be removed, but the lid (with straw) is top-rack dishwasher safe. Hand washing recommended."},
-        {q:"What's the difference between the 30oz and the 40oz?",lat:10.6,a:"The 30oz is the largest Mesa Loop size — there isn't a 40oz Mesa Loop. Happy to compare other bottles (Trek, Summit)."},
-        {q:"Does it keep drinks cold for 24 hours?",lat:10.1,a:"Yes — designed to keep drinks cold for up to 24 hours thanks to double-wall insulation."},
-        {q:"Is it leak-proof, and is the Almond Birch color in stock?",lat:9.2,a:"Not 100% sure on full leak-proofing, and no live stock signal in chat — recommend checking the product page. (Defers rather than picking.)"}],
-      dg:[
-        {q:"What is your most popular bouquet?",lat:null,a:"❌ Did not recommend. 'To ensure you get the best possible assistance, I will connect you with one of our agents.' Agents unavailable → offered a support ticket and stopped answering. (Handover on turn 1 locks the chat.)",note:"handover"}],
-      meta:[
-        {q:"I have dry, dull skin. Which product do you recommend?",lat:null,a:"❌ Did not recommend. 'Please share a few details and I'll connect you with someone from our team' → opened a human lead-capture form (Name/email). (Handover on turn 1 locks the chat.)",note:"handover"}],
-      ada:[],
-    }
-  },
-  support:{
-    order:["sierra","meta","gorgias","siena","dg","yuma","ada"],
-    rows:{
-      sierra:{lat:6.5, q:5.0, qnote:"Specific, complete shipping + trial/returns"},
-      meta:{lat:5.0, q:3.5, qnote:"Great returns; vague shipping (no specifics)"},
-      gorgias:{lat:19.2, q:4.2, qnote:"Specific policy answers (14-day returns, customs, discount fixes); gates order-specific issues behind login; human handover only on explicit request"},
-      siena:{lat:9.5, q:3.4, qnote:"Great shipping detail; deflects returns to 'share your email'"},
-      dg:{lat:10.2, q:4.3, qnote:"Specific delivery answers (returns not tested)"},
-      yuma:{lat:13.5, q:4.4, qnote:"Clear shipping + blunt no-returns policy"},
-      ada:{lat:"down", q:null, qnote:"Backend down both test days"},
-    },
-    conv:{
-      sierra:[
-        {q:"Do you offer free shipping?",lat:5.0,a:"Free shipping on most products (contiguous US), except adjustable bases ($50) and bed frames/headboards ($25). Alaska & Hawaii: $20 small, $250 large. Return shipping always free. In-home setup $249."},
-        {q:"What is your trial period and return policy?",lat:4.6,a:"100-night trial. If you're not 100% in love after the first 30 nights, returns are free and easy. Furniture: 30-night trial (100 with a mattress). Soft goods: no trial, return unused within 30 days."},
-        {q:"Do you offer financing or payment plans?",lat:8.9,a:"Yes — Casper offers financing and payment plans through Affirm, Katapult and others at checkout."},
-        {q:"How long does delivery take once I order?",lat:7.4,a:"Most in-stock Casper products are delivered within 2–8 business days after the order ships."}],
-      meta:[
-        {q:"Do you offer free shipping?",lat:5.0,a:"Yes, we offer free shipping as one of our shipping options. (Vague — no threshold or method.)"},
-        {q:"What is your return policy?",lat:5.0,a:"We gladly accept returns within 30 days of your order date. New or gently used items in original packaging; no return shipping, handling, or restocking fees. (+ View article)"}],
-      gorgias:[
-        {q:"I placed an order a few days ago and still have no tracking number. How long does it take to ship and send tracking?",lat:18.9,a:"Most orders ship within 48 business hours; tracking is sent once it ships. US standard delivery is 3–7 business days after dispatch. If there's no shipping confirmation within 5 business days, that's the point to flag it. (Offers an account lookup.)"},
-        {q:"What's your return policy? Can I return press-on nails if I've already opened the package?",lat:20.1,a:"Returns within 14 days of delivery, in original condition + packaging only — opened/used/altered items aren't eligible. Refund or gift card; refunds have an $8 return-shipping fee deducted (gift card has none). Refunds post to the original payment in 3–5 business days."},
-        {q:"A couple of nails arrived broken in the box. What do you do about damaged items?",lat:16.4,a:"Damaged-on-arrival is handled as a damaged-item issue (not a standard return), then asks you to log in to look up the order for next steps.",note:"🔒 gated on login"},
-        {q:"Can I still change the shipping address on an order I placed this morning?",lat:15.8,a:"Possibly, if it hasn't shipped — needs you to log in to check the specific order and update the address if still eligible."},
-        {q:"Can I cancel an order shortly after placing it? What's the cancellation window?",lat:15.4,a:"Orders process in 24–48 hours; cancellation is only possible before fulfilment. Log in to check eligibility."},
-        {q:"Do you ship internationally? If I'm in Canada, who covers customs and duties?",lat:31.3,a:"Ships to Canada (8–14 business days). Customs/duties paid by the customer; notes a possible 25% tariff on certain US-origin products + ~5–15% duty over $150 CAD. Free standard shipping to Canada over $65 USD."},
-        {q:"My discount code won't apply at checkout. What are the usual reasons and what should I do?",lat:17.1,a:"Codes fail if expired, items excluded, the minimum isn't met, or another promo is already applied. Enter it exactly, meet the offer terms, and remove other codes. Offers to check your specific code + cart."},
-        {q:"Are your nails and lashes cruelty-free and vegan? I have sensitive eyes and skin too.",lat:16.5,a:"Nails + lashes are cruelty-free; press-on nails are vegan. For sensitive skin, Adhesive Nail Tabs are gentler than glue (glue contains ethyl cyanoacrylate + PMMA). Offers lash/liner help for sensitive eyes."},
-        {q:"My tracking says delivered but the package never arrived. Do I get a refund or replacement?",lat:19.9,a:"Empathetic, but defers to login/order lookup to decide replacement vs refund — no general policy stated before auth.",note:"🔒 gated on login"},
-        {q:"This is getting complicated — can I just talk to a human?",lat:20.7,a:"🚩 Loops in a teammate and asks for an email so a specialist can follow up (~1 min) via an email-capture form. Note: this handover only triggered when a human was explicitly requested — Gina answered all 9 prior support questions itself, so this is an appropriate escalation, not an unprompted refusal to help.",note:"handover on request"}],
-      siena:[
-        {q:"Do you offer free shipping on orders?",lat:10.0,a:"Free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
-        {q:"How long does standard shipping usually take?",lat:7.0,a:"5–11 business days total: 1–3 to fulfil + 4–8 to ship."},
-        {q:"Can I return it if I don't like the color?",lat:11.3,a:"You may be able to — it depends on your order. Could you share your email or order number so the team can confirm? (Soft handover rather than stating the policy.)"}],
-      dg:[
-        {q:"Do you deliver next day in the UK?",lat:14.3,a:"Yes, next-day across most of the UK. Order by 10pm for central postcodes / 5:30pm for peripheral ones."},
-        {q:"How much does delivery cost?",lat:11.9,a:"Royal Mail free; DPD All-day £5 Mon–Fri / £6 Sat–Sun; DPD Morning £6 / £10 Sat; XEROE (London) free; Ireland free Tue–Fri."},
-        {q:"How do I track my order?",lat:4.4,a:"Your order number is in your confirmation email or on your account."},
-        {q:"Do you offer same-day delivery?",lat:null,a:"We don't offer same-day delivery in any market. The earliest option is next-day delivery, provided the order is placed before the cut-off times.",note:"answered"}],
-      yuma:[
-        {q:"Do you offer free shipping?",lat:6.9,a:"Yes — free shipping when your subtotal is at least $35 (after discounts, before taxes). Add-ons like Package Protection and the 1-Year Warranty are excluded."},
-        {q:"Is the gold real gold or gold plated?",lat:14.7,a:"Our jewelry features 18K gold plating — waterproof and skin-safe (nickel-free, lead-free), made for daily wear."},
-        {q:"How long does shipping take to the US?",lat:15.9,a:"Provides the US shipping fulfilment + transit window."},
-        {q:"What is your return policy?",lat:16.3,a:"We do not offer any refunds, exchanges, or returns (stated on our refund-policy page). Could you let us know why you're requesting a return?"}],
-      ada:[],
-    }
-  }
-};
+const COL = {Spiffy:'var(--spiffy)','Gorgias':'var(--gorgias)',Sierra:'var(--sierra)',Siena:'var(--siena)',Yuma:'var(--yuma)',DigitalGenius:'var(--dg)','Meta AI':'var(--meta)',Ada:'var(--ada)'};
+// ---- data: one entry per store ----
+const STORES = [
+  {id:'spiffy-supergoop', vendor:'Spiffy.ai', store:'Supergoop', site:'supergoop.com', url:'https://supergoop.com', method:'new', us:false,
+   lat:'~7.5s', latPct:38, success:100, successTxt:'10/10',
+   what:'Answered every turn: cards (price+rating+review count), dynamic quick replies, deep review citations, bundle, best-seller, add-to-bag, shipping.',
+   caps:{qr:1,cards:1,reviews:1,completes:1},
+   turns:[
+    {q:"Help me pick a sunscreen?",a:"Clarifying question + 5 follow-up quick-reply chips (water-resistant / high SPF sensitive / lightweight / daily use).",by:'ai'},
+    {q:"Oily, acne-prone skin, outdoors running, hate greasy white-cast.",a:"3 cards: Unseen SPF50 $38 ★4.7(5651) · Mineral Mattescreen SPF40 $24 ★4.7(1620) · Unseen Stick $32 ★4.8(271) + chips.",by:'ai'},
+    {q:"Keep under ~$40, also works under makeup.",a:"On-budget makeup-friendly cards (Unseen / Mattescreen / Unseen Stick) + comparison chips.",by:'ai'},
+    {q:"Compare Unseen vs Mineral Mattescreen for oily skin + running.",a:"Unseen = weightless/primer/chemical; Mattescreen = mattifies/blurs pores/mineral + cards + a verified-buyer review quote.",by:'ai'},
+    {q:"Worried it'll feel heavy / break me out — what do reviewers with oily skin say?",a:"Cited named reviewers (Starla P., Lupe, Helen M.) — silky, light, no breakout, no oily residue — with a verified-buyer quote.",by:'ai'},
+    {q:"Need something for my face for daily wear under makeup.",a:"3 face-specific cards: Unseen $38 · City Sunscreen Serum SPF30 $48 ★4.7(220) · Play Everyday Face Lotion.",by:'ai'},
+    {q:"A set or bundle that's better value?",a:"Recommended the Best of Supergoop! SPF Set $134 ★5.0 as a better-value bundle.",by:'ai'},
+    {q:"Which is your overall best seller, well reviewed?",a:"Best seller = Unseen Sunscreen SPF50 $38 ★4.7 (5651) — invisible, weightless, blends under makeup.",by:'ai'},
+    {q:"Add Unseen Sunscreen and Mineral Mattescreen to my bag.",a:"Confirmed both added to the bag + offered an 'I'm ready to checkout' chip.",by:'ai'},
+    {q:"My total, and free shipping / first-order discount?",a:"Free shipping over $50, free Glow Stick at $70+; defers exact total to the cart page.",by:'ai'}
+   ]},
+  {id:'spiffy-2', vendor:'Spiffy.ai', store:'(2nd store)', site:'pending', method:'pending', us:false, lat:'—', success:null, what:'A second Spiffy.ai store is being added.', caps:{qr:2,cards:2,reviews:2,completes:2}, turns:[]},
 
-let mode = "shopping";
-function latClass(s){ if(s==null) return 'l-none'; if(s<6) return 'l-fast'; if(s<10) return 'l-mid'; if(s<15) return 'l-slow'; return 'l-vslow'; }
-function fmtLat(v){ if(v==='down') return 'down'; if(v==null) return 'no rec'; return v.toFixed(1)+'s'; }
+  {id:'gorgias-glamnetic', vendor:'Gorgias', store:'Glamnetic', site:'glamnetic.com', url:'https://www.glamnetic.com', method:'new', us:true,
+   lat:'~20s', latPct:100, success:100, successTxt:'10/10',
+   what:'Completed the journey: interactive Add-to-Cart cards, multi-item & cross-category recs (nails→lash→liner), bundle reasoning; honest about limits.',
+   caps:{qr:1,cards:1,reviews:0,completes:1},
+   turns:[
+    {q:"New to press-ons, weak/short nails — longest-lasting that won't damage?",a:"Cards: Think Pink $15.99 · Pinky Promise $17.99 · Short & Suite $34.18 + advice (glue-on lasts ~2wks; nail tabs for weak nails).",by:'ai'},
+    {q:"Natural, neutral look — most beginner-friendly?",a:"Card: Ma Damn $15.99 (short almond, semi-transparent base + white French tip).",by:'ai'},
+    {q:"How long does it last + safe apply/remove on weak nails?",a:"Up to 2 weeks; detailed safe application + soak-off removal steps.",by:'ai'},
+    {q:"Small/narrow nails — how do I get the fit right?",a:"Sizing (Short Almond 6.3–14.01mm, 24 nails/12 sizes, file to fit); offers a photo-based fit check.",by:'ai'},
+    {q:"Anything else to apply safely — prep/glue/tabs?",a:"Cards: Pressed to Perfection $16.18 · Brush-On Glue $7.99 · Remover $12.99 + reasoning.",by:'ai'},
+    {q:"Total for Ma Damn + the bundle, and a first-order discount?",a:"$32.17 before tax/ship; 20% new-customer offer link; honest that no code is confirmed in chat.",by:'ai'},
+    {q:"How fast is US shipping, free shipping on both?",a:"Knowledge gap — couldn't confirm shipping ETA / threshold; deflected to products.",by:'ai'},
+    {q:"Add Ma Damn + the bundle to my cart.",a:"Can't add directly, but surfaces the cards + checkout quick-replies.",by:'ai'},
+    {q:"A magnetic lash to match this natural look?",a:"Card: Virgo $19.99 (most natural lash) + magnetic-liner options as chips.",by:'ai'},
+    {q:"Classic black liner + checkout + the 20% offer?",a:"Card: Magnetic Eyeliner Pen Black $27.99; checkout guidance + offer link; offers to line up the full set.",by:'ai'}
+   ]},
+  {id:'gorgias-madura', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
+   lat:'~13s', latPct:65, success:40, successTxt:'4/10',
+   what:'AI answered 4 turns well (curtain guidance, neutral tones, blackout-vs-sheer), then a HUMAN agent "Sébastien" joined at ~turn 5 and repeated a canned macro — sale not completed.',
+   caps:{qr:0,cards:0,reviews:0,completes:0},
+   turns:[
+    {q:"Redoing my living room, need curtains — where to start?",a:"Opacity/size/finish framework; how to measure the rod; width recs by rod length.",by:'ai'},
+    {q:"Bright south-facing room, 2.5m windows, soften light, modern neutrals.",a:"Sheer / light-filtering; neutral palette (off-white, ecru, linen, sand, greige, taupe).",by:'ai'},
+    {q:"Under ~€200 for the pair, I rent so can't drill big fixtures.",a:"Sheer/light-filtering 280cm, lightweight for renters + curtain & sheer collection links.",by:'ai'},
+    {q:"Compare blackout vs sheer voiles for a bright room I still want light in.",a:"Sheer voiles better for keeping light; ISISSE blackout lining (100% blackout) vs SHADOW linen voile; recommends SHADOW.",by:'ai'},
+    {q:"Worried sheers won't give privacy in the evening — true?",a:"Human agent 'Sébastien' joined and replied with a canned no-drill macro — did NOT address the privacy question.",by:'human'},
+    {q:"I'd also like cushions that match the curtains.",a:"Same canned no-drill message repeated; cushions ignored.",by:'human'},
+    {q:"A bundle of curtains + cushions for better value?",a:"Not meaningfully answered after the handover.",by:'human'},
+    {q:"Best-selling curtain, does the colour match the photos?",a:"Not meaningfully answered after the handover.",by:'human'},
+    {q:"Add best-selling neutral curtains + 2 matching cushions to my cart.",a:"Not actioned after the handover.",by:'human'},
+    {q:"Total with the sale, and delivery time?",a:"Not answered after the handover.",by:'human'}
+   ]},
+  {id:'gorgias-masderm', vendor:'Gorgias', store:'Masderm', site:'masderm.com/fr', url:'https://masderm.com/fr', method:'new', us:true,
+   lat:'~12s', latPct:60, success:20, successTxt:'2/10',
+   what:'AI gave product cards + a clarifying question, then at turn 3 transferred to a human + email gate ("je transfère votre demande à un conseiller humain… laissez votre e-mail"). Sale not completed.',
+   caps:{qr:0,cards:1,reviews:0,completes:0},
+   turns:[
+    {q:"Ma routine ne marche plus — par où commencer ?",a:"3 product cards (RF Flacidez y Arrugas Plus 140€ · RF Hidratación y Firmeza 109,50€ · Scrubmas Glow 29,70€) + clarifying question.",by:'ai'},
+    {q:"Peau sèche et terne, ridules sous les yeux, réagit mal aux actifs forts.",a:"Acknowledged the profile; rolled into the next turn.",by:'ai'},
+    {q:"Rester sous ~80€ pour 2-3 produits.",a:"Advised avoiding harsh actives, then TRANSFERRED to a human + asked for email — gated the rest of the conversation.",by:'human'},
+    {q:"Comparer un sérum et une crème — lequel agit le plus ?",a:"Not answered (awaiting email / human).",by:'human'},
+    {q:"Peur qu'un sérum soit trop agressif pour ma peau sensible ?",a:"Not answered after the transfer.",by:'human'},
+    {q:"Protection solaire jour sans résidus sous le maquillage.",a:"Not answered after the transfer.",by:'human'},
+    {q:"Coffret/lot plus avantageux qu'à l'unité ?",a:"Not answered after the transfer.",by:'human'},
+    {q:"Meilleure vente, bons avis ?",a:"Not answered after the transfer.",by:'human'},
+    {q:"Ajoutez le sérum et la crème au panier.",a:"Not actioned after the transfer.",by:'human'},
+    {q:"Total + livraison gratuite / réduction 1ère commande ?",a:"Not answered after the transfer.",by:'human'}
+   ]},
 
-function render(){
-  const D = DATA[mode];
-  const isShop = mode==='shopping';
-  // tags
-  document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===mode));
-  ['lat-modetag','q-modetag','c-modetag'].forEach(id=>{ const e=document.getElementById(id); e.className='modetag '+mode; e.textContent= isShop?'Shopping Assistant':'Support only'; });
-  document.getElementById('togglehint').textContent = isShop
-    ? 'Showing discovery conversations where the shopper asks for a product recommendation.'
-    : 'Showing pure support questions — shipping and returns/policy.';
-  document.getElementById('lat-lead').innerHTML = isShop
-    ? 'Time to a full <strong>product recommendation</strong>. 🚩 = the assistant <strong>hands off to a human</strong> instead of recommending — a real capability limitation (it can\'t complete the sale), not a fast result. Lower is better, but only if it actually recommends.'
-    : 'Time to a full answer on shipping / returns questions. Lower is better.';
-  document.getElementById('q-lead').innerHTML = isShop
-    ? 'Quality of the <strong>product recommendation</strong> (specificity + a real path to buy). 0 = escalated / no recommendation.'
-    : 'Quality of <strong>support answers</strong> (accuracy, completeness, clarity). Average of the FAQ + policy scores.';
+  {id:'sierra-casper', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
+   lat:'~8.2s', latPct:41, success:'✓', successTxt:'completed', successCls:'p-ok',
+   what:'Legacy single-conversation run: streamed a real recommendation with interactive Add-to-Cart cards; did not hand off. Pending standardized 10-turn re-test + a 2nd store.',
+   caps:{qr:1,cards:1,reviews:2,completes:1}, turns:[]},
+  {id:'siena-simplemodern', vendor:'Siena', store:'Simple Modern', site:'simplemodern.com', url:'https://www.simplemodern.com', method:'legacy', us:false,
+   lat:'~10s', latPct:50, success:'~', successTxt:'partial', successCls:'p-mid',
+   what:'Legacy run: answered product questions but tended to defer to product pages; soft-handover on returns. Pending standardized re-test + a 2nd store.',
+   caps:{qr:2,cards:0,reviews:2,completes:2}, turns:[]},
+  {id:'yuma-evryjewels', vendor:'Yuma', store:'EvryJewels', site:'evryjewels.com', url:'https://evryjewels.com', method:'legacy', us:false,
+   lat:'~13.8s', latPct:69, success:'✓', successTxt:'completed', successCls:'p-ok',
+   what:'Legacy run (Yuma runs behind Gorgias Chat): gave a text recommendation, no handoff, but only gestured at collections. Pending re-test + a 2nd store.',
+   caps:{qr:2,cards:0,reviews:2,completes:1}, turns:[]},
+  {id:'dg-bloomwild', vendor:'DigitalGenius', store:'Bloom & Wild', site:'bloomandwild.com', url:'https://www.bloomandwild.com', method:'legacy', us:false,
+   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
+   what:'Legacy run: escalated the product-recommendation question to a human on turn 1 (agents unavailable → ticket flow). No recommendation. Pending re-test + a 2nd store.',
+   caps:{qr:2,cards:2,reviews:2,completes:0}, turns:[]},
+  {id:'meta-dermalogica', vendor:'Meta AI', store:'Dermalogica', site:'dermalogica.com', url:'https://www.dermalogica.com', method:'legacy', us:false,
+   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
+   what:'Legacy run (front-end is Zendesk\'s Virtual Assistant): escalated the product question to a human lead-capture form. No recommendation. Pending re-test + a 2nd store.',
+   caps:{qr:2,cards:2,reviews:2,completes:0}, turns:[]},
+  {id:'ada-loop', vendor:'Ada', store:'Loop Earplugs', site:'loopearplugs.com', url:'https://www.loopearplugs.com', method:'down', us:false,
+   lat:'down', latPct:0, success:null, successTxt:'backend down', successCls:'p-na',
+   what:'Ada bot backend was unavailable on the test days. Pending a working run + a 2nd store.',
+   caps:{qr:2,cards:2,reviews:2,completes:2}, turns:[]},
+];
 
-  // ---- chart ----
-  const maxLat = 20;
-  const chart = document.getElementById('chart');
-  chart.innerHTML = D.order.map(k=>{
-    const r=D.rows[k], v=V[k];
-    if(r.lat==='down') return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill none" style="width:100%">⚠ backend down — not measurable</div></div><div class="cnote">${v.client}</div></div>`;
-    if(r.lat==null) return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill none" style="width:100%">🚩 hands off to a human — capability limitation</div></div><div class="cnote">${v.client}</div></div>`;
-    const pct=Math.min(100,(r.lat/maxLat)*100);
-    return `<div class="crow"><div class="cl" style="color:${v.color}">${v.name}${v.us?' · us':''}</div><div class="ctrack"><div class="cfill" style="width:${pct}%;background:${v.color}">${r.lat.toFixed(1)}s</div></div><div class="cnote">${v.client}</div></div>`;
-  }).join('');
-
-  // ---- quality table ----
-  document.getElementById('q-head').innerHTML = `<tr><th>Vendor</th><th class="n">${isShop?'Product-rec quality':'Support quality'}</th><th>Judge takeaway</th></tr>`;
-  document.getElementById('q-body').innerHTML = D.order.map(k=>{
-    const r=D.rows[k], v=V[k];
-    const qs = r.q==null ? '—' : r.q.toFixed(1);
-    const col = r.q==null?'':(r.q>=4.5?'var(--success)':r.q>=3?'':(r.q>=1?'var(--warning)':'var(--danger)'));
-    return `<tr class="${v.us?'us-row':''}"><td><span class="vdot" style="background:${v.color}"></span>${v.name} ${v.us?'<span class="us-tag">us</span>':''}</td><td class="n mono" style="font-weight:800;color:${col}">${qs}</td><td>${r.qnote}</td></tr>`;
-  }).join('');
-
-  // ---- conversations ----
-  const tabs=document.getElementById('conv-tabs');
-  const withConv = D.order.filter(k=>D.conv[k] && D.conv[k].length);
-  tabs.innerHTML = withConv.map((k,i)=>`<button class="tab" aria-selected="${i===0}" onclick="showConv('${k}')">${V[k].name}${V[k].us?' · us':''}</button>`).join('');
-  if(withConv.length) showConv(withConv[0]);
-  else document.getElementById('conv-body').innerHTML='<div class="emptymsg">No conversation recorded for this mode.</div>';
+function pillFor(s){
+  if(s.success===100) return '<span class="pill p-ok">100% · '+s.successTxt+'</span>';
+  if(typeof s.success==='number'){ const cls = s.success>=70?'p-ok':s.success>=40?'p-mid':'p-bad'; return '<span class="pill '+cls+'">'+s.success+'% · '+s.successTxt+'</span>'; }
+  if(s.success===null) return '<span class="pill p-na">'+(s.successTxt||'pending')+'</span>';
+  return '<span class="pill '+(s.successCls||'p-na')+'">'+s.successTxt+'</span>';
 }
-function showConv(k){
-  document.querySelectorAll('#conv-tabs .tab').forEach(t=>t.setAttribute('aria-selected', t.textContent.startsWith(V[k].name)));
-  const turns=DATA[mode].conv[k]||[];
-  const bot = V[k].name+' · '+V[k].client.split('·').pop().trim();
-  document.getElementById('conv-body').innerHTML = turns.map((t,i)=>{
-    let lat, cls;
-    if(t.lat!=null){ lat=t.lat.toFixed(1)+'s'; cls=latClass(t.lat); }
-    else if(t.note==='handover'){ lat='🚩 handover'; cls='l-none'; }
-    else { lat='⏱ n/a'; cls='l-mid'; }   // real reply, latency not cleanly timed
-    return `<div class="turn"><div class="th"><span class="tn">T${i+1}</span><span class="tq">${t.q}</span><span class="lat ${cls}">${lat}</span></div>
-      <div class="msg u"><div class="av u">U</div><div><div class="mr">Shopper</div><div class="mt">${t.q}</div></div></div>
-      <div class="msg b"><div class="av b">AI</div><div><div class="mr">${bot}</div><div class="mt">${t.a}</div></div></div></div>`;
-  }).join('') || '<div class="emptymsg">No conversation recorded.</div>';
+function vcell(s){
+  return '<span class="vdot" style="background:'+(COL[s.vendor]||'#888')+'"></span><span class="vname">'+s.vendor+'</span>'+(s.us?'<span class="us-tag">US</span>':'')+'<br><span class="site">'+(s.url?'<a class="site" href="'+s.url+'" target="_blank" rel="noopener">'+s.store+' · '+s.site+'</a>':s.store)+'</span>';
 }
-function setMode(m){ mode=m; render(); }
-render();
+function methodCell(s){
+  if(s.method==='new') return '<span class="pill p-ok" style="background:#ede9fe;color:#6d28d9">new</span>';
+  if(s.method==='legacy') return '<span class="pill p-na">legacy</span>';
+  if(s.method==='down') return '<span class="pill p-na">down</span>';
+  return '<span class="pill p-na">pending</span>';
+}
+// results table grouped by vendor
+(function(){
+  let html='', lastV=null;
+  STORES.forEach(s=>{
+    if(s.vendor!==lastV){ html+='<tr class="grp-row"><td colspan="5">'+s.vendor+'</td></tr>'; lastV=s.vendor; }
+    const latBar = (typeof s.latPct==='number' && s.method!=='pending') ? '<div class="bar" style="display:inline-block;width:70px;vertical-align:middle"><i style="width:'+s.latPct+'%;background:'+(COL[s.vendor]||'#888')+'"></i></div> ' : '';
+    html+='<tr class="'+(s.method==='legacy'?'legacy':'')+'">'+
+      '<td>'+vcell(s)+'</td>'+
+      '<td class="hide-sm">'+methodCell(s)+'</td>'+
+      '<td class="n mono">'+latBar+'<span style="font-weight:700">'+(s.lat||'—')+'</span></td>'+
+      '<td>'+pillFor(s)+'</td>'+
+      '<td class="hide-sm note" style="font-size:12px">'+(s.what||'')+'</td>'+
+      '</tr>';
+  });
+  document.getElementById('results-body').innerHTML=html;
+})();
+// capability matrix
+(function(){
+  const sym = v => v===1?'<span class="y">●</span>':v===0?'<span class="n">●</span>':'<span class="p">●</span>';
+  let html='';
+  STORES.filter(s=>s.method==='new'||s.method==='legacy').forEach(s=>{
+    html+='<tr><td><span class="vdot" style="background:'+(COL[s.vendor]||'#888')+'"></span>'+s.store+' <span class="site">'+s.vendor+'</span></td>'+
+      '<td>'+sym(s.caps.qr)+'</td><td>'+sym(s.caps.cards)+'</td><td>'+sym(s.caps.reviews)+'</td><td>'+sym(s.caps.completes)+'</td></tr>';
+  });
+  document.getElementById('matrix-body').innerHTML=html;
+})();
+// conversation drill-down
+const CONV = STORES.filter(s=>s.turns && s.turns.length);
+function showConv(id){
+  const s = CONV.find(x=>x.id===id);
+  document.querySelectorAll('#conv-tabs .tab').forEach(t=>t.setAttribute('aria-selected', t.dataset.id===id));
+  document.getElementById('conv-head').innerHTML =
+    '<span class="vdot" style="background:'+(COL[s.vendor]||'#888')+'"></span><span class="lbl">'+s.store+'</span>'+
+    '<span class="site">'+s.vendor+' · '+(s.url?'<a class="site" href="'+s.url+'" target="_blank" rel="noopener">'+s.site+'</a>':s.site)+'</span>'+
+    '&nbsp;'+pillFor(s)+'<span class="lat" style="margin-left:auto">latency '+s.lat+'</span>';
+  document.getElementById('conv-body').innerHTML = s.turns.map((t,i)=>{
+    const human = t.by==='human';
+    return '<div class="turn"><div class="th"><span class="tn">T'+(i+1)+'</span><span class="tq">'+t.q+'</span>'+(human?'<span class="badge-h">🚩 human handover</span>':'')+'</div>'+
+      '<div class="msg"><div class="av u">U</div><div class="mt">'+t.q+'</div></div>'+
+      '<div class="msg"><div class="av '+(human?'h':'b')+'">'+(human?'H':'AI')+'</div><div class="mt">'+t.a+'</div></div></div>';
+  }).join('');
+}
+(function(){
+  document.getElementById('conv-tabs').innerHTML = CONV.map((s,i)=>'<button class="tab" data-id="'+s.id+'" aria-selected="'+(i===0)+'" onclick="showConv(\''+s.id+'\')">'+s.store+' · '+s.vendor+(s.us?' (us)':'')+'</button>').join('');
+  if(CONV.length) showConv(CONV[0].id);
+})();
 </script>
 </body>
 </html>

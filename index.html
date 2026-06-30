@@ -3,93 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chat Latency Benchmark — Siena · Sierra · Ada · Yuma</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<title>AI Shopping Assistant Benchmark — Gorgias R&D</title>
+<meta http-equiv="refresh" content="0; url=report.html">
+<link rel="canonical" href="report.html">
 <style>
-  :root{
-    --bg:#f6f7f9;--surface:#fff;--surface-2:#f1f3f6;--line:#e6e8ee;
-    --on:#0e1116;--on-muted:#5a6473;--on-faint:#8b94a3;--primary:#4f46e5;
-    --sierra:#0f766e;--siena:#4f46e5;--ada:#b45309;--yuma:#9333ea;--dg:#db2777;--gorgias:#15803d;--meta:#0891b2;
-    --e8:0 8px 24px rgba(13,18,28,.08);--r:14px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--on);-webkit-font-smoothing:antialiased;min-height:100vh}
-  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
-  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
-  .hero{background:linear-gradient(180deg,#0e1116,#171c26);color:#fff;padding:64px 0 72px;text-align:center}
-  .hero .eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8b94a3}
-  .hero h1{font-size:38px;font-weight:800;letter-spacing:-.025em;margin:14px auto 16px;max-width:680px;line-height:1.1}
-  .hero p{font-size:16px;color:#aab2c0;max-width:600px;margin:0 auto;line-height:1.6}
-  .kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:-40px;position:relative;z-index:2}
-  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--e8);padding:20px;text-align:center;position:relative;overflow:hidden}
-  .kpi .accent{position:absolute;top:0;left:0;right:0;height:4px}
-  .kpi .v{font-size:26px;font-weight:800;letter-spacing:-.03em;margin-bottom:4px}
-  .kpi .l{font-size:11px;color:var(--on-muted)}
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
-  a.card{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:28px;text-decoration:none;color:inherit;transition:transform .18s ease,box-shadow .18s ease}
-  a.card:hover{transform:translateY(-4px);box-shadow:var(--e8)}
-  a.card .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--primary)}
-  a.card h2{font-size:20px;font-weight:800;margin:8px 0 6px;letter-spacing:-.01em}
-  a.card p{font-size:13px;color:var(--on-muted);line-height:1.55}
-  a.card .go{margin-top:16px;font-size:13px;font-weight:700;color:var(--primary)}
-  .src{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px;margin-top:18px}
-  .src h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--on-muted);margin-bottom:14px}
-  .src ul{list-style:none}
-  .src li{padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;display:flex;gap:12px;align-items:baseline}
-  .src li:last-child{border-bottom:none}
-  .src code{background:var(--surface-2);padding:2px 8px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace}
-  .src a{color:var(--primary);text-decoration:none}
-  .foot{text-align:center;font-size:12px;color:var(--on-faint);padding:32px}
-  @media(max-width:760px){.kpis{grid-template-columns:1fr 1fr;margin-top:-28px}.cards{grid-template-columns:1fr}.hero h1{font-size:28px}}
-  @media (prefers-reduced-motion: reduce){a.card{transition:none}}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0e1116;color:#fff;display:grid;place-items:center;height:100vh;margin:0;text-align:center}
+  a{color:#a5b4fc}
 </style>
 </head>
 <body>
-<header class="hero">
-  <div class="wrap">
-    <div class="eyebrow">Gorgias R&amp;D · Competitor Intelligence</div>
-    <h1>AI Chat Benchmark — Shopping vs Support</h1>
-    <p>Live latency &amp; answer-quality tests of competitor on-site AI assistants, split into two modes — Shopping Assistant (discovery → product rec) and Support only (FAQ &amp; policy) — with a toggle in the report. Source &amp; raw results included.</p>
+  <div>
+    <p>Redirecting to the benchmark report…</p>
+    <p><a href="report.html">Open the report &rarr;</a></p>
   </div>
-</header>
-<div class="wrap">
-  <div class="kpis">
-    <div class="kpi"><div class="accent" style="background:var(--sierra)"></div><div class="v mono" style="color:var(--sierra)">7.4s</div><div class="l">Sierra · Casper</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--siena)"></div><div class="v mono" style="color:var(--siena)">9.8s</div><div class="l">Siena · Simple Modern</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--dg)"></div><div class="v mono" style="color:var(--dg)">10.2s</div><div class="l">DigitalGenius · Bloom &amp; Wild</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--meta)"></div><div class="v mono" style="color:var(--meta)">~5s</div><div class="l">Meta AI · Dermalogica (no rec)</div></div>
-    <div class="kpi" style="outline:2px solid var(--gorgias)"><div class="accent" style="background:var(--gorgias)"></div><div class="v mono" style="color:var(--gorgias)">20s</div><div class="l">Gorgias · Glamnetic (us) · product rec</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--yuma)"></div><div class="v mono" style="color:var(--yuma)">14.3s</div><div class="l">Yuma · EvryJewels</div></div>
-    <div class="kpi"><div class="accent" style="background:var(--ada)"></div><div class="v mono" style="color:var(--ada)">down</div><div class="l">Ada · Loop</div></div>
-  </div>
-  <div class="cards">
-    <a class="card" href="report.html">
-      <div class="tag">Main report</div><h2>Competitor comparison →</h2>
-      <p>Toggle between <strong>Shopping Assistant</strong> and <strong>Support</strong> modes to compare latency, blind answer-quality scores, and recorded conversations across all 7 vendors.</p>
-      <div class="go">Open the benchmark report →</div></a>
-    <a class="card" href="results.html">
-      <div class="tag">Deep dive</div><h2>Siena · Simple Modern →</h2>
-      <p>The original 10-turn Siena benchmark: per-turn latency chart and the full recorded conversation with "Maddie".</p>
-      <div class="go">Open the Siena results →</div></a>
-  </div>
-  <div class="src">
-    <h3>Source &amp; data</h3>
-    <ul>
-      <li><code>report.html</code><span>Combined comparison report (Siena · Sierra · Ada · Yuma)</span></li>
-      <li><code>data_sierra.json</code><span>Sierra (Casper) raw latencies + recorded answers</span></li>
-      <li><code>data_yuma.json</code><span>Yuma (EvryJewels) raw latencies + recorded answers</span></li>
-      <li><code>data_digitalgenius.json</code><span>DigitalGenius (Bloom &amp; Wild) raw latencies + recorded answers</span></li>
-      <li><code>data_gorgias.json</code><span>Gorgias (Glamnetic, live store) raw latencies + recorded shopping &amp; support answers</span></li>
-      <li><code>data_metaai.json</code><span>Meta AI / Dermalogica (Zendesk assistant) — FAQ latency + escalation finding</span></li>
-      <li><code>data_quality_eval.json</code><span>Blind LLM-judge answer-quality scores (3-judge panel) per vendor</span></li>
-      <li><code>benchmark.py</code> / <code>benchmark.js</code><span>Siena methodology + reproducible browser runner</span></li>
-      <li><a href="https://github.com/gorgias/ai-chat-latency-benchmark">View the full source on GitHub →</a></li>
-    </ul>
-  </div>
-</div>
-<div class="foot">Competitor intelligence · methodology &amp; caveats in the report · 2026-06-29</div>
+  <script>location.replace('report.html');</script>
 </body>
 </html>
