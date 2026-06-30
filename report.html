@@ -90,7 +90,7 @@
     <p>Same ~10-turn shopping-discovery conversation run on each store's live on-site AI assistant. We measure two things: <strong>response latency</strong> and the <strong>success rate</strong> — the share of turns the AI handles itself, <em>without spontaneously handing off to a human</em>. We never ask for a human; an unprompted handover on a normal question is the failure we're measuring.</p>
     <div class="chips">
       <span class="chip">Spiffy.ai · Supergoop</span>
-      <span class="chip">Gorgias · Glamnetic / Madura / Masderm</span>
+      <span class="chip">Gorgias · Madura / Masderm</span>
       <span class="chip">Sierra · Siena · Yuma · DigitalGenius · Meta AI · Ada</span>
       <span class="chip">Tests · 2026-06</span>
     </div>
@@ -106,6 +106,15 @@
 <p class="lead" id="mode-note" style="text-align:center;margin:0 auto 6px">Shopping-discovery conversations that must end in a real product recommendation.</p>
 
 <section>
+  <h2 class="sec">Summary — by vendor</h2>
+  <p class="lead">One line per vendor, <strong>averaged across the stores tested in this mode</strong>. Drill into individual stores in the table below. (Legacy single-store success is mapped to a proxy: completed = 100%, partial = 50%, handover = 0%.)</p>
+  <div class="card" style="overflow:hidden">
+    <table><thead><tr><th>Vendor</th><th class="n">Stores</th><th class="n">Avg latency</th><th>Avg success (no handover)</th></tr></thead>
+      <tbody id="summary-body"></tbody></table>
+  </div>
+</section>
+
+<section>
   <h2 class="sec">Results — per store</h2>
   <p class="lead">Each row is one live store. <strong>Latency</strong> = time to a full answer. <strong>Success</strong> = % of the 10 turns the AI answered itself with no human handover. Stores marked <span class="pill p-na">legacy</span> were measured earlier on a single conversation and are pending a standardized re-test; their success figure reflects observed handover behavior, not a precise 10-turn rate.</p>
   <div class="toggle-tabs" id="store-filter"></div>
@@ -118,7 +127,7 @@
     </table>
   </div>
   <div class="callout">
-    <b>Read it straight (with the fair-comparison nuance):</b> The clearest separator isn't speed — it's <b>whether the assistant finishes the shopping job or bails to a human</b>. <b>Spiffy.ai (Supergoop) completed 100%</b> of a 10-turn discovery. For Gorgias, the result is <b>merchant-configuration-driven, not a fixed capability</b>: <b>Glamnetic (Gorgias) also completed 100%</b> with Add-to-Cart cards, while <b>Madura</b> hands to a human agent at ~turn 5 and <b>Masderm</b> transfers to a human + email-gate at turn 3. Same vendor, opposite outcomes — the difference is how each merchant configured escalation, not the engine.
+    <b>Read it straight (with the fair-comparison nuance):</b> The clearest separator isn't speed — it's <b>whether the assistant finishes the shopping job or bails to a human</b>. <b>Spiffy.ai (Supergoop) completed 100%</b> of a 10-turn discovery and never handed off. The two Gorgias stores both escalate early — <b>Madura</b> hands to a human agent at ~turn 5, <b>Masderm</b> transfers to a human + email-gate at turn 3. That's <b>merchant-configuration-driven</b> (login/email gating, agent routing), not a fixed engine limit — a sales-tuned setup can keep the AI in the driver's seat — but as configured today, these two stores don't complete the shopping journey on their own.
   </div>
 </section>
 
@@ -127,7 +136,7 @@
   <p class="lead">Beyond answering: does it use <strong>quick replies</strong> (suggested chips), render <strong>product cards</strong> ("pull cards" with price/links), surface <strong>reviews</strong>, and <strong>complete the sale</strong> itself? <span class="matrix"><span class="y">●</span> yes · <span class="n">●</span> no · <span class="p">●</span> not yet tested</span></p>
   <div class="card" style="overflow:hidden">
     <table class="matrix"><thead><tr>
-      <th>Store</th><th>Quick replies</th><th>Product cards</th><th>Reviews</th><th>Completes sale (no handoff)</th>
+      <th>Store</th><th>Quick replies</th><th>Product cards</th><th>Reviews</th><th>Completes sale (no handoff)</th><th class="n">Score</th>
     </tr></thead><tbody id="matrix-body"></tbody></table>
   </div>
 </section>
@@ -148,7 +157,7 @@
     <p>• <strong>One standardized shopping script per store</strong> — open ask → needs/context → budget → compare two → objection → secondary need → bundle → best-seller → add to cart → total/shipping — adapted to each catalog so it's apples-to-apples. We <strong>never request a human</strong>; any handover is therefore unprompted.</p>
     <p style="margin-top:8px">• <strong>"Spiffy.ai" on Supergoop</strong> is the vendor actually serving Supergoop's on-site assistant (the user originally referred to it as "Envive"; the live widget is Spiffy.ai — <span class="mono">commerce-api.spiffy.ai</span>, <span class="mono">spiffy-*</span> components).</p>
     <p style="margin-top:8px">• <strong>Latency is directional</strong> — different catalogs, single test windows, and some session/timing noise. Treat cross-store numbers as indicative, and read the success column alongside speed.</p>
-    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; its three stores are real customer storefronts with their own escalation settings — Glamnetic completes the sale, Madura/Masderm escalate early by configuration.</p>
+    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; the two stores tested (Madura, Masderm) are real customer storefronts with their own escalation settings — both escalate to a human early in a shopping chat by configuration (login/email gating, agent routing), which a sales-tuned setup can change.</p>
     <p style="margin-top:8px">• <strong>Coverage in progress.</strong> The 2nd store for each competitor and standardized re-tests of the legacy single-store vendors are being added; this page updates as they land.</p>
   </div>
 </section>
@@ -178,22 +187,6 @@ const STORES = [
    ]},
   {id:'spiffy-2', vendor:'Spiffy.ai', store:'(2nd store)', site:'pending', method:'pending', us:false, lat:'—', success:null, what:'A second Spiffy.ai store is being added.', caps:{qr:2,cards:2,reviews:2,completes:2}, turns:[]},
 
-  {id:'gorgias-glamnetic', vendor:'Gorgias', store:'Glamnetic', site:'glamnetic.com', url:'https://www.glamnetic.com', method:'new', us:true,
-   lat:'~20s', latPct:100, success:100, successTxt:'10/10',
-   what:'Completed the journey: interactive Add-to-Cart cards, multi-item & cross-category recs (nails→lash→liner), bundle reasoning; honest about limits.',
-   caps:{qr:1,cards:1,reviews:0,completes:1},
-   turns:[
-    {q:"New to press-ons, weak/short nails — longest-lasting that won't damage?",a:"Cards: Think Pink $15.99 · Pinky Promise $17.99 · Short & Suite $34.18 + advice (glue-on lasts ~2wks; nail tabs for weak nails).",by:'ai'},
-    {q:"Natural, neutral look — most beginner-friendly?",a:"Card: Ma Damn $15.99 (short almond, semi-transparent base + white French tip).",by:'ai'},
-    {q:"How long does it last + safe apply/remove on weak nails?",a:"Up to 2 weeks; detailed safe application + soak-off removal steps.",by:'ai'},
-    {q:"Small/narrow nails — how do I get the fit right?",a:"Sizing (Short Almond 6.3–14.01mm, 24 nails/12 sizes, file to fit); offers a photo-based fit check.",by:'ai'},
-    {q:"Anything else to apply safely — prep/glue/tabs?",a:"Cards: Pressed to Perfection $16.18 · Brush-On Glue $7.99 · Remover $12.99 + reasoning.",by:'ai'},
-    {q:"Total for Ma Damn + the bundle, and a first-order discount?",a:"$32.17 before tax/ship; 20% new-customer offer link; honest that no code is confirmed in chat.",by:'ai'},
-    {q:"How fast is US shipping, free shipping on both?",a:"Knowledge gap — couldn't confirm shipping ETA / threshold; deflected to products.",by:'ai'},
-    {q:"Add Ma Damn + the bundle to my cart.",a:"Can't add directly, but surfaces the cards + checkout quick-replies.",by:'ai'},
-    {q:"A magnetic lash to match this natural look?",a:"Card: Virgo $19.99 (most natural lash) + magnetic-liner options as chips.",by:'ai'},
-    {q:"Classic black liner + checkout + the 20% offer?",a:"Card: Magnetic Eyeliner Pen Black $27.99; checkout guidance + offer link; offers to line up the full set.",by:'ai'}
-   ]},
   {id:'gorgias-madura', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
    lat:'~13s', latPct:65, success:40, successTxt:'4/10',
    what:'AI answered 4 turns well (curtain guidance, neutral tones, blackout-vs-sheer), then a HUMAN agent "Sébastien" joined at ~turn 5 and repeated a canned macro — sale not completed.',
@@ -255,20 +248,9 @@ const STORES = [
 
 // ---- SUPPORT mode: same stores, support questions (shipping/returns/policy) ----
 const SUPPORT = [
-  {id:'gorgias-glamnetic-sup', vendor:'Gorgias', store:'Glamnetic', site:'glamnetic.com', url:'https://www.glamnetic.com', method:'new', us:true,
-   lat:'~19s', latPct:95, success:100, successTxt:'9/9',
-   what:'Answered every support question itself: returns (14-day, $8 fee, refund vs gift card), shipping/tracking, Canada customs & duties, discount-code fixes, cruelty-free/vegan. Order-specific cases gated behind account login. No spontaneous handover.',
-   turns:[
-    {q:"Placed an order days ago, still no tracking — how long to ship + send tracking?",a:"Ships within 48 business hours; tracking on dispatch; US standard 3–7 business days; flag if no confirmation within 5 business days.",by:'ai'},
-    {q:"Return policy — can I return opened press-on nails?",a:"14 days, original condition + packaging only; opened/used not eligible. Refund (−$8 return shipping) or gift card (no fee); refunds in 3–5 business days.",by:'ai'},
-    {q:"A couple of nails arrived broken — what do you do?",a:"Damaged-item issue (not a standard return); asks to log in to look up the order for next steps.",by:'ai'},
-    {q:"Change the shipping address on an order placed this morning?",a:"Possible if not yet shipped; needs login to check + update if eligible.",by:'ai'},
-    {q:"Cancel an order shortly after placing? Cancellation window?",a:"Processed in 24–48h; cancellation only before fulfilment; login to check.",by:'ai'},
-    {q:"Ship to Canada? Who covers customs/duties?",a:"Ships to Canada (8–14 business days); customs/duties paid by customer; possible 25% tariff on certain US-origin products + ~5–15% duty over $150 CAD; free standard shipping over $65 USD.",by:'ai'},
-    {q:"Discount code won't apply at checkout — reasons + fix?",a:"Expired / excluded items / minimum not met / another promo applied; enter exactly, remove other codes; offers to check the specific code + cart.",by:'ai'},
-    {q:"Cruelty-free and vegan? I have sensitive skin.",a:"Cruelty-free (nails + lashes); press-on nails vegan; nail tabs gentler than glue (ethyl cyanoacrylate + PMMA).",by:'ai'},
-    {q:"Tracking says delivered but never arrived — refund or replacement?",a:"Empathetic; defers to login/order lookup to decide replacement vs refund.",by:'ai'}
-   ]},
+  {id:'gorgias-sup-pending', vendor:'Gorgias', store:'Madura / Masderm', site:'pending', method:'pending', us:true,
+   lat:'—', success:null, successTxt:'pending',
+   what:'Support not yet run on the current Gorgias stores (Madura, Masderm) with the standardized method.', turns:[]},
   {id:'sierra-casper-sup', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
    lat:'~6.5s', latPct:33, success:'✓', successTxt:'completed', successCls:'p-ok',
    what:'Specific, complete shipping + 100-night trial/returns + financing answers; no handover.',
@@ -335,6 +317,35 @@ function methodCell(s){
   return '<span class="pill p-na">pending</span>';
 }
 // ---- mode-aware rendering ----
+function sNum(s){
+  if(typeof s.success==='number') return s.success;
+  if(s.success==='✓'||s.successTxt==='completed') return 100;
+  if(s.success==='~'||s.successTxt==='partial') return 50;
+  if(s.successTxt==='handover') return 0;
+  return null;
+}
+function latNum(s){ const m=(s.lat||'').match(/[\d.]+/); return m?parseFloat(m[0]):null; }
+function renderSummary(){
+  const byV={};
+  AS().forEach(s=>{ (byV[s.vendor]=byV[s.vendor]||[]).push(s); });
+  let html='';
+  Object.keys(byV).forEach(v=>{
+    const arr=byV[v];
+    const tested=arr.filter(s=>s.method==='new'||s.method==='legacy');
+    const sN=arr.map(sNum).filter(x=>x!=null);
+    const lN=arr.map(latNum).filter(x=>x!=null);
+    const avgS = sN.length? Math.round(sN.reduce((a,b)=>a+b,0)/sN.length) : null;
+    const avgL = lN.length? (Math.round(lN.reduce((a,b)=>a+b,0)/lN.length*10)/10) : null;
+    const cls = avgS==null?'p-na':avgS>=70?'p-ok':avgS>=40?'p-mid':'p-bad';
+    const pill = avgS==null?'<span class="pill p-na">pending</span>':'<span class="pill '+cls+'">'+avgS+'%</span>';
+    const bar = avgL!=null? '<div class="bar" style="display:inline-block;width:70px;vertical-align:middle"><i style="width:'+Math.min(100,avgL/20*100)+'%;background:'+(COL[v]||'#888')+'"></i></div> ':'';
+    html+='<tr><td><span class="vdot" style="background:'+(COL[v]||'#888')+'"></span><span class="vname">'+v+'</span>'+(arr[0].us?'<span class="us-tag">US</span>':'')+'</td>'+
+      '<td class="n mono">'+tested.length+'</td>'+
+      '<td class="n mono">'+bar+'<span style="font-weight:700">'+(avgL!=null?('~'+avgL+'s'):'—')+'</span></td>'+
+      '<td>'+pill+'</td></tr>';
+  });
+  document.getElementById('summary-body').innerHTML=html;
+}
 function renderResults(){
   let html='', lastV=null;
   AS().forEach(s=>{
@@ -354,8 +365,13 @@ function renderMatrix(){
   const sym = v => v===1?'<span class="y">●</span>':v===0?'<span class="n">●</span>':'<span class="p">●</span>';
   let html='';
   AS().filter(s=>(s.method==='new'||s.method==='legacy') && s.caps).forEach(s=>{
+    const c=s.caps, dims=[c.qr,c.cards,c.reviews,c.completes];
+    const yes=dims.filter(v=>v===1).length, tested=dims.filter(v=>v===0||v===1).length;
+    const scoreTxt = tested? yes+'/4' : 'n/t';
+    const sc = !tested ? 'var(--on-faint)' : (yes>=3?'var(--success)':yes>=2?'var(--warning)':'var(--danger)');
     html+='<tr data-v="'+s.vendor+'"><td><span class="vdot" style="background:'+(COL[s.vendor]||'#888')+'"></span>'+s.store+' <span class="site">'+s.vendor+'</span></td>'+
-      '<td>'+sym(s.caps.qr)+'</td><td>'+sym(s.caps.cards)+'</td><td>'+sym(s.caps.reviews)+'</td><td>'+sym(s.caps.completes)+'</td></tr>';
+      '<td>'+sym(c.qr)+'</td><td>'+sym(c.cards)+'</td><td>'+sym(c.reviews)+'</td><td>'+sym(c.completes)+'</td>'+
+      '<td class="n mono" style="font-weight:800;color:'+sc+'">'+scoreTxt+'</td></tr>';
   });
   document.getElementById('matrix-body').innerHTML=html;
 }
@@ -393,7 +409,7 @@ function filterBy(v){
   });
 }
 function renderAll(){
-  renderResults(); renderMatrix(); renderConv(); renderFilter();
+  renderSummary(); renderResults(); renderMatrix(); renderConv(); renderFilter();
   document.getElementById('caps-sec').style.display = (MODE==='shopping') ? '' : 'none';
   document.getElementById('mode-note').textContent = (MODE==='shopping')
     ? 'Shopping-discovery conversations that must end in a real product recommendation.'
