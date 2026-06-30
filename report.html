@@ -248,9 +248,12 @@ const STORES = [
 
 // ---- SUPPORT mode: same stores, support questions (shipping/returns/policy) ----
 const SUPPORT = [
-  {id:'gorgias-sup-pending', vendor:'Gorgias', store:'Madura / Masderm', site:'pending', method:'pending', us:true,
-   lat:'—', success:null, successTxt:'pending',
-   what:'Support not yet run on the current Gorgias stores (Madura, Masderm) with the standardized method.', turns:[]},
+  {id:'gorgias-madura-sup', vendor:'Gorgias', store:'Madura', site:'madura.com/en', url:'https://www.madura.com/en', method:'new', us:true,
+   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
+   what:'Routes support to a human by configuration — a human agent ("Sébastien") owns the thread and new questions queue for the agent rather than getting a self-served AI answer. (Cross-origin warm session can\'t be reset from the page; a clean cold run needs a fresh browser profile.)', turns:[]},
+  {id:'gorgias-masderm-sup', vendor:'Gorgias', store:'Masderm', site:'masderm.com/fr', url:'https://masderm.com/fr', method:'new', us:true,
+   lat:'🚩', latPct:0, success:0, successTxt:'handover', successCls:'p-bad',
+   what:'Transfers to a human + email gate (same config as its shopping flow: "je transfère votre demande à un conseiller humain… laissez votre e-mail"). The AI does not self-serve support to completion.', turns:[]},
   {id:'sierra-casper-sup', vendor:'Sierra', store:'Casper', site:'casper.com', url:'https://casper.com', method:'legacy', us:false,
    lat:'~6.5s', latPct:33, success:'✓', successTxt:'completed', successCls:'p-ok',
    what:'Specific, complete shipping + 100-night trial/returns + financing answers; no handover.',
