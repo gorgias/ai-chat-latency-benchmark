@@ -209,6 +209,55 @@ export const WIDGETS = {
       await page.keyboard.press("Enter");
     },
   },
+
+  // ---- NEW vendor harnesses (best-effort scaffolds; verify per widget) ----
+  // Rep AI — loads via initRep(); widget usually in a rep.ai / hellorep iframe.
+  repai: {
+    scope: { kind: "frame", match: "rep" },
+    async open(page) {
+      await page.waitForTimeout(4000); await dismiss(page);
+      await page.evaluate(() => { try { window.initRep?.(); } catch (e) {} document.querySelector('[id*="rep" i] button, [class*="rep-launcher" i], [aria-label*="chat" i]')?.click?.(); });
+      await page.waitForTimeout(4000);
+    },
+    async send(page, text) {
+      const f = page.frames().find(fr => /rep\.ai|hellorep|getrep/i.test(fr.url())); if (!f) return;
+      const i = f.locator('textarea, input[type="text"], [contenteditable="true"]').first();
+      await i.click({ timeout: 5000 }).catch(() => {}); await i.fill(text).catch(async () => { await i.type(text).catch(() => {}); });
+      await page.keyboard.press("Enter");
+    },
+  },
+  // Kodif — kodif-chat-widget iframe.
+  kodif: {
+    scope: { kind: "frame", match: "kodif" },
+    async open(page) {
+      await page.waitForTimeout(4000); await dismiss(page);
+      await page.evaluate(() => document.querySelector('#kodif-chat-widget, [id*="kodif" i], [class*="kodif" i]')?.click?.());
+      const f = await findFrame(page, "kodif");
+      if (f) { try { await f.locator('button, [role="button"]').first().click({ timeout: 2500 }); } catch (e) {} }
+      await page.waitForTimeout(3500);
+    },
+    async send(page, text) {
+      const f = await findFrame(page, "kodif"); if (!f) return;
+      const i = f.locator('textarea, input[type="text"], [contenteditable="true"]').first();
+      await i.click({ timeout: 5000 }).catch(() => {}); await i.fill(text).catch(async () => { await i.type(text).catch(() => {}); });
+      await page.keyboard.press("Enter");
+    },
+  },
+  // Humind — boostWidgetIntegration (FR). Widget tech TBD; best-effort.
+  humind: {
+    scope: { kind: "frame", match: "humind" },
+    async open(page) {
+      await page.waitForTimeout(4000); await dismiss(page);
+      await page.evaluate(() => document.querySelector('[id*="humind" i], [class*="humind" i], [class*="boost" i], [aria-label*="chat" i]')?.click?.());
+      await page.waitForTimeout(4000);
+    },
+    async send(page, text) {
+      const f = page.frames().find(fr => /humind|boost/i.test(fr.url())); if (!f) return;
+      const i = f.locator('textarea, input[type="text"], [contenteditable="true"]').first();
+      await i.click({ timeout: 5000 }).catch(() => {}); await i.fill(text).catch(async () => { await i.type(text).catch(() => {}); });
+      await page.keyboard.press("Enter");
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -254,6 +303,15 @@ export const STORES = [
   // Ada
   { key: "ada-loop", vendor: "Ada", store: "Loop Earplugs",            url: "https://www.loopearplugs.com/",    widget: "ada" },
   { key: "ada-2",    vendor: "Ada", store: "(2nd store)",             url: "",                                 widget: "ada", candidate: true, todo: "find a 2nd Ada retail storefront" },
+
+  // ---- Added on request (refresh). Detected chat tech in comments. ----
+  { key: "sierra-scotts",  vendor: "Sierra",  store: "Scotts Miracle-Gro", url: "https://scottsmiraclegro.com/", widget: "sierra" },
+  { key: "yuma-tediber",   vendor: "Yuma",    store: "Tediber",            url: "https://www.tediber.com/",      widget: "gorgias", locale: "fr-FR" }, // Yuma runs behind Gorgias Chat
+  { key: "envive-kut",     vendor: "Envive",  store: "Kut from the Kloth", url: "https://www.kutfromthekloth.com/", widget: "gorgias" }, // chat shell is Gorgias
+  { key: "repai-fresh",    vendor: "Rep AI",  store: "Fresh Roasted Coffee", url: "https://www.freshroastedcoffee.com/", widget: "repai", candidate: true },
+  { key: "kodif-dsc",      vendor: "Kodif",   store: "Dollar Shave Club",  url: "https://us.dollarshaveclub.com/", widget: "kodif", candidate: true },
+  { key: "humind-chaiselongue", vendor: "Humind", store: "La Chaise Longue", url: "https://www.lachaiselongue.fr/", widget: "humind", candidate: true, locale: "fr-FR" },
+  // Nordstrom — Google Agentic: SKIPPED (redirects to siteclosed.nordstrom.com; not accessible to us).
 ];
 
 // Find a frame by element id / title / name / url.

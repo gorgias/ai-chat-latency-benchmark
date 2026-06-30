@@ -11,111 +11,153 @@
     {
       "turn": 1,
       "q": "I placed an order a few days ago and still have no tracking — how long until it ships and I get a tracking number?",
-      "ttft_ms": 449,
-      "complete_ms": 12967,
-      "grew": 489,
+      "by": "ai",
+      "ttft_ms": 15117,
+      "complete_ms": 15117,
+      "grew": 390,
+      "ai_latency_ms": 15117,
       "handover": false,
       "handover_hit": null,
-      "replyTail": " your account first. Once you are logged in, we can look up your latest order and tell you where things stand. As a general guide, in-stock non-bulky items usually ship within 2 to 5 business days, and tracking is sent by email once the parcel is handed to the carrier.\n\n05:22 PM\nVerify order details"
+      "replyTail": " unable to look up your order details just yet. Please log in so we can check your latest order and tell you exactly when it should ship and when your tracking link will be sent.\n\nIn general, tracking is emailed automatically as soon as the carrier picks up the parcel.\n\n08:50 PM\nVerify order details"
     },
     {
       "turn": 2,
       "q": "How long does delivery usually take once it ships?",
-      "ttft_ms": 477,
-      "complete_ms": 9584,
-      "grew": 69,
+      "by": "ai",
+      "ttft_ms": 13969,
+      "complete_ms": 13969,
+      "grew": 426,
+      "ai_latency_ms": 13969,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "rder and tell you where things stand. As a general guide, in-stock non-bulky items usually ship within 2 to 5 business days, and tracking is sent by email once the parcel is handed to the carrier.\n\n05:22 PM\n5:22 PM. You said:\n\nHow long does delivery usually take once it ships?\n\n05:22 PM\nAlmost there"
+      "replyTail": "t type. For non-bulky items in France, it is typically 2 to 5 business days for Colissimo home delivery, or 4 to 7 business days for Colissimo or Mondial Relay pickup point delivery. For made-to-order furniture, delivery is usually arranged within 1 to 3 weeks after production is complete.\n\n08:51 PM"
     },
     {
       "turn": 3,
       "q": "What is your return policy?",
-      "ttft_ms": 390,
-      "complete_ms": 4611,
-      "grew": 67,
+      "by": "ai",
+      "ttft_ms": 16830,
+      "complete_ms": 16830,
+      "grew": 1229,
+      "ai_latency_ms": 16830,
       "handover": false,
       "handover_hit": null,
-      "replyTail": " or Mondial Relay. For bulky items, delivery is usually 2 to 4 weeks if in stock. Made-to-order furniture requires 8 to 10 weeks of production first, then delivery is typically arranged within 1 to 3 weeks after production.\n\n05:22 PM\n5:22 PM. You said:\n\nWhat is your return policy?\n\n05:22 PM\nThinking"
+      "replyTail": "efund\" inside the parcel.\n\nOnce the return reaches our warehouse, it is inspected first. After validation, the refund is processed within 14 working days.\n\nIf you log in, we can also check your latest order and tell you which return conditions apply to it specifically.\n\n08:51 PM\nVerify order details"
     },
     {
       "turn": 4,
       "q": "How do I start a return or an exchange?",
-      "ttft_ms": 436,
-      "complete_ms": 4614,
-      "grew": 70,
+      "by": "ai",
+      "ttft_ms": 12378,
+      "complete_ms": 12378,
+      "grew": 1218,
+      "ai_latency_ms": 12378,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "f in stock. Made-to-order furniture requires 8 to 10 weeks of production first, then delivery is typically arranged within 1 to 3 weeks after production.\n\n05:22 PM\n5:22 PM. You said:\n\nWhat is your return policy?\n\n05:22 PM\n5:22 PM. You said:\n\nHow do I start a return or an exchange?\n\n05:22 PM\nThinking"
+      "replyTail": "nd the note \"return for refund\" inside the parcel.\n\nOnce the return arrives at our warehouse, it is inspected first. After validation, the refund is processed within 14 working days.\n\nIf you log in, we can also tell you which return option applies to your latest order.\n\n08:51 PM\nVerify order details"
     },
     {
       "turn": 5,
       "q": "What happens if an item arrives damaged or faulty — is that handled differently?",
-      "ttft_ms": 473,
-      "complete_ms": 4462,
-      "grew": 99,
+      "by": "ai",
+      "ttft_ms": null,
+      "complete_ms": 15276,
+      "grew": 108,
+      "ai_latency_ms": 15276,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "ur order number and the note \"return for refund\" inside the parcel. Once the return reaches the warehouse and is approved, the refund is processed within 14 working days.\n\n05:23 PM\n5:23 PM. You said:\n\nWhat happens if an item arrives damaged or faulty — is that handled differently?\n\n05:23 PM\nThinking"
+      "replyTail": "d first. After validation, the refund is processed within 14 working days.\n\nIf you log in, we can also tell you which return option applies to your latest order.\n\n08:51 PM\n8:51 PM. You said:\n\nWhat happens if an item arrives damaged or faulty — is that handled differently?\n\n08:51 PM\nGathering details"
     },
     {
       "turn": 6,
       "q": "Can I change the shipping address on an order I just placed?",
-      "ttft_ms": 448,
-      "complete_ms": 13535,
-      "grew": 316,
+      "by": "ai",
+      "ttft_ms": 1370,
+      "complete_ms": 1370,
+      "grew": 228,
+      "ai_latency_ms": 1370,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "I change the shipping address on an order I just placed?\n\n05:23 PM\n\nYes, a shipping address change needs to be handled by our team. Please log in so we can identify your order, or send your order number, name, email, or shipping address, and we will take it from there.\n\n05:23 PM\nVerify order details"
+      "replyTail": "il address in this chat so we can contact you.\n\n08:52 PM\n8:52 PM. You said:\n\nCan I change the shipping address on an order I just placed?\n\n08:52 PM\nLeave us your email\n*\nSubmit\n08:52 PM\nA support agent is joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join."
     },
     {
       "turn": 7,
       "q": "Can I cancel or modify an order after it's placed, and is there a time window?",
-      "ttft_ms": 437,
-      "complete_ms": 4927,
-      "grew": 343,
-      "handover": true,
-      "handover_hit": "joined the chat",
-      "replyTail": "placed, and is there a time window?\n\n05:23 PM\nSébastien joined the chat\n5:23 PM. Sébastien says:\nSébastien\n\nCould you please provide your full name and email address so we can check your order status and provide you with the tracking information?\n\nKind regards,\n\nThe Madura Customer Service\n\n05:23 PM"
+      "by": "ai",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 110,
+      "ai_latency_ms": null,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": " on an order I just placed?\n\n08:52 PM\nLeave us your email\n*\nSubmit\n08:52 PM\nA support agent is joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join.\n\n8:52 PM. You said:\n\nCan I cancel or modify an order after it's placed, and is there a time window?\n\n08:52 PM"
     },
     {
       "turn": 8,
       "q": "Do you ship internationally, and who covers customs or duties?",
-      "ttft_ms": 406,
-      "complete_ms": 3993,
-      "grew": 735,
+      "by": "ai",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 93,
+      "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "n 2 hours have passed, changes may no longer be possible. If the order has already shipped, it cannot be edited, and you may return it for a refund once received.\n\nPlease log in so we can identify your order, or send your order number, name, email, or shipping address.\n\n05:23 PM\nVerify order details"
+      "replyTail": "s joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join.\n\n8:52 PM. You said:\n\nCan I cancel or modify an order after it's placed, and is there a time window?\n\n08:52 PM\n8:53 PM. You said:\n\nDo you ship internationally, and who covers customs or duties?\n\n08:53 PM"
     },
     {
       "turn": 9,
       "q": "My discount code isn't applying at checkout — what are the usual reasons?",
-      "ttft_ms": 494,
-      "complete_ms": 6414,
-      "grew": 109,
-      "handover": true,
-      "handover_hit": "joined the chat",
-      "replyTail": "ed, and you may return it for a refund once received.\n\nPlease log in so we can identify your order, or send your order number, name, email, or shipping address.\n\n05:23 PM\nSébastien joined the chat\n5:23 PM. You said:\n\nMy discount code isn't applying at checkout — what are the usual reasons?\n\n05:23 PM"
+      "by": "ai",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 104,
+      "ai_latency_ms": null,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "PM. You said:\n\nCan I cancel or modify an order after it's placed, and is there a time window?\n\n08:52 PM\n8:53 PM. You said:\n\nDo you ship internationally, and who covers customs or duties?\n\n08:53 PM\n8:53 PM. You said:\n\nMy discount code isn't applying at checkout — what are the usual reasons?\n\n08:53 PM"
     },
     {
       "turn": 10,
       "q": "How do I track my order?",
+      "by": "ai",
       "ttft_ms": null,
       "complete_ms": null,
       "grew": 55,
-      "handover": true,
-      "handover_hit": "joined the chat",
-      "replyTail": "Please log in so we can identify your order, or send your order number, name, email, or shipping address.\n\n05:23 PM\nSébastien joined the chat\n5:23 PM. You said:\n\nMy discount code isn't applying at checkout — what are the usual reasons?\n\n05:23 PM\n5:24 PM. You said:\n\nHow do I track my order?\n\n05:24 PM"
+      "ai_latency_ms": null,
+      "handover": false,
+      "handover_hit": null,
+      "replyTail": "'s placed, and is there a time window?\n\n08:52 PM\n8:53 PM. You said:\n\nDo you ship internationally, and who covers customs or duties?\n\n08:53 PM\n8:53 PM. You said:\n\nMy discount code isn't applying at checkout — what are the usual reasons?\n\n08:53 PM\n8:54 PM. You said:\n\nHow do I track my order?\n\n08:54 PM"
     }
   ],
+  "ticket": {
+    "subdomain": "fr-madura",
+    "account_id": "74962",
+    "application_id": "25450",
+    "ticket_id": null,
+    "conversation_id": "20064ec9-faae-49a1-8eb3-57aa0a6a8982",
+    "url": "https://fr-madura.gorgias.com/app/tickets",
+    "all_ticket_ids": [],
+    "all_conversations": [
+      "20064ec9-faae-49a1-8eb3-57aa0a6a8982"
+    ],
+    "hosts": [
+      "config.gorgias.chat",
+      "assets.gorgias.chat",
+      "fr-madura.shopify-checkout.config.gorgias.chat",
+      "gorgias-convert.com",
+      "us-east1-898b.gorgias.chat",
+      "www.madura.com",
+      "config.gorgias.io"
+    ]
+  },
   "stats": {
     "turns": 10,
-    "answered_no_handover": 7,
-    "success_rate": 70,
-    "avg_ms": 7234,
-    "min_ms": 3993,
-    "max_ms": 13535,
-    "handover_turn": 7
+    "answered_no_handover": 6,
+    "success_rate": 60,
+    "avg_ms": 12490,
+    "min_ms": 1370,
+    "max_ms": 16830,
+    "latency_basis": "AI turns only (human replies excluded)",
+    "handover_turn": null
   }
 }

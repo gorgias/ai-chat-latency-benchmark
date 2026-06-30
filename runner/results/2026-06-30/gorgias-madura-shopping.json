@@ -12,121 +12,121 @@
       "turn": 1,
       "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
       "by": "ai",
-      "ttft_ms": null,
-      "complete_ms": null,
-      "grew": 45,
-      "ai_latency_ms": null,
+      "ttft_ms": 12701,
+      "complete_ms": 12701,
+      "grew": 263,
+      "ai_latency_ms": 12701,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "Track orders\nThis chat is AI-powered for faster assistance.\n8:02 PM. You said:\n\nHi! I'm shopping but not sure what's right for me — can you help me choose?\n\n08:02 PM\nThinking"
+      "replyTail": "ping but not sure what's right for me — can you help me choose?\n\n08:50 PM\n\nHello, absolutely. We can help you choose based on the room, the style you want, and the type of product you are considering. Tell us what you are shopping for, and we will guide you toward the most suitable option.\n\n08:50 PM"
     },
     {
       "turn": 2,
       "q": "I want something for everyday use, good quality, and I care about value for money — what do you recommend?",
       "by": "ai",
-      "ttft_ms": 4825,
-      "complete_ms": 4825,
-      "grew": 294,
-      "ai_latency_ms": 4825,
+      "ttft_ms": 14482,
+      "complete_ms": 14482,
+      "grew": 477,
+      "ai_latency_ms": 14482,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "03 PM. You said:\n\nI want something for everyday use, good quality, and I care about value for money — what do you recommend?\n\n08:03 PM\n\nHello, absolutely. Tell us what you are looking for, such as curtains, furniture, cushions, or another category, and we will help you choose the best fit.\n\n08:03 PM"
+      "replyTail": " money, we recommend starting with timeless, durable essentials rather than highly specific or decorative pieces. Our best fit will usually be simple curtains, sheers, cushions, or everyday home textiles in versatile colors and easy-care fabrics, depending on the room you are shopping for.\n\n08:51 PM"
     },
     {
       "turn": 3,
       "q": "I'd like to stay within a sensible budget. What are my best options in that range?",
       "by": "ai",
-      "ttft_ms": 25851,
-      "complete_ms": 25851,
-      "grew": 408,
-      "ai_latency_ms": 25851,
+      "ttft_ms": 14743,
+      "complete_ms": 14743,
+      "grew": 504,
+      "ai_latency_ms": 14743,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "03 PM\n\nHello, for everyday use with good quality and strong value, our best options are usually cushions, curtains, and selected furniture essentials, depending on what you need most. If you share the category you have in mind, we can narrow it to the most sensible budget-friendly options.\n\n08:04 PM"
+      "replyTail": "ky essentials such as curtains, sheers, cushions, bed linen, and accessories. The most practical way to stay within budget is to compare products directly on the site, where each product page shows the current price, specifications, and estimated delivery time next to the add-to-cart area.\n\n08:51 PM"
     },
     {
       "turn": 4,
       "q": "Can you compare your two most popular options and tell me which is better for me?",
       "by": "ai",
-      "ttft_ms": 19082,
-      "complete_ms": 19082,
-      "grew": 432,
-      "ai_latency_ms": 19082,
+      "ttft_ms": 15096,
+      "complete_ms": 15096,
+      "grew": 469,
+      "ai_latency_ms": 15096,
       "handover": false,
       "handover_hit": null,
-      "replyTail": " glad to help, but we cannot compare the two most popular options without the product category. Popular choices are different for curtains, cushions, and furniture. Tell us the category you want, and we will compare the two strongest value options for everyday use within a sensible budget.\n\n08:04 PM"
+      "replyTail": "we need the product or category you have in mind first, because the best choice depends on what you are shopping for on our site. Tell us the type of item you want to buy, such as curtains, cushions, bed linen, or furniture, and we will compare the strongest value options for everyday use.\n\n08:51 PM"
     },
     {
       "turn": 5,
       "q": "I'm a little worried about quality and whether it'll suit me — what do other customers say in their reviews?",
-      "by": "ai",
-      "ttft_ms": 15903,
-      "complete_ms": 15903,
-      "grew": 442,
-      "ai_latency_ms": 15903,
-      "handover": false,
-      "handover_hit": null,
-      "replyTail": "ello, we do not have access to customer review summaries or product review quotes here. If you share the product category or the exact item you are considering, we can still help you assess quality, everyday practicality, and overall value for money based on the product details we do have.\n\n08:04 PM"
+      "by": "human",
+      "ttft_ms": 11419,
+      "complete_ms": 13745,
+      "grew": 651,
+      "ai_latency_ms": null,
+      "handover": true,
+      "handover_hit": "share your email address, the team",
+      "replyTail": " can feel confident it suits everyday use.\n\nIf you share your email address, the team can contact you with the most accurate information.\n\n08:52 PM\nLeave us your email\n*\nSubmit\n08:52 PM\nA support agent is joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join."
     },
     {
       "turn": 6,
       "q": "Is there anything that pairs well with it or completes the set?",
-      "by": "ai",
-      "ttft_ms": 16570,
-      "complete_ms": 16570,
-      "grew": 368,
-      "ai_latency_ms": 16570,
-      "handover": false,
-      "handover_hit": null,
-      "replyTail": "mpletes the set?\n\n08:05 PM\n\nIt depends on the item. For cushion covers, the recommended insert size is usually shown on the product page, and inserts are sold separately. If you share the exact product or category you mean, we can tell you what pairs well with it or what completes the set.\n\n08:05 PM"
+      "by": "human",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 95,
+      "ai_latency_ms": null,
+      "handover": true,
+      "handover_hit": "share your email address, the team",
+      "replyTail": "ct you with the most accurate information.\n\n08:52 PM\nLeave us your email\n*\nSubmit\n08:52 PM\nA support agent is joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join.\n\n8:52 PM. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n08:52 PM"
     },
     {
       "turn": 7,
       "q": "Is there a bundle or set that's better value than buying the pieces separately?",
-      "by": "ai",
-      "ttft_ms": 14028,
-      "complete_ms": 14028,
-      "grew": 383,
-      "ai_latency_ms": 14028,
-      "handover": false,
-      "handover_hit": null,
-      "replyTail": "ieces separately?\n\n08:05 PM\n\nWe do not have information here showing a general bundle or set discount versus buying pieces separately. If you are looking at a specific product or collection, share it with us and we can tell you whether there is a matching item or coordinated set around it.\n\n08:05 PM"
+      "by": "human",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 110,
+      "ai_latency_ms": null,
+      "handover": true,
+      "handover_hit": "share your email address, the team",
+      "replyTail": "joining the chat\n\nFeel free to ask more questions — our team will respond as soon as they join.\n\n8:52 PM. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n08:52 PM\n8:52 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n08:52 PM"
     },
     {
       "turn": 8,
       "q": "Which one is your overall best seller, and is it well reviewed?",
-      "by": "ai",
-      "ttft_ms": 14043,
-      "complete_ms": 14043,
-      "grew": 351,
-      "ai_latency_ms": 14043,
-      "handover": false,
-      "handover_hit": null,
-      "replyTail": " seller, and is it well reviewed?\n\n08:05 PM\n\nWe do not have verified information here about our overall best seller or whether it is well reviewed. If you share the product category or the specific item you are considering, we can help assess its quality, practicality, and value for money.\n\n08:06 PM"
+      "by": "human",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 94,
+      "ai_latency_ms": null,
+      "handover": true,
+      "handover_hit": "share your email address, the team",
+      "replyTail": ".\n\n8:52 PM. You said:\n\nIs there anything that pairs well with it or completes the set?\n\n08:52 PM\n8:52 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n08:52 PM\n8:53 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n08:53 PM"
     },
     {
       "turn": 9,
       "q": "Okay, can you add your top recommendation to my cart?",
-      "by": "ai",
-      "ttft_ms": 10916,
-      "complete_ms": 10916,
-      "grew": 270,
-      "ai_latency_ms": 10916,
-      "handover": false,
-      "handover_hit": null,
-      "replyTail": "and value for money.\n\n08:06 PM\n8:06 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n08:06 PM\n\nWe can help you choose, but we cannot add an item to your cart from here. If you share the category you want, we can point you to the strongest value option for everyday use.\n\n08:06 PM"
+      "by": "human",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 84,
+      "ai_latency_ms": null,
+      "handover": true,
+      "handover_hit": "share your email address, the team",
+      "replyTail": "t?\n\n08:52 PM\n8:52 PM. You said:\n\nIs there a bundle or set that's better value than buying the pieces separately?\n\n08:52 PM\n8:53 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n08:53 PM\n8:54 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n08:54 PM"
     },
     {
       "turn": 10,
       "q": "What's my total, and do you offer free shipping or a first-order discount?",
-      "by": "ai",
-      "ttft_ms": 19518,
-      "complete_ms": 19518,
-      "grew": 652,
-      "ai_latency_ms": 19518,
+      "by": "human",
+      "ttft_ms": null,
+      "complete_ms": null,
+      "grew": 105,
+      "ai_latency_ms": null,
       "handover": false,
       "handover_hit": null,
-      "replyTail": "ry in France for non-bulky items. If you mean a first-order discount, the welcome offer is 15% off for first-time customers only, and it cannot be combined with other promotions or discount codes. You can also find delivery details here: https://www.madura.com/en/pages/delivery-and-returns\n\n08:06 PM"
+      "replyTail": "rately?\n\n08:52 PM\n8:53 PM. You said:\n\nWhich one is your overall best seller, and is it well reviewed?\n\n08:53 PM\n8:54 PM. You said:\n\nOkay, can you add your top recommendation to my cart?\n\n08:54 PM\n8:54 PM. You said:\n\nWhat's my total, and do you offer free shipping or a first-order discount?\n\n08:54 PM"
     }
   ],
   "ticket": {
@@ -134,11 +134,11 @@
     "account_id": "74962",
     "application_id": "25450",
     "ticket_id": null,
-    "conversation_id": "90ba12b5-eb0f-4310-91ae-7f0c998b0978",
+    "conversation_id": "73dc68c4-26d5-4591-bdfb-069d79e2156f",
     "url": "https://fr-madura.gorgias.com/app/tickets",
     "all_ticket_ids": [],
     "all_conversations": [
-      "90ba12b5-eb0f-4310-91ae-7f0c998b0978"
+      "73dc68c4-26d5-4591-bdfb-069d79e2156f"
     ],
     "hosts": [
       "config.gorgias.chat",
@@ -147,18 +147,17 @@
       "gorgias-convert.com",
       "us-east1-898b.gorgias.chat",
       "www.madura.com",
-      "europe-west1-sonorous-dragon-276210.cloudfunctions.net",
       "config.gorgias.io"
     ]
   },
   "stats": {
     "turns": 10,
-    "answered_no_handover": 9,
-    "success_rate": 90,
-    "avg_ms": 15637,
-    "min_ms": 4825,
-    "max_ms": 25851,
+    "answered_no_handover": 4,
+    "success_rate": 40,
+    "avg_ms": 14256,
+    "min_ms": 12701,
+    "max_ms": 15096,
     "latency_basis": "AI turns only (human replies excluded)",
-    "handover_turn": null
+    "handover_turn": 5
   }
 }
