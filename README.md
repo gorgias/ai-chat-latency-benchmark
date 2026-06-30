@@ -55,6 +55,18 @@ The runners drive each vendor's **own widget** on the live storefront — no moc
 python3 benchmark.py
 ```
 
+## Cold sessions & reproducibility (important for the recurring run)
+
+Each chat widget persists its conversation in its **own cross-origin storage** (`gorgias.chat`, `siena.cx`, `ada.support`, `chat.digitalgenius.com`, Zendesk). Consequences, verified 2026-06-30:
+
+- Clearing the **parent page's** cookies + localStorage + sessionStorage + IndexedDB + caches does **not** reset these chats (the session lives in the widget's partitioned cross-origin storage).
+- A browser-extension automation **cannot drive a true incognito window** (the incognito window isn't visible to it).
+- Warm/re-used sessions slightly **inflate** latency — e.g. DigitalGenius next-day answer measured **12.7s cold vs 14.3s warm**.
+
+**Practice:** test each vendor **cold-first** (one clean pass, no re-runs in the same window); use a widget's in-chat "new conversation" reset where offered; note residual warm-session caveats.
+
+**Infra prerequisite for the monthly automated run:** spin up a **fresh browser profile / container per execution** (e.g. a new Playwright/Chromium `--user-data-dir`, or a throwaway container). That is the only reliable way to guarantee a cold session for *every* vendor, because it has zero storage for any origin — including the chat widgets'. DigitalGenius is the only vendor resettable from page scripts alone (its session is in the parent origin).
+
 ---
 
 *Competitor intelligence. Latency numbers reflect a single test window on 2026-06-29 and will vary with load, query type, and session state.*
