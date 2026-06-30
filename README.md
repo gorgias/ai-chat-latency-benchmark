@@ -32,7 +32,7 @@ It measures end-to-end response **latency**, scores **answer quality** with a bl
 |---|---|---|---|
 | **Sierra** | Casper ("Luna") | inline shadow-DOM widget, SSE streaming | ✅ |
 | **Siena** | Simple Modern ("Maddie") | iframe (`chat.siena.cx`) + REST API | ✅ |
-| **Gorgias** *(us)* | NouriVida (Gorgias demo store) | Gorgias Chat, WebSocket | ✅ |
+| **Gorgias** *(us)* | Glamnetic ("Gina", live production store) | Gorgias Chat, WebSocket | ✅ |
 | **Yuma** | EvryJewels | none of its own — runs behind **Gorgias Chat** | ❌ (back-end automation) |
 | **DigitalGenius** | Bloom & Wild ("Willow") | Sunshine Conversations + Pusher | ✅ (gated by prechat form) |
 | **Meta AI**¹ | Dermalogica | Zendesk "Virtual Assistant" | ✅ |
@@ -47,7 +47,7 @@ It measures end-to-end response **latency**, scores **answer quality** with a bl
 | Vendor | Latency | Quality | Notes |
 |---|---|---|---|
 | Sierra | ~8.2s | 5.0 | streams; interactive Add-to-Cart product cards |
-| Gorgias *(us)* | ~17.1s | 5.0 | product cards + SKU links + discount code; **slowest of the rec-capable** |
+| Gorgias *(us)* | ~20.2s | 4.7 | interactive Add-to-Cart cards + multi-item & cross-category recs; **slowest of the rec-capable** |
 | Yuma | ~13.8s | 2.7 | text rec, only gestures at collections |
 | Siena | ~10s | 1.0 | defers to product pages |
 | DigitalGenius | 🚩 | 0 | **hands off to a human** — no recommendation |
@@ -60,7 +60,7 @@ It measures end-to-end response **latency**, scores **answer quality** with a bl
 |---|---|---|
 | Sierra | ~6.5s | 5.0 |
 | Meta AI | ~5s | 3.5 |
-| Gorgias *(us)* | ~8.7s | 3.9 |
+| Gorgias *(us)* | ~19.2s | 4.2 |
 | Siena | ~9.5s | 3.4 |
 | DigitalGenius | ~10.2s | 4.3 |
 | Yuma | ~13.5s | 4.4 |
@@ -69,7 +69,7 @@ It measures end-to-end response **latency**, scores **answer quality** with a bl
 **Three things that pop out** (full analysis in [`docs/FINDINGS.md`](docs/FINDINGS.md)):
 
 1. **Speed ≠ quality.** The fastest support responder (Meta AI ~5s) is among the lowest quality and won't recommend at all. Sierra is fastest *and* highest quality.
-2. **Product recommendation splits the field.** Only Sierra, Gorgias, Yuma and Siena attempt it; **DigitalGenius and Meta AI hand off to a human** (red flag). Gorgias (us) ties Sierra on rec quality (5.0) but is the slowest to produce one (~17s).
+2. **Product recommendation splits the field.** Only Sierra, Gorgias, Yuma and Siena attempt it; **DigitalGenius and Meta AI hand off to a human** (red flag). Gorgias (us) lands a strong rec (4.7, just behind Sierra) with interactive Add-to-Cart cards and cross-category discovery, but is the slowest to produce one (~20s).
 3. **Question type drives latency more than the vendor.** Product-recommendation turns are ~2–3× slower than FAQs everywhere (catalog retrieval + reasoning + card rendering).
 
 ## How it works (short)
@@ -130,7 +130,7 @@ node run.js --mode shopping
 ## Key caveats
 
 - **Different stores/domains** (mattresses, supplements, jewelry, flowers, skincare, drinkware, earplugs) — answers are judged in each store's own context; cross-vendor numbers are directional, not a controlled lab.
-- **Gorgias (us) ran on its own NouriVida demo store** — a sales-tuned, best-case configuration.
+- **Gorgias (us) ran on Glamnetic** — a *live production storefront* (real catalog + production guardrails), not a sales-tuned demo. This makes it a fairer, tougher baseline; it's also slower than the old demo (~20s vs ~17s).
 - **Warm sessions slightly inflate latency** (measured: DigitalGenius 12.7s cold vs 14.3s warm). The monthly runner uses a fresh container per run, which is cold by construction. See [`docs/METHODOLOGY.md#cold-sessions`](docs/METHODOLOGY.md#cold-sessions).
 - **Ada** was deployed but its bot was unavailable on both test days.
 - **Public client-side identifiers** (e.g. Siena's `appKey`) that appear in this repo are already readable in the storefronts' page source — they are not secrets, and are included only for reproducibility.

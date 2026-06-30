@@ -31,14 +31,14 @@ What each assistant is, how its widget is built, the transport it uses, how to o
 - **Latency signal:** send→reply via the GET poll (atomic).
 - **Observations:** answers in rich text with **linked product variants** (each color → its PDP) but **defers** confident product picks to the product pages ("check the product page", "share your email so the team can confirm"). Support FAQ strong; returns answer deflects (quality: FAQ 5.0, product-rec 1.0).
 
-## Gorgias — NouriVida (us) / also EvryJewels
+## Gorgias — Glamnetic (us) / also EvryJewels
 
-- **Sites:** `nourivida.myshopify.com` (Gorgias's **demo store**, sales-tuned), `evryjewels.com`.
-- **Widget:** **Gorgias Chat** (`config.gorgias.chat`); newer AI-Agent UI on NouriVida. Launcher + input + **`chat-window`** iframe (same-origin under the Shopify domain — readable).
+- **Sites:** `glamnetic.com` (a **live production storefront** — Shopify shop `glamrco.myshopify.com`; magnetic lashes + press-on nails; assistant named **"Gina"**), `evryjewels.com`.
+- **Widget:** **Gorgias Chat** (`config.gorgias.chat`, bundle-loader for `glamrco.myshopify.com`); AI-Agent UI. Launcher + input + **`chat-window`** iframe (same-origin under the Shopify domain — readable, so the transcript can be timed directly).
 - **Transport:** **WebSocket** (`us-east1-*.gorgias.chat/ws`). Replies arrive as frames; `data.fromAgent === true` marks the bot. Frame events are network-driven → accurate timing even under tab throttling.
-- **Open / drive:** `window.GorgiasChat.open()`; **`window.GorgiasChat.sendMessage(text)` works programmatically** (no UI needed) → ideal for automation.
-- **Latency signal:** first `fromAgent` WS frame, or `chat-window` iframe text growth+stability.
-- **Observations (NouriVida):** **most sales-forward** — renders product cards, recommends specific SKUs with links, applies a **discount code**, and proactively upsells (even on a returns answer). Strongest rec quality (5.0, tied with Sierra) but **slowest to a rec (~17s)**; returns answer is thin and pivots to upsell (quality 2.7). Note: best-case demo.
+- **Open / drive:** `window.GorgiasChat.open()`; `window.GorgiasChat.sendMessage(text)` works programmatically once the conversation view is active (the AI replies post atomically into `chat-window`). The reply often arrives as one complete message rather than streaming, so completion = transcript length stable for ~4s, with a typing-indicator guard ("Thinking/Analyzing/…").
+- **Latency signal:** first `fromAgent` WS frame, or `chat-window` iframe text growth+stability (typing-indicator aware).
+- **Observations (Glamnetic):** renders **interactive Add-to-Cart product cards** and makes specific, **multi-item & cross-category** recommendations (press-on nails → matching magnetic lash → liner), reasons about **bundles**, and is **honest about limits** (won't add to cart for you; no in-chat shipping ETA). Strong product-rec quality (**4.7**, just behind Sierra's 5.0) but the **slowest rec-capable vendor (~20s)**. Support: specific policy answers (14-day returns, customs/duties, discount-code troubleshooting, cruelty-free/vegan) but **gates order-specific actions behind account login**, and **escalates to a human only when explicitly asked** (an appropriate handover, not an unprompted refusal). Being a real production store (vs the old NouriVida demo) makes this a fairer, tougher baseline.
 
 ## Yuma — EvryJewels
 

@@ -75,7 +75,7 @@ Validated against real captured replies: it flags DigitalGenius, Meta AI, and Si
 
 These widgets persist a conversation in their **own cross-origin storage** (`gorgias.chat`, `siena.cx`, `ada.support`, `chat.digitalgenius.com`, Zendesk). This caused warm-session bias in early manual runs. Verified facts (2026-06-30):
 
-- ❌ Clearing the **parent page's** cookies + localStorage + sessionStorage + IndexedDB + caches does **not** reset these chats — the session lives in the widget's partitioned cross-origin storage. (Gorgias/NouriVida stayed warm — "Bonjour Max" — after a full parent wipe.)
+- ❌ Clearing the **parent page's** cookies + localStorage + sessionStorage + IndexedDB + caches does **not** reset these chats — the session lives in the widget's partitioned cross-origin storage. (On Glamnetic the Gorgias widget surfaced a months-old prior conversation — handled by a human agent and auto-closed — the moment it opened, despite a clean parent page.)
 - ❌ A browser-extension automation **cannot drive a true incognito window** even with "Allow in incognito" enabled — the incognito window never appears to the automation.
 - ⚠️ Warm/re-used sessions **inflate latency** — measured: DigitalGenius next-day answer **12.7s cold vs 14.3s warm**.
 - ✅ Only **DigitalGenius** stores its session in the parent origin, so it alone is resettable from page scripts.
@@ -90,7 +90,7 @@ These widgets persist a conversation in their **own cross-origin storage** (`gor
 ## Threats to validity
 
 - **Different stores/domains** — judged in each store's own context; cross-vendor latency is directional.
-- **Gorgias on its own demo (NouriVida)** — sales-tuned, best-case.
+- **Gorgias on Glamnetic** — a live production storefront (real catalog + guardrails), not a sales-tuned demo. Fairer/tougher, and the session was warm (shopping turns 1–3 untimed).
 - **Recorded-answer scoring** — the quality eval scores the captured texts (some paraphrased from live runs).
 - **Widget drift** — vendors change DOM/SDK; the runner's `vendors.js` selectors are the maintenance surface and each vendor fails soft (records `null` + `error`).
 - **Single test windows** — 2026-06-29/30; the monthly run builds a trend over time.

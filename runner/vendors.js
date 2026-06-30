@@ -21,10 +21,12 @@ async function dismiss(page) {
 
 export const VENDORS = {
   gorgias: {
-    label: "Gorgias", client: "NouriVida (us)", us: true,
-    url: "https://nourivida.myshopify.com/",
+    label: "Gorgias", client: "Glamnetic (us)", us: true,
+    url: "https://www.glamnetic.com/",
     scope: { kind: "frame", match: "chat-window" },
-    async open(page) { await page.waitForTimeout(3500); await dismiss(page); await page.evaluate(() => window.GorgiasChat?.open()); await page.waitForTimeout(3500); },
+    // GorgiasChat takes a few seconds to initialize on Glamnetic; open() may need a retry,
+    // and sendMessage only posts once the conversation view is active.
+    async open(page) { await page.waitForTimeout(5000); await dismiss(page); await page.evaluate(async () => { for (let i=0;i<8 && !window.GorgiasChat?.isOpen?.();i++){ try{ window.GorgiasChat?.open(); }catch(e){} await new Promise(r=>setTimeout(r,800)); } }); await page.waitForTimeout(3500); },
     async send(page, text) { await page.evaluate(t => window.GorgiasChat.sendMessage(t), text); },
   },
 

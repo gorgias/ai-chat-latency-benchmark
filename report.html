@@ -104,7 +104,7 @@
     <p>Live latency &amp; answer-quality tests of competitor on-site AI assistants, split into two jobs: selling (discovery → product recommendation) and supporting (FAQ &amp; policy). Toggle the mode below.</p>
     <div class="chips">
       <span class="chip">Sierra · Casper</span><span class="chip">Siena · Simple Modern</span>
-      <span class="chip">Gorgias · NouriVida (us)</span><span class="chip">Yuma · EvryJewels</span>
+      <span class="chip">Gorgias · Glamnetic (us)</span><span class="chip">Yuma · EvryJewels</span>
       <span class="chip">DigitalGenius · Bloom &amp; Wild</span><span class="chip">Meta AI · Dermalogica</span>
       <span class="chip">Ada · Loop Earplugs</span><span class="chip">Tests 2026-06-29/30</span>
     </div>
@@ -148,7 +148,7 @@
     <div class="sec-head"><h2>Methodology</h2></div>
     <div class="card card-pad" style="font-size:13px;color:#2b3340;line-height:1.7">
       <p>Each assistant was driven on its <strong>live customer site</strong>. Latency = wall-clock from message sent to full response (network/WebSocket/DOM timing per vendor; Meta AI screenshot-approx). Two question pools were run: <strong>Shopping Assistant</strong> (discovery questions that ask for a product recommendation) and <strong>Support</strong> (shipping FAQ + returns/policy). Answer quality was scored by a blind 3-judge LLM panel on anonymized stores.</p>
-      <p style="margin-top:8px"><strong>Caveats:</strong> different stores/domains (treat as directional); Gorgias ran on its own NouriVida demo (sales-tuned, best-case); Ada's bot was down on both test days; Meta AI's underlying model isn't verifiable client-side (front-end is Zendesk's "Virtual Assistant").</p>
+      <p style="margin-top:8px"><strong>Caveats:</strong> different stores/domains (treat as directional); Gorgias ran on <strong>Glamnetic</strong>, a <em>live production storefront</em> (real catalog + production guardrails — not a demo); Ada's bot was down on both test days; Meta AI's underlying model isn't verifiable client-side (front-end is Zendesk's "Virtual Assistant").</p>
       <p style="margin-top:8px"><strong>Cold vs warm sessions.</strong> Each widget persists its conversation in its own <em>cross-origin</em> storage (gorgias.chat, siena.cx, …), which a page script can't clear, and the automation can't drive a true incognito window — so re-runs reuse a "warm" session that slightly inflates latency (measured: DigitalGenius next-day answer <span class="mono" style="font-size:12px">12.7s cold vs 14.3s warm</span>). We therefore test each vendor <strong>cold-first</strong> (one clean pass, no re-runs in the same window). <strong>The recurring monthly run must spin up a fresh browser profile/container per execution</strong> — that's the only reliable way to guarantee a cold session for every vendor.</p>
     </div>
   </section>
@@ -160,7 +160,7 @@
 const V = {
   sierra:{name:"Sierra",client:"Casper · Luna",color:"#0f766e",us:false},
   siena:{name:"Siena",client:"Simple Modern · Maddie",color:"#4f46e5",us:false},
-  gorgias:{name:"Gorgias",client:"NouriVida · AI Agent",color:"#15803d",us:true},
+  gorgias:{name:"Gorgias",client:"Glamnetic · Gina",color:"#15803d",us:true},
   yuma:{name:"Yuma",client:"EvryJewels",color:"#9333ea",us:false},
   dg:{name:"DigitalGenius",client:"Bloom & Wild · Willow",color:"#db2777",us:false},
   meta:{name:"Meta AI*",client:"Dermalogica",color:"#0891b2",us:false},
@@ -172,7 +172,7 @@ const DATA = {
     order:["sierra","gorgias","yuma","siena","dg","meta","ada"],
     rows:{
       sierra:{lat:8.2, q:5.0, qnote:"Real rec + interactive Add-to-Cart cards"},
-      gorgias:{lat:17.1, q:5.0, qnote:"Best rec quality: card + SKU link + discount code + CTA"},
+      gorgias:{lat:20.2, q:4.7, qnote:"Interactive Add-to-Cart cards + multi-item & cross-category recs (nails→lashes→liner); honest on limits (can't add to cart, no shipping ETA)"},
       yuma:{lat:13.8, q:2.7, qnote:"Only gestures at collections, no specific item"},
       siena:{lat:10.0, q:1.0, qnote:"Defers product questions to product pages"},
       dg:{lat:null, q:0, qnote:"🚩 Hands off to a human (no in-chat rec)"},
@@ -185,10 +185,16 @@ const DATA = {
         {q:"Are your mattresses good for side sleepers?",lat:9.2,a:"Yes! Casper mattresses are designed to support all sleep positions, including side sleepers."},
         {q:"Can you recommend a pillow to go with it?",lat:6.7,a:"Absolutely — for hot sleepers, the Hybrid Snow Pillow or a cooling Foam Pillow would pair well."}],
       gorgias:[
-        {q:"Hi, can you help me find the right product for me?",lat:null,a:"Of course! To point you the right way — are you after a quick energy drink or a more filling meal powder?",note:"clarifying"},
-        {q:"I'm training for a half marathon and keep crashing mid-afternoon.",lat:null,a:"🛍️ [Product card: Energy Drink – Berry Boost] For sustained energy on training days, Berry Boost is a strong fit — it has L-theanine for focus without the crash. [link] You can also use code …ML for 8% off. Ready to grab it?",note:"recommended"},
-        {q:"I have low energy in the afternoon — which product do you recommend?",lat:17.6,a:"🛍️ [Product card: Complete Meal Powder – Matcha $6.99] For an afternoon boost, go with Complete Meal Powder – Matcha — clean, steady fuel without the heavy slump. [link] Use code …VK for 8% off. Ready to grab it now?"},
-        {q:"What do you recommend to help me sleep better?",lat:16.6,a:"For something calming in the evening, Golden Milk – Turmeric Glow looks like the best fit [link]. You can also browse our Functional Cartons collection."}],
+        {q:"Hi! I'm totally new to press-on nails and my natural nails are weak and short. Which of your sets last the longest and won't damage my nails?",lat:null,a:"🛍️ [Cards: Think Pink $15.99 · Pinky Promise $17.99 · Short & Suite $34.18] For longest wear use standard glue-on press-ons (last up to 2 weeks), not Quick Press Mani. For weak/short nails the gentlest option is nail tabs instead of glue (easier removal). Start with a short shape — beginner picks: Think Pink, Pinky Promise, Short & Suite."},
+        {q:"I love a natural, neutral look — nothing too long or flashy. Between those, which is most natural and truly beginner-friendly?",lat:null,a:"🛍️ [Card: Ma Damn $15.99] Ma Damn is the most natural & beginner-friendly: classic short almond shape, semi-transparent natural base with a white French tip — polished without feeling flashy."},
+        {q:"How long does Ma Damn actually last, and how do I apply and remove it safely so I don't wreck my weak nails?",lat:null,a:"🛍️ [Card: Ma Damn $15.99] Up to 2 weeks. Apply: a small amount of glue, avoid the skin, press 10s; prep by pushing back cuticles + lightly buffing. Remove: soak in warm water + oil + soap 10–15 min, lift from the sides, never pry; buff off leftover glue and moisturize."},
+        {q:"My nails are quite small and narrow. How do I make sure Ma Damn fits, and what if a size doesn't fit?",lat:27.5,a:"🛍️ [Card: Ma Damn $15.99] Short Almond runs ~6.3–14.01mm; 24 nails in 12 sizes (numbered on the back), file the sides for a custom fit. Test each nail sidewall-to-sidewall before applying — size down/file if too wide, size up if too narrow. You can send a photo of bare nails for fit help."},
+        {q:"Do I need anything else to apply them safely as a beginner — a prep kit, the right glue, or those nail tabs?",lat:20.7,a:"🛍️ [Cards: Pressed to Perfection $16.18 · Brush-On Nail Glue $7.99 · Press-On Nail Remover $12.99] The set already includes glue, an alcohol pad, a file & a cuticle stick. For weak nails, Adhesive Nail Tabs are gentler; Brush-On Glue is the easiest to control. Best one-stop beginner kit: the Pressed to Perfection bundle."},
+        {q:"If I get Ma Damn plus the Pressed to Perfection bundle, what's my total, and is there a first-order discount?",lat:19.7,a:"🛍️ [Cards: Ma Damn $15.99 · Pressed to Perfection $16.18] Total $32.17 before tax & shipping. There's a 20% new-customer offer (link) — but no first-order code is confirmed in chat and no automatic discounts apply right now."},
+        {q:"How fast is shipping to the US, and do I get free shipping if I add both items?",lat:14.7,a:"\"I don't have the US shipping timing or free-shipping threshold confirmed here yet.\" — deflects back to product questions.",note:"⚠ knowledge gap during the buy flow"},
+        {q:"Okay, I'm sold — can you add Ma Damn and the bundle to my cart?",lat:15.3,a:"🛍️ [Cards: Ma Damn · Pressed to Perfection] \"I can't add items to your cart for you\" — but surfaces the product cards (add from each page) + checkout quick-replies (Check product details / Need help with checkout?).",note:"⚠ can't add to cart"},
+        {q:"I also wear lashes. Do you have a magnetic lash that would match this soft natural look?",lat:23.0,a:"🛍️ [Card: Virgo $19.99] Virgo is the most natural-looking magnetic lash, good for everyday — it needs a magnetic liner (sold separately). Offers liner options: Natural Look / Classic Black Liner / Hybrid Liner."},
+        {q:"Let's go with the classic black liner. Best way to check out, and can I use the 20% new-customer offer?",lat:20.5,a:"🛍️ [Cards: Magnetic Eyeliner Pen $27.99 · Pressed to Perfection $16.18] Best classic black liner: Magnetic Eyeliner Pen in Black $27.99 (in stock). Open the cards → add → checkout from the cart; 20% new-customer offer link provided. Offers to line up the full set."}],
       yuma:[
         {q:"Can you recommend a necklace for a birthday gift?",lat:13.8,a:"A necklace is such a thoughtful birthday gift! I highly recommend our custom name necklaces or a piece from our best-sellers collection. Do you have a specific style in mind?"},
         {q:"Are your rings adjustable or do they come in fixed sizes?",lat:18.1,a:"Our rings come in both adjustable and fixed sizes, depending on the design! Many pieces (like the Double Date Ring) are adjustable; others come in fixed sizes 5–9."}],
@@ -210,7 +216,7 @@ const DATA = {
     rows:{
       sierra:{lat:6.5, q:5.0, qnote:"Specific, complete shipping + trial/returns"},
       meta:{lat:5.0, q:3.5, qnote:"Great returns; vague shipping (no specifics)"},
-      gorgias:{lat:8.7, q:3.9, qnote:"Precise shipping; thin returns that pivots to upsell"},
+      gorgias:{lat:19.2, q:4.2, qnote:"Specific policy answers (14-day returns, customs, discount fixes); gates order-specific issues behind login; human handover only on explicit request"},
       siena:{lat:9.5, q:3.4, qnote:"Great shipping detail; deflects returns to 'share your email'"},
       dg:{lat:10.2, q:4.3, qnote:"Specific delivery answers (returns not tested)"},
       yuma:{lat:13.5, q:4.4, qnote:"Clear shipping + blunt no-returns policy"},
@@ -226,10 +232,16 @@ const DATA = {
         {q:"Do you offer free shipping?",lat:5.0,a:"Yes, we offer free shipping as one of our shipping options. (Vague — no threshold or method.)"},
         {q:"What is your return policy?",lat:5.0,a:"We gladly accept returns within 30 days of your order date. New or gently used items in original packaging; no return shipping, handling, or restocking fees. (+ View article)"}],
       gorgias:[
-        {q:"Do you offer free shipping?",lat:6.4,a:"Free on orders over $100 in North America ($9.99 under). International: free over $200, $19.99 under."},
-        {q:"Are your products vegan and gluten-free?",lat:5.5,a:"Most of our range is plant-based, so vegan options are available. I don't have gluten-free confirmation for every product."},
-        {q:"What is your return policy?",lat:13.5,a:"We accept returns — just let us know. (Noted behaviour: it then pivoted to a product upsell instead of fully explaining the policy — see the quality note.)"},
-        {q:"How long does shipping take?",lat:7.2,a:"5–7 business days within North America; international 14–21 business days."}],
+        {q:"I placed an order a few days ago and still have no tracking number. How long does it take to ship and send tracking?",lat:18.9,a:"Most orders ship within 48 business hours; tracking is sent once it ships. US standard delivery is 3–7 business days after dispatch. If there's no shipping confirmation within 5 business days, that's the point to flag it. (Offers an account lookup.)"},
+        {q:"What's your return policy? Can I return press-on nails if I've already opened the package?",lat:20.1,a:"Returns within 14 days of delivery, in original condition + packaging only — opened/used/altered items aren't eligible. Refund or gift card; refunds have an $8 return-shipping fee deducted (gift card has none). Refunds post to the original payment in 3–5 business days."},
+        {q:"A couple of nails arrived broken in the box. What do you do about damaged items?",lat:16.4,a:"Damaged-on-arrival is handled as a damaged-item issue (not a standard return), then asks you to log in to look up the order for next steps.",note:"🔒 gated on login"},
+        {q:"Can I still change the shipping address on an order I placed this morning?",lat:15.8,a:"Possibly, if it hasn't shipped — needs you to log in to check the specific order and update the address if still eligible."},
+        {q:"Can I cancel an order shortly after placing it? What's the cancellation window?",lat:15.4,a:"Orders process in 24–48 hours; cancellation is only possible before fulfilment. Log in to check eligibility."},
+        {q:"Do you ship internationally? If I'm in Canada, who covers customs and duties?",lat:31.3,a:"Ships to Canada (8–14 business days). Customs/duties paid by the customer; notes a possible 25% tariff on certain US-origin products + ~5–15% duty over $150 CAD. Free standard shipping to Canada over $65 USD."},
+        {q:"My discount code won't apply at checkout. What are the usual reasons and what should I do?",lat:17.1,a:"Codes fail if expired, items excluded, the minimum isn't met, or another promo is already applied. Enter it exactly, meet the offer terms, and remove other codes. Offers to check your specific code + cart."},
+        {q:"Are your nails and lashes cruelty-free and vegan? I have sensitive eyes and skin too.",lat:16.5,a:"Nails + lashes are cruelty-free; press-on nails are vegan. For sensitive skin, Adhesive Nail Tabs are gentler than glue (glue contains ethyl cyanoacrylate + PMMA). Offers lash/liner help for sensitive eyes."},
+        {q:"My tracking says delivered but the package never arrived. Do I get a refund or replacement?",lat:19.9,a:"Empathetic, but defers to login/order lookup to decide replacement vs refund — no general policy stated before auth.",note:"🔒 gated on login"},
+        {q:"This is getting complicated — can I just talk to a human?",lat:20.7,a:"🚩 Loops in a teammate and asks for an email so a specialist can follow up (~1 min) via an email-capture form. Note: this handover only triggered when a human was explicitly requested — Gina answered all 9 prior support questions itself, so this is an appropriate escalation, not an unprompted refusal to help.",note:"handover on request"}],
       siena:[
         {q:"Do you offer free shipping on orders?",lat:10.0,a:"Free standard shipping on orders over $30 (contiguous 48). Under $30 is $4.99. Most orders arrive in 5–11 business days."},
         {q:"How long does standard shipping usually take?",lat:7.0,a:"5–11 business days total: 1–3 to fulfil + 4–8 to ship."},
