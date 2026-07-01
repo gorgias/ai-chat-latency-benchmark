@@ -172,7 +172,7 @@ async function timeTurnNet(page, net, sendFn) {
 async function runStoreMode(browser, store, mode, theme) {
   const w = WIDGETS[store.widget];
   const pool = theme.turns;
-  const out = { key: store.key, vendor: store.vendor, store: store.store, url: store.url, us: !!store.us, widget: store.widget, mode, theme: theme.key, themeLabel: theme.label, date: STAMP, turns: [] };
+  const out = { key: store.key, vendor: store.vendor, store: store.store, url: store.url, us: !!store.us, widget: store.widget, mode, theme: theme.key, themeLabel: theme.label, date: STAMP, capturedAt: new Date().toISOString(), turns: [] };
   // INCOGNITO/COLD: a brand-new Playwright context has zero cookies/localStorage/
   // IndexedDB/cache for ANY origin (the widget's cross-origin storage included),
   // so there is never a pre-existing conversation. storageState is left undefined

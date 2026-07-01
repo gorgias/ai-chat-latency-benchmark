@@ -10,7 +10,7 @@
 // Honesty: the per-turn "a" text is the ACTUAL captured reply tail (truncated),
 // never a fabricated summary. Human turns are flagged and never timed.
 
-import { readFile, writeFile, readdir, rename } from "node:fs/promises";
+import { readFile, writeFile, readdir, rename, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { STORES as SITES } from "./vendors.js";
 import { SHOPPING_THEMES, SUPPORT_THEMES } from "./pools.js";
@@ -105,7 +105,16 @@ async function loadAgg(key, mode, date) {
   try { files = (await readdir(dir)).filter(f => f.startsWith(`${key}-${mode}-`) && f.endsWith(".json")); } catch { return null; }
   if (!files.length) return null;
   const themes = [];
-  for (const f of files) { try { themes.push(JSON.parse(await readFile(`${dir}/${f}`, "utf8"))); } catch {} }
+  for (const f of files) {
+    try {
+      const obj = JSON.parse(await readFile(`${dir}/${f}`, "utf8"));
+      // datetime of the conversation: explicit capture stamp, else the file's mtime
+      let dt = obj.capturedAt;
+      if (!dt) { try { dt = (await stat(`${dir}/${f}`)).mtime.toISOString(); } catch {} }
+      obj._datetime = dt || null;
+      themes.push(obj);
+    } catch {}
+  }
   if (!themes.length) return null;
   const order = (mode === "support" ? SUPPORT_THEMES : SHOPPING_THEMES).map(t => t.key);
   themes.sort((a, b) => order.indexOf(a.theme) - order.indexOf(b.theme));
@@ -115,7 +124,7 @@ async function loadAgg(key, mode, date) {
   const themesWithHandover = themes.filter(t => t.stats && t.stats.handover_turn != null).length;
   const tk = [...themes].reverse().find(t => t.ticket && t.ticket.conversation_id) || themes.find(t => t.ticket);
   return {
-    themes: themes.map(t => ({ theme: t.theme, label: t.themeLabel, turns: t.turns, stats: t.stats, ticket: t.ticket || null, error: t.error || null })),
+    themes: themes.map(t => ({ theme: t.theme, label: t.themeLabel, turns: t.turns, stats: t.stats, ticket: t.ticket || null, error: t.error || null, datetime: t._datetime || null })),
     stats: {
       n_themes: themes.length, turns_total: totalTurns,
       avg_turns: themes.length ? Math.round((totalTurns / themes.length) * 10) / 10 : null,
@@ -150,8 +159,9 @@ function measuredEntry(site, mode, agg, date) {
     timed: st.answered_no_handover, attempted: st.turns_total,   // latency-measurement coverage
     ticket: tk(agg.ticket),
     what,
+    datetime: agg.themes.map(t => t.datetime).filter(Boolean).sort().pop() || null,
     themes: agg.themes.map(t => ({
-      key: t.theme, label: t.label,
+      key: t.theme, label: t.label, datetime: t.datetime || null,
       lat: t.stats.avg_ms != null ? `~${round1(t.stats.avg_ms / 1000)}s` : "—",
       success: t.stats.success_rate, successTxt: (t.stats.success_rate != null ? t.stats.success_rate + "%" : "—"),
       handoverTurn: t.stats.handover_turn,
