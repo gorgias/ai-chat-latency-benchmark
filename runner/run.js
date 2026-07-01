@@ -73,7 +73,9 @@ const HANDOVER_PATTERNS = [
   /\b(fill (in|out)|complete) (the|this|a) form\b/i, /\benter your details\b/i,
   /\bshare (your|a few) (details|email|order number)\b.*(team|agent|connect|assist|follow)/i,
   /\b(joined|entered) the (chat|conversation)\b/i, /\ba rejoint (la )?(conversation|discussion|chat)\b/i,
-  /\b\w+ (says|dit)\s*:/i, /\blaissez(\-| )?(nous|moi)?\s*(votre)?\s*(e-?mail|adresse)/i,
+  // A *named human agent* joining shows as "Sébastien says:"; exclude bot self-labels
+  // ("AI says:", "Virtual Assistant says:") so a Zendesk/VA reply isn't misread as handover.
+  /\b(?!(?:ai|assistant|bot|chatbot|concierge|virtual)\b)\w+ (says|dit)\s*:/i, /\blaissez(\-| )?(nous|moi)?\s*(votre)?\s*(e-?mail|adresse)/i,
   /\b(leave|enter) (your|us) (e-?mail|email address)\b/i,
   /\ball of our agents are (unavailable|busy)\b/i,
 ];
