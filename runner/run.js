@@ -23,6 +23,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { WIDGETS, STORES, readTranscript } from "./vendors.js";
 import { SHOPPING_THEMES, SUPPORT_THEMES } from "./pools.js";
+import { isGen, isAck, isNoAnswer, detectHandover, convoValidity } from "./classify.js";
 
 const POLL_MS = 250, STABLE_MS = 5000, GROWTH = 60, SETTLE_MS = 2500;
 const TURN_TIMEOUT_MS = Number(process.env.TURN_TIMEOUT_MS) || 60000;
@@ -62,28 +63,7 @@ const STEALTH = () => {
   };
 };
 
-// Unprompted handover = the assistant bailed to a human on its own (failure).
-const HANDOVER_PATTERNS = [
-  /\bconnect you (with|to)\b/i, /\bi('|’)?ll connect you\b/i,
-  /\btransfer(ring)? you (to|over)\b/i, /\btransf[eè]re(r|z)?\b.*(humain|conseiller|agent|ticket|demande)/i,
-  /\bspeak (to|with) (a|an|our|one of our) (human|agent|team|representative|specialist|advisor)/i,
-  /\b(submit|raise|create|open|log) a (support )?ticket\b/i,
-  /\bour (team|agents?|support team) (will|can) (get back|follow up|reach out|be in touch|contact|assist)/i,
-  /\ba (member|representative) of our team\b/i, /\bconseiller humain\b/i,
-  /\b(fill (in|out)|complete) (the|this|a) form\b/i, /\benter your details\b/i,
-  /\bshare (your|a few) (details|email|order number)\b.*(team|agent|connect|assist|follow)/i,
-  /\b(joined|entered) the (chat|conversation)\b/i, /\ba rejoint (la )?(conversation|discussion|chat)\b/i,
-  // A *named human agent* joining shows as "Sébastien says:"; exclude bot self-labels
-  // ("AI says:", "Virtual Assistant says:") so a Zendesk/VA reply isn't misread as handover.
-  /\b(?!(?:ai|assistant|bot|chatbot|concierge|virtual)\b)\w+ (says|dit)\s*:/i, /\blaissez(\-| )?(nous|moi)?\s*(votre)?\s*(e-?mail|adresse)/i,
-  /\b(leave|enter) (your|us) (e-?mail|email address)\b/i,
-  /\ball of our agents are (unavailable|busy)\b/i,
-];
-function detectHandover(text, extra = []) {
-  if (!text) return null;
-  for (const re of [...HANDOVER_PATTERNS, ...extra]) { const m = text.match(re); if (m) return m[0].trim().slice(0, 80); }
-  return null;
-}
+// Handover detection lives in classify.js (imported above) so it can be unit-tested.
 
 const args = process.argv.slice(2);
 const pick = (flag) => { const i = args.indexOf(flag); if (i < 0) return null; const out = []; for (let j = i + 1; j < args.length && !args[j].startsWith("--"); j++) out.push(args[j]); return out; };
@@ -108,15 +88,8 @@ if (skipCandidates) targets = targets.filter(s => !s.candidate);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Generation/typing indicators — must NOT be treated as a finished reply.
-const GEN_RE = /(Thinking|Analyzing|Typing|Searching|Looking|Writing|Processing|Almost there|En train|Réflexion|Analyse|Recherche|escribiendo|pensando)\s*\.*\s*$/i;
-const isGen = (t) => GEN_RE.test((t || "").trim());
-// STALL / acknowledgement messages — a provider sends "OK, let me check…" FIRST, then
-// the real answer as a SECOND message. We must NOT stop the clock on the stall; latency
-// runs to the TRUE final answer. Treated as "still working" only while the reply is still
-// short (a genuine long answer that happens to end this way is accepted).
-const ACK_RE = /(let me (check|look|see|find|pull|grab|dig|confirm)|one moment|just a (sec|second|moment|minute)|give me a (sec|second|moment|minute)|hold on|bear with|i'?ll (check|look|find|get|see|have a look)|looking into (it|that|this)|checking (on )?(that|this|it)|let me take a look|searching (for|our)|on it!?|right away|happy to help|great question|un instant|un moment|deux secondes|laisse[- ]?moi|je (regarde|vérifie|cherche|reviens|te reviens|te dis|m'?en occupe)|patiente)\b[\s.!?…]*$/i;
-const isAck = (t) => ACK_RE.test((t || "").trim());
+// Typing / stall(ack) / no-answer classifiers now live in classify.js (imported above)
+// so they can be unit-tested without a browser.
 
 // TRUE end-to-end latency: t0 = the instant the user message is sent; complete_ms
 // = the instant the AI's FULL, FINAL reply finished rendering (last text change) − t0.
@@ -142,7 +115,11 @@ async function timeTurn(page, scope, sendFn, q) {
     const shortSoFar = (len - before) < 240;
     const working = isGen(text) || (isAck(text) && shortSoFar);
     const settled = Date.now() - lastChange > STABLE_MS;
-    if (settled && !working && (grownReply || (sawGen && len > before + 40))) { complete = lastChange - t0; break; }
+    // A settled transcript that's just an offline/reconnecting state or a chip/"leave a
+    // message" menu is NOT a real answer — never stop the clock on it (leaves complete_ms
+    // null → the conversation's validity gate will drop it as noise).
+    const realAnswer = (grownReply || (sawGen && len > before + 40)) && !isNoAnswer(text);
+    if (settled && !working && realAnswer) { complete = lastChange - t0; break; }
   }
   return { ttft_ms: ttft, complete_ms: complete, grew: lastLen - before };
 }
@@ -290,6 +267,12 @@ async function runStoreMode(browser, store, mode, theme) {
   const aiValid = out.turns.filter(t => t.by === "ai").map(t => t.complete_ms).filter(x => x != null);
   const firstHandover = out.turns.find(t => t.handover);
   const answered = out.turns.filter(t => t.by === "ai" && t.complete_ms != null).length;
+  // Validity gate: a conversation is a real data point only if it hit a handover (a genuine
+  // finding) OR produced enough cleanly-timed answers. Otherwise it's noise (menu/offline/
+  // timeout) and must not pollute the report.
+  const v = convoValidity(out.turns);
+  out.valid = v.valid;
+  out.invalid_reason = v.reason;
   out.stats = {
     turns: out.turns.length,
     answered_no_handover: answered,
@@ -299,7 +282,9 @@ async function runStoreMode(browser, store, mode, theme) {
     max_ms: aiValid.length ? Math.max(...aiValid) : null,
     latency_basis: "AI turns only (human replies excluded)",
     handover_turn: firstHandover ? firstHandover.turn : null,
+    valid: v.valid, timed_turns: v.timed,
   };
+  console.log(`  [${store.key}/${mode}/${theme.key}] ${v.valid ? "VALID" : "INVALID — " + v.reason} (timed ${v.timed}/${v.aiAttempted}${v.hadHandover ? ", handover" : ""})`);
   return out;
 }
 
@@ -323,10 +308,11 @@ async function runStoreMode(browser, store, mode, theme) {
     let themes = mode === "support" ? SUPPORT_THEMES : SHOPPING_THEMES;
     if (THEME_LIMIT) themes = themes.slice(0, THEME_LIMIT);
     for (const theme of themes) {
-      // RESUME: skip only if a VALID capture exists (reached the widget → ≥1 turn).
-      // Network/load failures (0 turns) are re-tried, never treated as done.
+      // RESUME: skip only if a VALID capture exists. Network/load failures (0 turns) AND
+      // noise captures (invalid: menu/offline/timeout with no handover) are re-tried,
+      // never treated as done — so a re-run keeps trying to get a clean measurement.
       if (RESUME && existsSync(convFile(store.key, mode, theme.key))) {
-        try { const j = JSON.parse(readFileSync(convFile(store.key, mode, theme.key), "utf8")); if (j.turns && j.turns.length > 0) { skipped++; continue; } } catch {}
+        try { const j = JSON.parse(readFileSync(convFile(store.key, mode, theme.key), "utf8")); if (j.turns && j.turns.length > 0 && j.valid !== false) { skipped++; continue; } } catch {}
       }
       tasks.push({ store, mode, theme });
     }

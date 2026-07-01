@@ -14,6 +14,7 @@ import { readFile, writeFile, readdir, rename, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { STORES as SITES } from "./vendors.js";
 import { SHOPPING_THEMES, SUPPORT_THEMES } from "./pools.js";
+import { convoValidity } from "./classify.js";
 
 const args = process.argv.slice(2);
 const dateArg = (() => { const i = args.indexOf("--date"); return i >= 0 ? args[i + 1] : null; })();
@@ -92,7 +93,14 @@ function aText(turn) {
   }
   return cleanReply(turn.replyTail) || "AI answered";
 }
-const themeTurns = (t) => t.turns.map(x => ({ q: x.q, a: aText(x), by: x.by, lat: x.ai_latency_ms != null ? round1(x.ai_latency_ms / 1000) : null }));
+// Truncate the transcript at the first handover turn — once a human takes over the
+// conversation is over; we never show turns past that point.
+const themeTurns = (t) => {
+  let turns = t.turns || [];
+  const ho = turns.findIndex(x => x.handover);
+  if (ho >= 0) turns = turns.slice(0, ho + 1);
+  return turns.map(x => ({ q: x.q, a: aText(x), by: x.by, lat: x.ai_latency_ms != null ? round1(x.ai_latency_ms / 1000) : null }));
+};
 const tk = (ticket) => ticket && ticket.subdomain ? { sub: ticket.subdomain, acct: ticket.account_id || null, conv: ticket.conversation_id || null } : null;
 
 // Aggregate ON READ from the per-conversation files results/<date>/conv/<key>-<mode>-*.json.
@@ -112,6 +120,10 @@ async function loadAgg(key, mode, date) {
       let dt = obj.capturedAt;
       if (!dt) { try { dt = (await stat(`${dir}/${f}`)).mtime.toISOString(); } catch {} }
       obj._datetime = dt || null;
+      // Drop NOISE conversations: crawler-flagged invalid, or (fallback for older
+      // captures) no timed AI answer and no handover — menu/offline/timeout junk.
+      if (obj.valid === false) continue;
+      if (!convoValidity(obj.turns || []).valid) continue;
       themes.push(obj);
     } catch {}
   }

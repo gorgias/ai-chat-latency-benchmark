@@ -96,14 +96,14 @@ export const SUPPORT_THEMES = [
     "If I cancel, how long until I'm refunded?",
     "Can you check whether my latest order can still be modified?",
   ]},
-  { key: "policy", label: "Discount / international / policy", turns: [
-    "My discount code isn't applying at checkout — what are the usual reasons?",
-    "Do you have any current promotions or a first-order discount?",
+  { key: "policy", label: "Shipping & returns policy", turns: [
+    "Where can I find your full shipping policy?",
     "Do you ship internationally, and who covers customs or duties?",
-    "What payment methods do you accept?",
-    "Is there a loyalty or rewards program?",
-    "Where can I find your full shipping and returns policy?",
-    "Can I use more than one discount code on an order?",
+    "How long does standard shipping take once an order is placed?",
+    "What's your return and refund policy?",
+    "Are any items final sale or non-returnable?",
+    "What payment methods do you accept for an order?",
+    "How do I contact your support team if I have an issue with an order?",
   ]},
 ];
 
