@@ -1,139 +1,152 @@
-# AI Chat Benchmark — Shopping Assistant vs Support
+# Gorgias AI Agent — Competitive Benchmark
 
-Live, reproducible **latency + answer-quality** benchmark of competitor on-site AI chat assistants, split into the two jobs a storefront assistant actually does:
+A reproducible benchmark of competitor **on-site AI chat assistants**, measured on their **live customer storefronts**, across the two jobs a storefront assistant actually does:
 
-- **🛍️ Shopping Assistant** — sales discovery that must end in a real product recommendation
-- **🎧 Support** — shipping, delivery, returns, policy
+- **Shopping Assistant** — product discovery that must end in a real recommendation
+- **Support AI Agent** — shipping, delivery, returns, policy
 
-It measures end-to-end response **latency**, scores **answer quality** with a blind LLM-judge panel, and **red-flags** any assistant that hands the conversation to a human instead of doing the job.
+For every conversation it records three things:
 
-**📊 Live report:** https://gorgias.github.io/ai-chat-latency-benchmark/
-&nbsp;&nbsp;(toggle Shopping Assistant ⇄ Support at the top)
+1. **Latency** — true end-to-end, from message sent to the *final* answer rendered.
+2. **Success rate** — % of turns the AI handled itself, with **no spontaneous human handover**.
+3. **Answer quality** — an LLM-judge score against a grounded rubric (Relevance for Shopping, Resolution for Support).
 
-> Built by Gorgias R&D as competitor intelligence. Latency reflects specific test windows (2026-06-29/30) and varies with load, query type, and session state — treat cross-vendor numbers as **directional**, and read the per-question-type and quality sections, not just a single average.
+**Live report:** https://gorgias.github.io/ai-chat-latency-benchmark/report.html
+&nbsp;&nbsp;(toggle Shopping Assistant ⇄ Support AI Agent at the top; filter by date range)
 
----
-
-## Contents
-
-- [Vendors tested](#vendors-tested)
-- [Headline results](#headline-results)
-- [How it works (short)](#how-it-works-short)
-- [Repository map](#repository-map)
-- [Running it](#running-it)
-- [Deep documentation](#deep-documentation)
-- [Key caveats](#key-caveats)
+> Built by Gorgias R&D as competitor intelligence. Latency reflects specific capture windows and varies with load, query type, and session state — treat cross-vendor numbers as **directional**, and read the success + quality columns alongside speed, not a single average.
 
 ---
 
-## Vendors tested
+## What the report shows
 
-| Vendor | Customer site tested | Widget tech | Native storefront chat? |
-|---|---|---|---|
-| **Sierra** | Casper ("Luna") | inline shadow-DOM widget, SSE streaming | ✅ |
-| **Siena** | Simple Modern ("Maddie") | iframe (`chat.siena.cx`) + REST API | ✅ |
-| **Gorgias** *(us)* | Glamnetic ("Gina", live production store) | Gorgias Chat, WebSocket | ✅ |
-| **Yuma** | EvryJewels | none of its own — runs behind **Gorgias Chat** | ❌ (back-end automation) |
-| **DigitalGenius** | Bloom & Wild ("Willow") | Sunshine Conversations + Pusher | ✅ (gated by prechat form) |
-| **Meta AI**¹ | Dermalogica | Zendesk "Virtual Assistant" | ✅ |
-| **Ada** | Loop Earplugs | `static.ada.support` embed | ✅ (deployed; **backend down** both test days) |
+The report is a **static snapshot** (baked data, no auto-refresh). Each run **adds** a new dated batch of conversations; the date-range picker at the top defaults to the last 30 days and lets you scope any window. Sections top-to-bottom:
 
-¹ Requested as "Meta AI"; client-side the widget is Zendesk's messaging Virtual Assistant — the underlying model isn't verifiable from the browser. Labeled as requested with that caveat.
+- **Summary — by vendor.** One row per vendor for the current mode: stores, conversations, avg latency, avg success, avg quality, avg turns. Sortable.
+- **Best AI agent — by category.** Ranks vendors by a single **composite of the two things that matter most — success and speed** — shown side-by-side for Shopping and Support, with where Gorgias lands in each.
+  - `composite = 0.6 × success% + 0.4 × speed`, where `speed = 100 at ≤3s, 0 at ≥22s` (linear).
+  - This is deliberately transparent: success is the outcome, speed is the experience. It surfaces the real trade-off — e.g. Gorgias tends to **lead on success but is dragged down by latency**.
+- **Results — per store.** Every live store as its own row: latency, success, quality, turns, and a one-line "what happened".
+- **Capabilities** (Shopping only) — per **vendor**: quick replies, product cards, reviews, completes-the-sale-without-handoff.
+- **Recorded conversations** — drill into the actual multi-turn transcript per store, with per-message latency and where any human handover occurred.
 
-## Headline results
+## How it works
 
-**Shopping Assistant** — time to a real product recommendation + recommendation quality (0–5):
+- Each assistant is driven on its **live customer site** in a **fresh, cold browser context** per conversation (private/incognito-equivalent — no warm session state).
+- We run **5 standardized Shopping themes + 5 Support themes** per store (everyday-value, gift, problem-solver, compare-budget, beginner / tracking, returns, damaged, order-mgmt, policy), each a **single continuous ~7-turn conversation** (consecutive turns in the *same* session, not a new chat per turn), adapted to each catalog so it's apples-to-apples.
+- **Latency is timed to the true final answer.** Typing indicators and stall/ack messages ("one moment, let me check…") are skipped so a two-part reply can't fake a fast number. Human replies are never timed.
+- We **never click quick-reply chips** — always free-typed text — because canned chips can trigger cached responses and distort latency.
+- We **never request a human**; any handover is therefore unprompted and counts against success.
 
-| Vendor | Latency | Quality | Notes |
-|---|---|---|---|
-| Sierra | ~8.2s | 5.0 | streams; interactive Add-to-Cart product cards |
-| Gorgias *(us)* | ~20.2s | 4.7 | interactive Add-to-Cart cards + multi-item & cross-category recs; **slowest of the rec-capable** |
-| Yuma | ~13.8s | 2.7 | text rec, only gestures at collections |
-| Siena | ~10s | 1.0 | defers to product pages |
-| DigitalGenius | 🚩 | 0 | **hands off to a human** — no recommendation |
-| Meta AI | 🚩 | 0 | **hands off to a lead-capture form** — no recommendation |
-| Ada | — | — | backend down |
+### Quality scoring
 
-**Support** — time to a full answer + answer quality (0–5):
+Recorded transcripts are scored by an LLM judge against a grounded 0–100 rubric, written to [`runner/quality-scores.json`](runner/quality-scores.json) and merged into the report by `gen.js`:
 
-| Vendor | Latency | Quality |
+| Shopping — **Relevance** | Support — **Resolution** |
+|---|---|
+| R1 Answer relevance /35 | R1 Resolution correctness /35 |
+| R2 Recommendation specificity /25 | R2 Groundedness of policy facts /25 |
+| R3 Right rich element (card/reviews/cart) /25 | R3 Self-served / containment /25 |
+| R4 Closed without handover /15 | R4 Completeness / actionability /15 |
+
+## Vendors
+
+11 vendors, each sourced to **≥5 verified customer storefronts**. Captured coverage varies because most widgets only load in a real (headed) browser.
+
+| Vendor | Widget / transport | Headless-drivable? |
 |---|---|---|
-| Sierra | ~6.5s | 5.0 |
-| Meta AI | ~5s | 3.5 |
-| Gorgias *(us)* | ~19.2s | 4.2 |
-| Siena | ~9.5s | 3.4 |
-| DigitalGenius | ~10.2s | 4.3 |
-| Yuma | ~13.5s | 4.4 |
-| Ada | down | — |
+| **Gorgias** *(us)* | Gorgias Chat, same-origin iframe + WebSocket | ✅ (only vendor that captures headless) |
+| **Envive** (formerly Spiffy.ai) | `cdn.spiffy.ai` PDP modal, shadow DOM | headed-only |
+| **Sierra** | inline shadow-DOM widget, SSE streaming | headed-only |
+| **Siena** | `chat.siena.cx` iframe + REST | headed-only |
+| **Yuma** | runs behind Gorgias/Zendesk (back-end automation) | partial |
+| **DigitalGenius** | Sunshine Conversations + Pusher, prechat form | headed-only (≈2 sites load) |
+| **Meta AI** ¹ | Zendesk messaging "Virtual Assistant" | partial |
+| **Ada** | `static.ada.support` embed (help pages) | headed-only |
+| **Rep AI** | `server.myrepai.com` (network-timed) | headed-only |
+| **Kodif** | `chatwidget.kodif.ai` iframe | headed-only |
+| **Humind** | `humind-gift-finder` shadow, FR | headed-only |
 
-**Three things that pop out** (full analysis in [`docs/FINDINGS.md`](docs/FINDINGS.md)):
+¹ Client-side the widget is Zendesk's messaging Virtual Assistant; the underlying model isn't verifiable from the browser. Labeled "Meta AI" as originally requested, with that caveat.
 
-1. **Speed ≠ quality.** The fastest support responder (Meta AI ~5s) is among the lowest quality and won't recommend at all. Sierra is fastest *and* highest quality.
-2. **Product recommendation splits the field.** Only Sierra, Gorgias, Yuma and Siena attempt it; **DigitalGenius and Meta AI hand off to a human** (red flag). Gorgias (us) lands a strong rec (4.7, just behind Sierra) with interactive Add-to-Cart cards and cross-category discovery, but is the slowest to produce one (~20s).
-3. **Question type drives latency more than the vendor.** Product-recommendation turns are ~2–3× slower than FAQs everywhere (catalog retrieval + reasoning + card rendering).
+## Headline results — 2026-07-01 snapshot
 
-## How it works (short)
+*(the live report is authoritative and updates each run; these are the current composite standings)*
 
-Each assistant is driven on its **live customer site**. For every turn we record wall-clock from message-sent to the full response, using the most reliable signal for that vendor's transport (REST poll / SSE stream close / WebSocket frame / same-origin iframe DOM). Two standardized, deliberately **complex** 10-turn conversations are run per vendor (Shopping + Support). Recorded answers are then scored 0–5 by a **blind 3-judge LLM panel** on anonymized vendors. Any unprompted **human handover is flagged as a red-flag limitation**.
+**Shopping Assistant** — composite (success + speed):
 
-Full detail: [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md).
+1. **Siena — 54** (49% success, ~10.1s)
+2. **Gorgias *(us)* — 49** (highest success **69%**, but ~18.5s latency)
+3. Rep AI 48 · Kodif 46 · Sierra 44 · Envive 41 · DigitalGenius 34 · Ada 30 · Humind 25
+
+**Support AI Agent** — composite:
+
+1. **Siena — 84** (100% success, ~10.7s)
+2. DigitalGenius 57 · Ada 51 · Envive 48 · **Gorgias *(us)* 45** (#5 of 6) · Sierra 45
+
+**Top quality (0–100):** Shopping — Envive/Supergoop **97**, Gorgias/Beekman **97**, Gorgias/Shoebacca 96. Support — Siena/Simple Modern **97**, Gorgias/Beekman 96, Yuma/EvryJewels 95.
+
+**The through-line:** Gorgias is competitive-to-leading on **success and answer quality**, but its **~18s latency is the gap** — it's what drops it in the speed-weighted composite. Full analysis in [`docs/FINDINGS.md`](docs/FINDINGS.md).
 
 ## Repository map
 
 ```
 .
+├── report.html                Main report (Shopping ⇄ Support toggle)  ← the deliverable, deployed to Pages
 ├── index.html                 Landing page
-├── report.html                Main report (Shopping ⇄ Support toggle)  ← the deliverable
-├── results.html               Original Siena (Simple Modern) deep-dive page
-├── benchmark.py / benchmark.js Original Siena harness (API method + browser runner)
-├── data_*.json                Raw per-vendor results + recorded answers
-│   ├── data_sierra.json  data_gorgias.json  data_yuma.json
-│   ├── data_digitalgenius.json  data_metaai.json
-│   └── data_quality_eval.json   blind-judge quality scores
-├── runner/                    Headless, cold-session runner (the monthly engine)
-│   ├── run.js                 orchestrator: cold context per vendor+mode, timing, handover flag
-│   ├── vendors.js             per-vendor harness (open / send / read transcript)
-│   ├── pools.js               standardized 10-turn Shopping + Support pools
-│   └── README.md              runner docs
+├── runner/                    Capture + report pipeline
+│   ├── run.js                 orchestrator: cold context per store+mode+theme, timing, handover flag,
+│   │                          per-conversation durable writes, theme-level resume
+│   ├── vendors.js             per-vendor harness (open / send / read transcript) + STORES site lists
+│   ├── pools.js               the 5 Shopping + 5 Support themes
+│   ├── detect.js              widget-signature detection (network + globals + DOM)
+│   ├── gen.js                 aggregates results/<date>/conv/*.json → injects data into report.html
+│   ├── quality-scores.json    LLM-judge Relevance/Resolution scores, keyed by store
+│   ├── run-benchmark.sh       one-command finisher (headless default; `headed` = all vendors)
+│   ├── refresh-loop.sh        local dev only: re-runs gen.js periodically while capturing
+│   └── results/<date>/conv/   one JSON per conversation (durable, accumulates per run)
 ├── docs/
-│   ├── METHODOLOGY.md         how latency, quality, cold sessions, handover are measured
+│   ├── METHODOLOGY.md         latency timing, quality rubric, cold sessions, handover detection
 │   ├── VENDORS.md             per-vendor widget tech, transport, harness, observations
 │   └── FINDINGS.md            full results + analysis + caveats
 └── .github/workflows/
+    ├── deploy-pages.yml       deploys repo root to GitHub Pages on push to master
     └── monthly-benchmark.yml  runs the runner on the 1st of each month (fresh container = cold)
 ```
 
 ## Running it
 
-**The report** is static — open `report.html` or the live URL.
+**The report** is static — open `report.html` or the live URL. To regenerate its data after a capture: `cd runner && node gen.js`.
 
-**The headless runner** (deep, cold, both modes):
+**Capture (headless — Gorgias + whatever loads without a real browser):**
 
 ```bash
 cd runner
 npm install
-npm run install:browser     # playwright install chromium
-node run.js                 # all vendors, both modes → runner/results/<date>/*.json
-node run.js --vendor gorgias sierra
+npx playwright install --with-deps chromium
+node run.js                       # all vendors, both modes, 5 themes → results/<date>/conv/*.json
 node run.js --mode shopping
 ```
 
-**Original Siena reproduction** (browser console): paste `benchmark.js` into DevTools on the Simple Modern product page with the chat open; or `python3 benchmark.py` to print the recorded run.
+**Capture (headed — required for most competitor widgets):**
 
-## Deep documentation
+```bash
+cd runner && caffeinate -i bash run-benchmark.sh headed   # real Chrome, resumable, residential IP
+```
 
-- **[docs/METHODOLOGY.md](docs/METHODOLOGY.md)** — measurement design: latency timing per transport, the blind quality eval, the cold-vs-warm session problem (and what does/doesn't work), and the handover red-flag detector.
-- **[docs/VENDORS.md](docs/VENDORS.md)** — per-vendor breakdown: site, widget technology, transport, how the chat is opened and driven, where the session persists, and behavioral observations.
-- **[docs/FINDINGS.md](docs/FINDINGS.md)** — full results for both modes, latency-by-question-type, quality scores, handover red flags, and the strategic takeaways.
-- **[runner/README.md](runner/README.md)** — the headless runner and monthly automation.
+Runner writes one JSON per conversation the instant it finishes (resumable at the theme level), then `gen.js` aggregates on read and injects `STORES`/`SUPPORT` into `report.html`.
+
+## Deploy
+
+GitHub Pages serves the repository root of `master` (`deploy-pages.yml`). **Pushing `report.html` to `master` publishes it** at `https://gorgias.github.io/ai-chat-latency-benchmark/report.html`.
 
 ## Key caveats
 
-- **Different stores/domains** (mattresses, supplements, jewelry, flowers, skincare, drinkware, earplugs) — answers are judged in each store's own context; cross-vendor numbers are directional, not a controlled lab.
-- **Gorgias (us) ran on Glamnetic** — a *live production storefront* (real catalog + production guardrails), not a sales-tuned demo. This makes it a fairer, tougher baseline; it's also slower than the old demo (~20s vs ~17s).
-- **Warm sessions slightly inflate latency** (measured: DigitalGenius 12.7s cold vs 14.3s warm). The monthly runner uses a fresh container per run, which is cold by construction. See [`docs/METHODOLOGY.md#cold-sessions`](docs/METHODOLOGY.md#cold-sessions).
-- **Ada** was deployed but its bot was unavailable on both test days.
-- **Public client-side identifiers** (e.g. Siena's `appKey`) that appear in this repo are already readable in the storefronts' page source — they are not secrets, and are included only for reproducibility.
+- **Different stores/domains** — answers are judged in each store's own context; cross-vendor numbers are directional, not a controlled lab.
+- **Static snapshot** — the report no longer auto-refreshes; the badge shows the latest capture date. Re-run `gen.js` and re-deploy to update.
+- **Coverage is honest, not uniform.** Only Gorgias captures headless; competitor widgets are headed-only, and some have hard ceilings (DigitalGenius ≈2 live on-site sites, some Yuma/Ada endpoints offline on capture days). Stores with no timed AI turn are left unscored rather than invented.
+- **Gorgias (us)** is tested on real customer storefronts (Madura, Jade, Beekman 1802, Baby Bee, Shoebacca) with production guardrails — a fairer, tougher baseline than a sales-tuned demo.
+- **Public client-side identifiers** (appKeys, shop handles) that appear here are already readable in the storefronts' page source — not secrets, included only for reproducibility.
 
 ---
 

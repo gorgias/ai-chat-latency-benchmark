@@ -20,10 +20,11 @@
 //
 import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import { WIDGETS, STORES, readTranscript } from "./vendors.js";
-import { SUPPORT, SHOPPING } from "./pools.js";
+import { SHOPPING_THEMES, SUPPORT_THEMES } from "./pools.js";
 
-const POLL_MS = 250, STABLE_MS = 4000, GROWTH = 60, SETTLE_MS = 2500;
+const POLL_MS = 250, STABLE_MS = 5000, GROWTH = 60, SETTLE_MS = 2500;
 const TURN_TIMEOUT_MS = Number(process.env.TURN_TIMEOUT_MS) || 60000;
 // Real desktop UA — some chat widgets refuse to load for the default headless UA.
 const REAL_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -36,7 +37,29 @@ const STEALTH = () => {
   Object.defineProperty(navigator, "webdriver", { get: () => undefined });
   Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
   Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
-  window.chrome = { runtime: {} };
+  // A real-ish chrome.runtime stub. The old `{runtime:{}}` had a truthy `runtime` but no
+  // sendMessage(), so widgets that do `if (chrome.runtime) chrome.runtime.sendMessage(...)`
+  // (e.g. Spiffy/Envive's init) threw and aborted before mounting. Provide no-op functions.
+  const _noop = () => {};
+  window.chrome = window.chrome || {};
+  window.chrome.runtime = window.chrome.runtime || {};
+  if (typeof window.chrome.runtime.sendMessage !== "function") window.chrome.runtime.sendMessage = () => Promise.resolve();
+  if (typeof window.chrome.runtime.connect !== "function") window.chrome.runtime.connect = () => ({ postMessage: _noop, onMessage: { addListener: _noop }, disconnect: _noop });
+  try { if (!("lastError" in window.chrome.runtime)) Object.defineProperty(window.chrome.runtime, "lastError", { get: () => undefined }); } catch {}
+  // Sierra: find the shadow root that CONTAINS the composer (its aria-label is never in
+  // textContent, so text-needle matching fails). Used by the sierra handler + reader.
+  window.__sierraRoot = (composerSel) => {
+    let found = null;
+    const walk = (n) => {
+      if (found || !n) return;
+      for (const el of (n.querySelectorAll ? n.querySelectorAll("*") : [])) if (el.shadowRoot) {
+        if (el.shadowRoot.querySelector(composerSel)) { found = el.shadowRoot; return; }
+        walk(el.shadowRoot); if (found) return;
+      }
+    };
+    walk(document);
+    return found;
+  };
 };
 
 // Unprompted handover = the assistant bailed to a human on its own (failure).
@@ -66,10 +89,13 @@ const storeFilter = pick("--store");
 const vendorFilter = pick("--vendor");
 const modeFilter = pick("--mode");
 const skipCandidates = args.includes("--skip-candidates");
+const RESUME = !args.includes("--no-resume");   // skip (store,mode) already written this run-date → survives kills
+const SERIAL = args.includes("--serial");        // per-store serialize (cleaner latency, slower); default OFF = max throughput
 // Parallelism: each (store,mode) runs in its own incognito context, so they're
 // independent. Latency is network/model-bound (not CPU-bound), so modest
 // concurrency doesn't skew timing. Default 4; tune with --concurrency N.
 const CONC = Math.max(1, Number((pick("--concurrency") || [])[0]) || Number(process.env.CONCURRENCY) || 4);
+const THEME_LIMIT = Number((pick("--themes") || [])[0]) || 0;   // 0 = all themes
 const MODES = (modeFilter || ["shopping", "support"]);
 const STAMP = (process.env.RUN_DATE || new Date().toISOString().slice(0, 10));
 
@@ -83,11 +109,17 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 // Generation/typing indicators — must NOT be treated as a finished reply.
 const GEN_RE = /(Thinking|Analyzing|Typing|Searching|Looking|Writing|Processing|Almost there|En train|Réflexion|Analyse|Recherche|escribiendo|pensando)\s*\.*\s*$/i;
 const isGen = (t) => GEN_RE.test((t || "").trim());
+// STALL / acknowledgement messages — a provider sends "OK, let me check…" FIRST, then
+// the real answer as a SECOND message. We must NOT stop the clock on the stall; latency
+// runs to the TRUE final answer. Treated as "still working" only while the reply is still
+// short (a genuine long answer that happens to end this way is accepted).
+const ACK_RE = /(let me (check|look|see|find|pull|grab|dig|confirm)|one moment|just a (sec|second|moment|minute)|give me a (sec|second|moment|minute)|hold on|bear with|i'?ll (check|look|find|get|see|have a look)|looking into (it|that|this)|checking (on )?(that|this|it)|let me take a look|searching (for|our)|on it!?|right away|happy to help|great question|un instant|un moment|deux secondes|laisse[- ]?moi|je (regarde|vérifie|cherche|reviens|te reviens|te dis|m'?en occupe)|patiente)\b[\s.!?…]*$/i;
+const isAck = (t) => ACK_RE.test((t || "").trim());
 
 // TRUE end-to-end latency: t0 = the instant the user message is sent; complete_ms
-// = the instant the AI's FULL reply finished rendering (last text change) − t0.
-// We skip the user-message echo (require growth past it) and never stop on a
-// "Thinking…/Almost there" indicator — that was making latencies look impossibly low.
+// = the instant the AI's FULL, FINAL reply finished rendering (last text change) − t0.
+// We skip the user-message echo, never stop on a "Thinking…" indicator, and never stop on
+// an intermediate stall ("let me check…") — the clock runs to the real final answer.
 async function timeTurn(page, scope, sendFn, q) {
   const before = (await readTranscript(page, scope)).len;
   const echoApprox = (q ? q.length : 80) + 70;   // "HH:MM. You said: <q> HH:MM"
@@ -102,22 +134,52 @@ async function timeTurn(page, scope, sendFn, q) {
     if (len !== lastLen) { lastChange = Date.now(); lastLen = len; }
     if (isGen(text)) sawGen = true;
     if (len > before + REPLY_MIN) { grownReply = true; if (ttft == null) ttft = Date.now() - t0; }
+    // "still working" = a typing indicator, OR a short stall/ack message that will be
+    // followed by the real answer. A long reply (>240 chars) is accepted even if it
+    // coincidentally ends acknowledgement-like.
+    const shortSoFar = (len - before) < 240;
+    const working = isGen(text) || (isAck(text) && shortSoFar);
     const settled = Date.now() - lastChange > STABLE_MS;
-    if (settled && !isGen(text) && (grownReply || (sawGen && len > before + 40))) { complete = lastChange - t0; break; }
+    if (settled && !working && (grownReply || (sawGen && len > before + 40))) { complete = lastChange - t0; break; }
   }
   return { ttft_ms: ttft, complete_ms: complete, grew: lastLen - before };
 }
 
-async function runStoreMode(browser, store, mode) {
+// NETWORK-timed turn — for closed widgets (Rep AI, Humind) whose DOM is awkward but
+// whose assistant reply arrives on a known backend endpoint. t0 = send; complete =
+// when the last new reply payload arrived after t0 and then went quiet for STABLE_MS.
+// `net.replies` is the live buffer filled by the page 'response' listener.
+async function timeTurnNet(page, net, sendFn) {
+  const base = net.replies.length;
+  const t0 = Date.now();
+  await sendFn();
+  let lastNew = null, count = base, ttft = null, complete = null;
+  const deadline = t0 + TURN_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await sleep(POLL_MS);
+    if (net.replies.length > count) { const r = net.replies[net.replies.length - 1]; if (r.t >= t0) { lastNew = r.t; if (ttft == null) ttft = lastNew - t0; } count = net.replies.length; }
+    // don't settle on a short stall/ack ("let me check…") — wait for the real final answer
+    const chunk = net.replies.slice(base);
+    const joined = chunk.map(r => r.text).join("  ");
+    const working = chunk.length && isAck(chunk[chunk.length - 1].text) && joined.length < 240;
+    if (lastNew && !working && Date.now() - lastNew > STABLE_MS) { complete = lastNew - t0; break; }
+  }
+  return { ttft_ms: ttft, complete_ms: complete, grew: count - base, replyText: net.replies.slice(base).map(r => r.text).join("  ") };
+}
+
+async function runStoreMode(browser, store, mode, theme) {
   const w = WIDGETS[store.widget];
-  const pool = mode === "support" ? SUPPORT : SHOPPING;
-  const out = { key: store.key, vendor: store.vendor, store: store.store, url: store.url, us: !!store.us, widget: store.widget, mode, date: STAMP, turns: [] };
+  const pool = theme.turns;
+  const out = { key: store.key, vendor: store.vendor, store: store.store, url: store.url, us: !!store.us, widget: store.widget, mode, theme: theme.key, themeLabel: theme.label, date: STAMP, turns: [] };
   // INCOGNITO/COLD: a brand-new Playwright context has zero cookies/localStorage/
   // IndexedDB/cache for ANY origin (the widget's cross-origin storage included),
   // so there is never a pre-existing conversation. storageState is left undefined
   // (no profile) and we clear cookies as belt-and-suspenders.
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: store.locale || "en-US", timezoneId: "America/New_York", userAgent: REAL_UA, extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" }, storageState: undefined });
   await context.addInitScript(STEALTH);
+  // Spiffy/Envive gates its widget behind an A/B rollout bucket that a cold context re-rolls
+  // to "disabled"; this sanctioned flag forces it ON before the session-bucket check.
+  if (store.widget === "spiffy") await context.addInitScript(() => { try { localStorage.setItem("spiffy_on", "true"); } catch (e) {} });
   await context.clearCookies().catch(() => {});
   const page = await context.newPage();
 
@@ -148,28 +210,52 @@ async function runStoreMode(browser, store, mode) {
     });
   }
 
+  // NETWORK-transport widgets (Rep AI, Humind): the assistant's reply text arrives on
+  // a backend endpoint, not the DOM. Buffer every parsed reply with its arrival time.
+  const net = { replies: [], seen: new Set() };
+  if (w.transport === "net" && w.net) {
+    page.on("response", async (resp) => {
+      try {
+        if (!w.net.match.test(resp.url())) return;
+        const body = await resp.text();
+        const t = Date.now();                 // for streams, text() resolves at stream END
+        for (const txt of (w.net.parse(body, resp.url()) || [])) {
+          const k = txt.slice(0, 120);
+          if (txt && txt.trim() && !net.seen.has(k)) { net.seen.add(k); net.replies.push({ t, text: txt }); }
+        }
+      } catch {}
+    });
+  }
+
   try {
     await page.goto(store.url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await w.open(page);
     let handedOver = false;
+    const useNet = w.transport === "net" && w.net;
     for (let i = 0; i < pool.length; i++) {
       const q = pool[i];
-      let r;
-      try { r = await timeTurn(page, w.scope, () => w.send(page, q), q); }
-      catch (e) { r = { ttft_ms: null, complete_ms: null, error: String(e).slice(0, 120) }; }
-      const tail = (await readTranscript(page, w.scope)).text.slice(-700);
+      let r, tail;
+      if (useNet) {
+        try { r = await timeTurnNet(page, net, () => w.send(page, q)); }
+        catch (e) { r = { ttft_ms: null, complete_ms: null, error: String(e).slice(0, 120) }; }
+        tail = net.replies.slice(-3).map(x => x.text).join("  ").slice(-700);
+      } else {
+        try { r = await timeTurn(page, w.scope, () => w.send(page, q), q); }
+        catch (e) { r = { ttft_ms: null, complete_ms: null, error: String(e).slice(0, 120) }; }
+        tail = (await readTranscript(page, w.scope)).text.slice(-700);
+      }
       const handover = detectHandover(tail, w.handover);
       if (handover) handedOver = true;
       // Once a human owns the thread, every later turn is human too. We NEVER
       // count a human reply's latency — only the AI's own responses are timed.
       const by = handedOver ? "human" : "ai";
-      out.turns.push({ turn: i + 1, q, by, ...r, ai_latency_ms: by === "ai" ? r.complete_ms : null, handover: !!handover, handover_hit: handover, replyTail: tail.slice(-300) });
-      console.log(`  [${store.key}/${mode}] T${i + 1} ${by === "ai" ? (r.complete_ms ?? "—") + "ms" : "(human)"}${handover ? "  ⛔ HANDOVER: " + handover : ""}`);
+      out.turns.push({ turn: i + 1, q, by, ...r, ai_latency_ms: by === "ai" ? r.complete_ms : null, handover: !!handover, handover_hit: handover, replyTail: tail.slice(-500) });
+      console.log(`  [${store.key}/${mode}/${theme.key}] T${i + 1} ${by === "ai" ? (r.complete_ms ?? "—") + "ms" : "(human)"}${handover ? "  ⛔ HANDOVER: " + handover : ""}`);
       await sleep(SETTLE_MS);
     }
   } catch (e) {
     out.error = String(e).slice(0, 200);
-    console.log(`  [${store.key}/${mode}] FAILED: ${out.error}`);
+    console.log(`  [${store.key}/${mode}/${theme.key}] FAILED: ${out.error}`);
   } finally {
     // Build the Gorgias agent-dashboard ticket link(s) from what we captured.
     if (store.widget === "gorgias") {
@@ -209,45 +295,63 @@ async function runStoreMode(browser, store, mode) {
   try { browser = await chromium.launch({ ...launchOpts, channel: HEADED ? "chrome" : undefined }); }
   catch (e) { browser = await chromium.launch(launchOpts); }
   console.log(HEADED ? "Running HEADED (visible Chrome) — bot-blocked widgets load here." : "Running headless.");
-  await mkdir(`results/${STAMP}`, { recursive: true });
-  const summary = [];
+  const CONV_DIR = `results/${STAMP}/conv`;
+  await mkdir(CONV_DIR, { recursive: true });   // one file PER CONVERSATION (theme)
 
-  // Build the full (store,mode) task list and run it through a concurrency pool.
+  // Build the (store,mode,theme) task list. EACH theme is one independent ~7-turn
+  // conversation in its own cold context. RESUME is THEME-level: we skip any
+  // conversation already on disk, so a kill loses at most the one in flight —
+  // relaunch continues exactly where it stopped. Aggregation happens on READ (gen.js).
+  const convFile = (k, mode, theme) => `${CONV_DIR}/${k}-${mode}-${theme}.json`;
   const tasks = [];
-  for (const store of targets) for (const mode of MODES) tasks.push({ store, mode });
-  console.log(`Running ${tasks.length} (store×mode) jobs at concurrency ${CONC}, each in a fresh incognito context.\n`);
+  let skipped = 0;
+  for (const store of targets) for (const mode of MODES) {
+    let themes = mode === "support" ? SUPPORT_THEMES : SHOPPING_THEMES;
+    if (THEME_LIMIT) themes = themes.slice(0, THEME_LIMIT);
+    for (const theme of themes) {
+      // RESUME: skip only if a VALID capture exists (reached the widget → ≥1 turn).
+      // Network/load failures (0 turns) are re-tried, never treated as done.
+      if (RESUME && existsSync(convFile(store.key, mode, theme.key))) {
+        try { const j = JSON.parse(readFileSync(convFile(store.key, mode, theme.key), "utf8")); if (j.turns && j.turns.length > 0) { skipped++; continue; } } catch {}
+      }
+      tasks.push({ store, mode, theme });
+    }
+  }
+  if (skipped) console.log(`↩︎ RESUME: skipping ${skipped} conversations already on disk.`);
+  // INTERLEAVE by vendor so early captures span ALL vendors — under frequent kills the
+  // report fills in representatively (every vendor gets some data) instead of one vendor
+  // at a time; depth accrues on later passes.
+  if (!SERIAL && tasks.length) {
+    const byV = {}; for (const t of tasks) (byV[t.store.vendor] = byV[t.store.vendor] || []).push(t);
+    const lists = Object.values(byV); const rr = [];
+    for (let i = 0; rr.length < tasks.length; i++) for (const l of lists) if (l[i]) rr.push(l[i]);
+    tasks.length = 0; tasks.push(...rr);
+  }
+  if (!tasks.length) { console.log("ALL DONE — every conversation already captured for this run-date."); await browser.close(); return; }
+  console.log(`Running ${tasks.length} conversations at concurrency ${CONC}, each in a fresh incognito context.\n`);
 
-  let next = 0;
+  const remaining = tasks.slice();
+  const inflight = new Set();
+  let done = 0, failed = 0;
   async function worker(wid) {
     while (true) {
-      const t = tasks[next++];               // single-threaded event loop → no race
-      if (!t) break;
-      console.log(`▶ [w${wid}] ${t.store.vendor} · ${t.store.store} · ${t.mode}`);
-      const res = await runStoreMode(browser, t.store, t.mode);
-      await writeFile(`results/${STAMP}/${t.store.key}-${t.mode}.json`, JSON.stringify(res, null, 2));
-      summary.push({ key: t.store.key, vendor: t.store.vendor, store: t.store.store, us: res.us, mode: t.mode, ...res.stats, error: res.error || null });
-      console.log(`  ← [${t.store.key}/${t.mode}] success ${res.stats.success_rate ?? "n/a"}% · avg ${res.stats.avg_ms ?? "n/a"}ms${res.stats.handover_turn ? `  🚩 handover @T${res.stats.handover_turn}` : ""}`);
+      let t;
+      if (SERIAL) {
+        const idx = remaining.findIndex(x => !inflight.has(x.store.key));
+        if (idx < 0) { if (remaining.length === 0) break; await sleep(300); continue; }
+        t = remaining.splice(idx, 1)[0]; inflight.add(t.store.key);
+      } else { t = remaining.shift(); if (!t) break; }
+      try {
+        const res = await runStoreMode(browser, t.store, t.mode, t.theme);
+        // WRITE THIS CONVERSATION IMMEDIATELY — finest-grained durability.
+        await writeFile(convFile(t.store.key, t.mode, t.theme.key), JSON.stringify(res)).catch(e => console.log("write err", e.message));
+        done++;
+        console.log(`  ✔ [${done}/${tasks.length}] ${t.store.key}/${t.mode}/${t.theme.key} · success ${res.stats.success_rate ?? "n/a"}% · avg ${res.stats.avg_ms ?? "n/a"}ms${res.stats.handover_turn ? `  🚩 handover@T${res.stats.handover_turn}` : ""}`);
+      } catch (e) { failed++; console.log(`  ✗ ${t.store.key}/${t.mode}/${t.theme.key} ERR ${String(e).slice(0, 100)}`); }
+      finally { if (SERIAL) inflight.delete(t.store.key); }
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONC, tasks.length) }, (_, i) => worker(i + 1)));
   await browser.close();
-
-  // per-vendor rollup (one line per vendor per mode), matching the report's top table
-  const byVendorMode = {};
-  for (const s of summary) {
-    const k = s.vendor + "|" + s.mode;
-    (byVendorMode[k] = byVendorMode[k] || []).push(s);
-  }
-  const vendorRollup = Object.entries(byVendorMode).map(([k, arr]) => {
-    const [vendor, mode] = k.split("|");
-    const sr = arr.map(a => a.success_rate).filter(x => x != null);
-    const la = arr.map(a => a.avg_ms).filter(x => x != null);
-    return {
-      vendor, mode, stores: arr.length,
-      avg_success_rate: sr.length ? Math.round(sr.reduce((a, b) => a + b, 0) / sr.length) : null,
-      avg_latency_ms: la.length ? Math.round(la.reduce((a, b) => a + b, 0) / la.length) : null,
-    };
-  });
-  await writeFile(`results/${STAMP}/summary.json`, JSON.stringify({ date: STAMP, perStore: summary, perVendor: vendorRollup }, null, 2));
-  console.log(`Done. Per-store + summary.json in results/${STAMP}/`);
+  console.log(`Done. Wrote ${done} conversations (${failed} failed) to ${CONV_DIR}/`);
 })();

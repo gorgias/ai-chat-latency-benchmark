@@ -7,3 +7,8 @@ results_*.json
 
 runner/node_modules/
 runner/package-lock.json
+
+# capture logs + scratch experiments (not part of the reproducible pipeline)
+runner/*.log
+runner/_*.mjs
+runner/captest.js
