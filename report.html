@@ -104,6 +104,19 @@
   .qseg{font-size:11px;margin-right:12px;color:var(--on-muted);white-space:nowrap}
   .qseg b{color:var(--on);font-weight:800}
   .conv-body{padding:8px 16px 16px}
+  /* all-conversations feed (newest first, expandable) */
+  .cf-item{border-bottom:1px solid var(--line)}
+  .cf-item:last-child{border-bottom:none}
+  .cf-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:11px 16px;font-size:13px;color:var(--on);font-family:inherit}
+  .cf-row:hover{background:var(--surface-2)}
+  .cf-store{font-weight:700;white-space:nowrap}
+  .cf-meta{color:var(--on-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cf-dt{margin-left:auto;font-size:11.5px;color:var(--on-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cf-caret{color:var(--on-faint);font-size:11px;width:12px;text-align:center}
+  .cf-body{padding:0 16px 10px}
+  .cf-body[hidden]{display:none}
+  .linklike{background:none;border:none;padding:0;font:inherit;color:var(--primary);cursor:pointer;font-weight:700}
+  .linklike:hover{text-decoration:underline}
   .theme-bar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
   .theme-bar .tab{font-size:12px;padding:5px 11px}
   .theme-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:8px 0 4px;border-bottom:1px solid var(--line);margin-bottom:6px}
@@ -241,6 +254,23 @@
       <h3>Sample window</h3>
       <p>Runs <strong>accumulate</strong>: each new run adds dated conversations and keeps the old ones. The date picker narrows the sample to a window (default: last 30 days), so every score reflects exactly the runs you've selected.</p>
     </div>
+
+    <div class="mblock">
+      <h3>Best AI agent — how the ranking works</h3>
+      <p>The two jobs an on-site assistant is hired for are ranked by a single composite that weighs the two things that matter most: <strong>success</strong> (does it finish the job without bailing to a human) and <strong>speed</strong> (latency to the full answer). <span class="mono">Composite = 60% success + 40% speed · speed scored 100 at ≤3s, 0 at ≥22s.</span> Averaged per vendor across its stores; respects the date window. <strong>Ranking is gated on measurement coverage</strong> — a vendor needs enough cleanly-timed turns to be ranked on speed; those with too few are listed separately.</p>
+    </div>
+
+    <div class="mblock">
+      <h3>Method &amp; caveats</h3>
+      <ul>
+        <li><strong>Apples-to-apples script</strong> — the same open-ask → needs → budget → compare → objection → bundle → best-seller → add-to-cart → total/shipping flow, adapted to each catalog. We never request a human, so any handover is unprompted.</li>
+        <li><strong>Once a human takes over, we stop</strong> — the remaining scripted turns aren't sent to a live agent; they count as not-self-served so the success denominator stays honest.</li>
+        <li><strong>Latency is directional</strong> — different catalogs, single windows, some timing noise. Read success and coverage alongside speed, not a single number.</li>
+        <li><strong>Gorgias is "us"</strong> — tested on real customer storefronts; behavior varies by each merchant's config.</li>
+        <li><strong>"Envive" = Spiffy.ai</strong> (same company, rebranded) — treated as one vendor.</li>
+        <li><strong>Coverage is honest, not uniform</strong> — only Gorgias drives fully headless; competitor widgets are headed-only and some have hard ceilings (offline widgets, handover-only). Stores with no timed AI turn are left unscored, never invented.</li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -291,7 +321,7 @@
 
 <section id="best-sec">
   <h2 class="sec">Best AI agent — by category</h2>
-  <p class="lead">The two jobs an on-site assistant is hired for, ranked by a single composite that weighs the two things that matter most: <strong>success</strong> (does it finish the job without bailing to a human) and <strong>speed</strong> (latency to the full answer). <span class="mono" style="opacity:.75">Composite = 60% success + 40% speed · speed scored 100 at ≤3s, 0 at ≥22s.</span> Averaged per vendor across its stores; respects the date window above. <strong>Ranking is gated on measurement coverage</strong> — a vendor needs enough cleanly-timed turns to be ranked on speed (see note below).</p>
+  <p class="lead">The single best on-site AI agent for each job, ranked by a composite of <strong>success</strong> + <strong>speed</strong>, gated on measurement coverage. <button class="linklike" onclick="openModal()">How the ranking works ↗</button></p>
   <div class="modebar bestbar">
     <button class="modebtn bestbtn" data-b="shopping" aria-selected="true" onclick="setBest('shopping')">Shopping Assistant</button>
     <button class="modebtn bestbtn" data-b="support" aria-selected="false" onclick="setBest('support')">Support AI Agent</button>
@@ -335,25 +365,9 @@
 </section>
 
 <section id="conv-sec">
-  <h2 class="sec">Recorded conversations — drill down by store</h2>
-  <p class="lead">Pick a store to see the actual ~10-turn conversation, turn by turn, with the AI's answers, the <strong>per-message latency</strong>, and where a <span style="color:var(--danger);font-weight:700">human handover</span> occurred (human replies are never timed).</p>
-  <div class="toggle-tabs" id="conv-tabs"></div>
-  <div class="card">
-    <div class="conv-head" id="conv-head"></div>
-    <div class="conv-body" id="conv-body"></div>
-  </div>
-</section>
-
-<section id="method-sec">
-  <h2 class="sec">Method &amp; caveats</h2>
-  <div class="note card" style="padding:16px 18px">
-    <p>• <strong>One standardized shopping script per store</strong> — open ask → needs/context → budget → compare two → objection → secondary need → bundle → best-seller → add to cart → total/shipping — adapted to each catalog so it's apples-to-apples. We <strong>never request a human</strong>; any handover is therefore unprompted.</p>
-    <p style="margin-top:8px">• <strong>"Spiffy.ai" on Supergoop</strong> is the vendor actually serving Supergoop's on-site assistant (the user originally referred to it as "Envive"; the live widget is Spiffy.ai — <span class="mono">commerce-api.spiffy.ai</span>, <span class="mono">spiffy-*</span> components).</p>
-    <p style="margin-top:8px">• <strong>Latency is directional</strong> — different catalogs, single test windows, and some session/timing noise. Treat cross-store numbers as indicative, and read the success column alongside speed.</p>
-    <p style="margin-top:8px">• <strong>Gorgias is "us"</strong>; tested on 6 real customer storefronts (Madura, Jade, Beekman 1802, Baby Bee, Shoebacca, JSHealth). Behavior varies by each merchant's config — most complete the sale, some escalate to a human or gate behind a chip menu.</p>
-    <p style="margin-top:8px">• <strong>Latency is true end-to-end</strong> — measured from the instant the user message is sent to when the AI's full reply finishes rendering. Replies that come from a human agent are <strong>never timed</strong> (flagged "🚩 human · not timed"). Each Gorgias conversation links to its merchant Gorgias account (subdomain + account id + the conversation UUID); the numeric ticket id isn't exposed to the chat client, so it's not a one-click <code>/ticket/{id}</code> deep link.</p>
-    <p style="margin-top:8px">• <strong>Coverage in progress.</strong> The 2nd store for each competitor and standardized re-tests of the legacy single-store vendors are being added; this page updates as they land.</p>
-  </div>
+  <h2 class="sec">All conversations · newest first</h2>
+  <p class="lead">Every captured conversation in this mode, <strong>freshest first</strong> (by capture date &amp; time). Click a row to expand the full turn-by-turn transcript with <strong>per-message latency</strong>; a <span style="color:var(--danger);font-weight:700">human handover</span> is flagged (human replies are never timed).</p>
+  <div class="card table-scroll" id="conv-feed"></div>
 </section>
 
 </div>
@@ -362,6 +376,8 @@
 <script>
 const COL = {Spiffy:'var(--spiffy)','Gorgias':'var(--gorgias)',Sierra:'var(--sierra)',Siena:'var(--siena)',Yuma:'var(--yuma)',DigitalGenius:'var(--dg)','Meta AI':'var(--meta)',Ada:'var(--ada)'};
 // ---- data: one entry per store ----
+// ---- SHOPPING (one entry per store; .themes = 5 apple-to-apple conversations) — GENERATED by runner/gen.js from runs [2026-07-01]. Do not hand-edit. ----
+// ---- SHOPPING (one entry per store; .themes = 5 apple-to-apple conversations) — GENERATED by runner/gen.js from runs [2026-07-01]. Do not hand-edit. ----
 // ---- SHOPPING (one entry per store; .themes = 5 apple-to-apple conversations) — GENERATED by runner/gen.js from runs [2026-07-01]. Do not hand-edit. ----
 // ---- SHOPPING (one entry per store; .themes = 5 apple-to-apple conversations) — GENERATED by runner/gen.js from runs [2026-07-01]. Do not hand-edit. ----
 // ---- SHOPPING (one entry per store; .themes = 5 apple-to-apple conversations) — GENERATED by runner/gen.js from runs [2026-07-01]. Do not hand-edit. ----
@@ -1570,10 +1586,12 @@ const STORES = [
    "conv": "2470611c-c7b8-47d1-8ca2-e84a7e98851b"
   },
   "what": "5 cold private conversations (shopping themes). Handover in 2/5 themes. Avg end-to-end latency ~16.6s across 20 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17s",
     "success": 43,
     "successTxt": "43%",
@@ -1631,6 +1649,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16s",
     "success": 86,
     "successTxt": "86%",
@@ -1688,6 +1707,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~23.4s",
     "success": 14,
     "successTxt": "14%",
@@ -1745,6 +1765,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.9s",
     "success": 100,
     "successTxt": "100%",
@@ -1802,6 +1823,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.5s",
     "success": 43,
     "successTxt": "43%",
@@ -1938,10 +1960,12 @@ const STORES = [
    "conv": "a9673680-898c-4da8-9222-db246df4bfc5"
   },
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~18.4s across 31 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~19.5s",
     "success": 100,
     "successTxt": "100%",
@@ -1999,6 +2023,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~20.8s",
     "success": 100,
     "successTxt": "100%",
@@ -2056,6 +2081,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~18.9s",
     "success": 100,
     "successTxt": "100%",
@@ -2113,6 +2139,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.9s",
     "success": 100,
     "successTxt": "100%",
@@ -2170,6 +2197,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~10.2s",
     "success": 43,
     "successTxt": "43%",
@@ -2306,10 +2334,12 @@ const STORES = [
    "conv": null
   },
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -2367,6 +2397,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -2424,6 +2455,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -2481,6 +2513,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -2538,6 +2571,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -2660,10 +2694,12 @@ const STORES = [
    "conv": "51c36e4d-0c33-4e7c-974a-6692d0d80997"
   },
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~18s across 35 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~20.4s",
     "success": 100,
     "successTxt": "100%",
@@ -2721,6 +2757,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~18.7s",
     "success": 100,
     "successTxt": "100%",
@@ -2778,6 +2815,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.1s",
     "success": 100,
     "successTxt": "100%",
@@ -2835,6 +2873,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.3s",
     "success": 100,
     "successTxt": "100%",
@@ -2892,6 +2931,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.3s",
     "success": 100,
     "successTxt": "100%",
@@ -3028,10 +3068,12 @@ const STORES = [
    "conv": "458befbe-56ef-4e4a-89e1-47229fc8665f"
   },
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~19.3s across 26 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~19.3s",
     "success": 86,
     "successTxt": "86%",
@@ -3089,6 +3131,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~22.8s",
     "success": 86,
     "successTxt": "86%",
@@ -3146,6 +3189,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.8s",
     "success": 43,
     "successTxt": "43%",
@@ -3203,6 +3247,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.9s",
     "success": 100,
     "successTxt": "100%",
@@ -3260,6 +3305,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~19s",
     "success": 57,
     "successTxt": "57%",
@@ -3396,10 +3442,12 @@ const STORES = [
    "conv": "ddd2e00d-4b7f-43da-baeb-28c7587f7e8b"
   },
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~20s across 32 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~20.7s",
     "success": 100,
     "successTxt": "100%",
@@ -3457,6 +3505,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~24.3s",
     "success": 100,
     "successTxt": "100%",
@@ -3514,6 +3563,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.6s",
     "success": 100,
     "successTxt": "100%",
@@ -3571,6 +3621,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~18s",
     "success": 100,
     "successTxt": "100%",
@@ -3628,6 +3679,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~19.3s",
     "success": 57,
     "successTxt": "57%",
@@ -3760,10 +3812,12 @@ const STORES = [
   "attempted": 35,
   "ticket": null,
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -3817,6 +3871,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -3870,6 +3925,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -3923,6 +3979,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -3976,6 +4033,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4104,10 +4162,12 @@ const STORES = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~12.4s across 7 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4161,6 +4221,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4214,6 +4275,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4267,6 +4329,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.2s",
     "success": 14,
     "successTxt": "14%",
@@ -4320,6 +4383,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~12.1s",
     "success": 86,
     "successTxt": "86%",
@@ -4443,15 +4507,17 @@ const STORES = [
   "latPct": 0,
   "success": 0,
   "successTxt": "0%",
-  "avgTurns": 7,
+  "avgTurns": 4.7,
   "timed": 0,
-  "attempted": 21,
+  "attempted": 14,
   "ticket": null,
   "what": "Cold private run (3 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4505,6 +4571,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4558,55 +4625,13 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
-    "success": 0,
-    "successTxt": "0%",
+    "success": null,
+    "successTxt": "—",
     "handoverTurn": null,
     "ticket": null,
-    "turns": [
-     {
-      "q": "Hi — I have a specific need and I'm worried about picking the wrong thing. Can you help?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "I've been disappointed by similar products before, so quality really matters to me.",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Which of your products is best for that, and why is it a good fit?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "What do other customers say in their reviews — does it actually hold up?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Is there anything I should pair it with to get the best result?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "If it doesn't work out for me, what are my options?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Okay, I'm convinced — add your recommendation and give me the total.",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     }
-    ]
+    "turns": []
    }
   ],
   "turns": [
@@ -4672,10 +4697,12 @@ const STORES = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (shopping themes). Handover in 1/5 themes. Avg end-to-end latency ~10.6s across 27 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~16.1s",
     "success": 100,
     "successTxt": "100%",
@@ -4729,6 +4756,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -4782,6 +4810,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~7.3s",
     "success": 86,
     "successTxt": "86%",
@@ -4835,6 +4864,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~8.8s",
     "success": 100,
     "successTxt": "100%",
@@ -4888,6 +4918,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~9.6s",
     "success": 100,
     "successTxt": "100%",
@@ -5009,17 +5040,19 @@ const STORES = [
   "us": false,
   "lat": "~9.7s",
   "latPct": 39,
-  "success": 17,
-  "successTxt": "17%",
+  "success": 21,
+  "successTxt": "21%",
   "avgTurns": 7,
   "timed": 6,
-  "attempted": 35,
+  "attempted": 28,
   "ticket": null,
-  "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~9.7s across 6 AI-timed turns.",
+  "what": "4 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~9.7s across 6 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5073,6 +5106,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5126,6 +5160,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~9.7s",
     "success": 86,
     "successTxt": "86%",
@@ -5179,6 +5214,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5223,59 +5259,6 @@ const STORES = [
      },
      {
       "q": "Add that one to my cart and tell me the total with any discount.",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     }
-    ]
-   },
-   {
-    "key": "beginner",
-    "label": "Total beginner",
-    "lat": "—",
-    "success": 0,
-    "successTxt": "0%",
-    "handoverTurn": null,
-    "ticket": null,
-    "turns": [
-     {
-      "q": "Hi! I'm completely new to this and don't know where to start — can you guide me?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Can you explain the main options in simple terms?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "For a first-timer like me, what's the safest, easiest choice?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "I don't want to overpay while I'm still learning — what's a good starter pick?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "What do beginners usually say about it in reviews?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Is there anything else a beginner needs to get started?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Okay, add your beginner recommendation to my cart — what's the total?",
       "a": "AI replied (streamed past timing window)",
       "by": "ai",
       "lat": null
@@ -5364,10 +5347,12 @@ const STORES = [
    "conv": null
   },
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5425,6 +5410,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5482,6 +5468,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5539,6 +5526,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5596,6 +5584,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -5720,10 +5709,12 @@ const STORES = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (shopping themes). Handover in 4/5 themes. Avg end-to-end latency ~22.5s across 20 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~26.6s",
     "success": 14,
     "successTxt": "14%",
@@ -5777,6 +5768,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~21.9s",
     "success": 86,
     "successTxt": "86%",
@@ -5830,6 +5822,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~20.8s",
     "success": 57,
     "successTxt": "57%",
@@ -5883,6 +5876,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~21.9s",
     "success": 86,
     "successTxt": "86%",
@@ -5936,6 +5930,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~26.1s",
     "success": 43,
     "successTxt": "43%",
@@ -6047,122 +6042,20 @@ const STORES = [
   ]
  },
  {
-  "id": "dg-gstar-shopping-2026-07-01",
+  "id": "dg-gstar-shopping-pending",
   "date": "2026-07-01",
   "vendor": "DigitalGenius",
   "store": "G-Star RAW",
   "site": "g-star.com/en_us",
   "url": "https://www.g-star.com/en_us",
-  "method": "new",
+  "method": "pending",
   "us": false,
   "lat": "—",
-  "latPct": 0,
-  "success": 0,
-  "successTxt": "0%",
-  "avgTurns": 7,
-  "timed": 0,
-  "attempted": 7,
-  "ticket": null,
-  "what": "Cold private run (1 themes): a human owned every conversation — no AI self-service this session.",
-  "themes": [
-   {
-    "key": "everyday-value",
-    "label": "Everyday value buyer",
-    "lat": "—",
-    "success": 0,
-    "successTxt": "0%",
-    "handoverTurn": null,
-    "ticket": null,
-    "turns": [
-     {
-      "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "I want something for everyday use, good quality, and I care about value for money.",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "I'd like to stay within a sensible budget — what are my best options?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Can you compare your two most popular options and tell me which is better for me?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Which one is your overall best seller, and is it well reviewed?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "Okay, can you add your top recommendation to my cart?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "What's my total, and do you offer free shipping or a first-order discount?",
-      "a": "AI replied (streamed past timing window)",
-      "by": "ai",
-      "lat": null
-     }
-    ]
-   }
-  ],
-  "turns": [
-   {
-    "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "I want something for everyday use, good quality, and I care about value for money.",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "I'd like to stay within a sensible budget — what are my best options?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "Can you compare your two most popular options and tell me which is better for me?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "Which one is your overall best seller, and is it well reviewed?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "Okay, can you add your top recommendation to my cart?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   },
-   {
-    "q": "What's my total, and do you offer free shipping or a first-order discount?",
-    "a": "AI replied (streamed past timing window)",
-    "by": "ai",
-    "lat": null
-   }
-  ]
+  "success": null,
+  "successTxt": "pending",
+  "successCls": "p-na",
+  "what": "Not captured in a cold run yet — pending.",
+  "turns": []
  },
  {
   "id": "meta-dermalogica-shopping-2026-07-01",
@@ -6179,13 +6072,15 @@ const STORES = [
   "successTxt": "0%",
   "avgTurns": 7,
   "timed": 0,
-  "attempted": 7,
+  "attempted": 35,
   "ticket": null,
-  "what": "Cold private run (1 themes): a human owned every conversation — no AI self-service this session.",
+  "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6230,6 +6125,222 @@ const STORES = [
      },
      {
       "q": "What's my total, and do you offer free shipping or a first-order discount?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "gift",
+    "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm looking for a gift for someone and I'm not sure what to pick — can you help?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "It's for someone who likes quality but isn't fussy; I want something they'll actually use.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "My budget is moderate — what would make a good gift in that range?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Between your top two gift ideas, which feels more special?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there a gift set or bundle that looks nicer than a single item?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can it arrive gift-ready, and how fast can it ship?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Great — add your top gift pick to my cart and tell me the total.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "problem-solver",
+    "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi — I have a specific need and I'm worried about picking the wrong thing. Can you help?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "I've been disappointed by similar products before, so quality really matters to me.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Which of your products is best for that, and why is it a good fit?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What do other customers say in their reviews — does it actually hold up?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there anything I should pair it with to get the best result?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "If it doesn't work out for me, what are my options?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Okay, I'm convinced — add your recommendation and give me the total.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "compare-budget",
+    "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm deciding between a few options and money's a bit tight — can you help me choose?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "I want the best bang for the buck, not the cheapest or the most expensive.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Show me your two best value-for-money options and compare them.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Honestly, is the pricier one worth the extra, or is the cheaper one fine?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Are there any current promos, bundles, or ways to save?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Which would you personally pick on my budget?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Add that one to my cart and tell me the total with any discount.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "beginner",
+    "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm completely new to this and don't know where to start — can you guide me?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can you explain the main options in simple terms?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "For a first-timer like me, what's the safest, easiest choice?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "I don't want to overpay while I'm still learning — what's a good starter pick?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What do beginners usually say about it in reviews?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there anything else a beginner needs to get started?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Okay, add your beginner recommendation to my cart — what's the total?",
       "a": "🚩 human took over",
       "by": "human",
       "lat": null
@@ -6306,10 +6417,12 @@ const STORES = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~8.3s across 1 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6363,6 +6476,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6416,6 +6530,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6469,6 +6584,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6522,6 +6638,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~8.3s",
     "success": 14,
     "successTxt": "14%",
@@ -6642,10 +6759,12 @@ const STORES = [
   "attempted": 28,
   "ticket": null,
   "what": "4 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~12.2s across 28 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.3s",
     "success": 100,
     "successTxt": "100%",
@@ -6699,6 +6818,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.7s",
     "success": 100,
     "successTxt": "100%",
@@ -6752,6 +6872,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.1s",
     "success": 100,
     "successTxt": "100%",
@@ -6805,6 +6926,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.8s",
     "success": 100,
     "successTxt": "100%",
@@ -6937,10 +7059,12 @@ const STORES = [
    "conv": "5fd56bee-c9af-4be0-8596-b974b21438fe"
   },
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -6998,6 +7122,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -7055,6 +7180,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -7112,6 +7238,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -7169,6 +7296,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -7291,10 +7419,12 @@ const STORES = [
    "conv": "82e4fa4c-88bb-4299-b3e9-ca0d7c383e4f"
   },
   "what": "5 cold private conversations (shopping themes). Handover in 1/5 themes. Avg end-to-end latency ~14.2s across 29 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.5s",
     "success": 100,
     "successTxt": "100%",
@@ -7352,6 +7482,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.1s",
     "success": 86,
     "successTxt": "86%",
@@ -7409,6 +7540,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.1s",
     "success": 43,
     "successTxt": "43%",
@@ -7466,6 +7598,7 @@ const STORES = [
    {
     "key": "compare-budget",
     "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.4s",
     "success": 86,
     "successTxt": "86%",
@@ -7523,6 +7656,7 @@ const STORES = [
    {
     "key": "beginner",
     "label": "Total beginner",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~15.1s",
     "success": 100,
     "successTxt": "100%",
@@ -7646,19 +7780,21 @@ const STORES = [
   "url": "https://www.freshroastedcoffee.com/",
   "method": "new",
   "us": false,
-  "lat": "~16.4s",
-  "latPct": 66,
-  "success": 52,
-  "successTxt": "52%",
+  "lat": "~29s",
+  "latPct": 100,
+  "success": 43,
+  "successTxt": "43%",
   "avgTurns": 7,
-  "timed": 11,
-  "attempted": 21,
+  "timed": 12,
+  "attempted": 28,
   "ticket": null,
-  "what": "3 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~16.4s across 11 AI-timed turns.",
+  "what": "4 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~29s across 12 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~15.3s",
     "success": 57,
     "successTxt": "57%",
@@ -7712,6 +7848,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~15.2s",
     "success": 57,
     "successTxt": "57%",
@@ -7765,9 +7902,10 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
-    "lat": "~19.4s",
-    "success": 43,
-    "successTxt": "43%",
+    "datetime": "2026-07-01T12:00:00Z",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
     "handoverTurn": null,
     "ticket": null,
     "turns": [
@@ -7785,33 +7923,87 @@ const STORES = [
      },
      {
       "q": "Which of your products is best for that, and why is it a good fit?",
-      "a": "…affordable coffee and tea with easy auto-deliver options—perfect for keeping your mornings fueled. Need help finding a great starter or details on subscriptions?",
+      "a": "AI replied (streamed past timing window)",
       "by": "ai",
-      "lat": 17.1
+      "lat": null
      },
      {
       "q": "What do other customers say in their reviews — does it actually hold up?",
-      "a": "(streamed past timing window) …affordable coffee and tea with easy auto-deliver options—perfect for keeping your mornings fueled. Need help finding a great starter or details on subscriptions?",
+      "a": "AI replied (streamed past timing window)",
       "by": "ai",
       "lat": null
      },
      {
       "q": "Is there anything I should pair it with to get the best result?",
-      "a": "…makes quality, affordable coffee easy with Auto Deliver. Want a quick rundown on how first subscriptions work or what’s included with a typical coffee/tea auto-deliver?",
+      "a": "AI replied (streamed past timing window)",
       "by": "ai",
-      "lat": 20.2
+      "lat": null
      },
      {
       "q": "If it doesn't work out for me, what are my options?",
-      "a": "(streamed past timing window) …makes quality, affordable coffee easy with Auto Deliver. Want a quick rundown on how first subscriptions work or what’s included with a typical coffee/tea auto-deliver?",
+      "a": "AI replied (streamed past timing window)",
       "by": "ai",
       "lat": null
      },
      {
       "q": "Okay, I'm convinced — add your recommendation and give me the total.",
-      "a": "…with a typical coffee/tea auto-deliver? Want a quick rundown on how the first subscription works or what’s included with a typical auto-deliver for coffee or tea?",
+      "a": "AI replied (streamed past timing window)",
       "by": "ai",
-      "lat": 20.8
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "compare-budget",
+    "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T12:00:00Z",
+    "lat": "~56.3s",
+    "success": 57,
+    "successTxt": "57%",
+    "handoverTurn": null,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm deciding between a few options and money's a bit tight — can you help me choose?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "I want the best bang for the buck, not the cheapest or the most expensive.",
+      "a": "…Roasted Coffee—we’re all about quality coffee, great prices, and friendly service. Need help picking a brew or setting up a subscription to save 30% on your first order?",
+      "by": "ai",
+      "lat": 55
+     },
+     {
+      "q": "Show me your two best value-for-money options and compare them.",
+      "a": "…save 30% on your first order and auto-deliver with flexible options. Want a quick explain of how subscriptions work or how Roaster's Choice can simplify your picks?",
+      "by": "ai",
+      "lat": 57.6
+     },
+     {
+      "q": "Honestly, is the pricier one worth the extra, or is the cheaper one fine?",
+      "a": "…save 30% on your first order and auto-deliver with flexible options—want a quick explain of how subscriptions work or how Roaster's Choice can simplify your picks?",
+      "by": "ai",
+      "lat": 55.9
+     },
+     {
+      "q": "Are there any current promos, bundles, or ways to save?",
+      "a": "…work or how Roaster's Choice can simplify your picks? Great time to explore—our subscriptions save 30% on your first order and auto-deliver with flexible options.",
+      "by": "ai",
+      "lat": 56.8
+     },
+     {
+      "q": "Which would you personally pick on my budget?",
+      "a": "(streamed past timing window) …work or how Roaster's Choice can simplify your picks? Great time to explore—our subscriptions save 30% on your first order and auto-deliver with flexible options.",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "Add that one to my cart and tell me the total with any discount.",
+      "a": "(streamed past timing window) …work or how Roaster's Choice can simplify your picks? Great time to explore—our subscriptions save 30% on your first order and auto-deliver with flexible options.",
+      "by": "ai",
+      "lat": null
      }
     ]
    }
@@ -7888,15 +8080,17 @@ const STORES = [
   "latPct": 59,
   "success": 52,
   "successTxt": "52%",
-  "avgTurns": 7,
+  "avgTurns": 5.3,
   "timed": 11,
   "attempted": 21,
   "ticket": null,
-  "what": "3 cold private conversations (shopping themes). Handover in 1/3 themes. Avg end-to-end latency ~14.8s across 11 AI-timed turns.",
+  "what": "4 cold private conversations (shopping themes). Handover in 1/4 themes. Avg end-to-end latency ~14.8s across 11 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -7950,6 +8144,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.4s",
     "success": 86,
     "successTxt": "86%",
@@ -8003,6 +8198,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~16.4s",
     "success": 71,
     "successTxt": "71%",
@@ -8052,6 +8248,17 @@ const STORES = [
       "lat": null
      }
     ]
+   },
+   {
+    "key": "compare-budget",
+    "label": "Comparison, budget-tight",
+    "datetime": "2026-07-01T12:00:00Z",
+    "lat": "—",
+    "success": null,
+    "successTxt": "—",
+    "handoverTurn": null,
+    "ticket": null,
+    "turns": []
    }
   ],
   "caps": {
@@ -8131,10 +8338,12 @@ const STORES = [
   "attempted": 21,
   "ticket": null,
   "what": "3 cold private conversations (shopping themes). No handover in any theme. Avg end-to-end latency ~14.3s across 3 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~15s",
     "success": 14,
     "successTxt": "14%",
@@ -8188,6 +8397,7 @@ const STORES = [
    {
     "key": "gift",
     "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.6s",
     "success": 14,
     "successTxt": "14%",
@@ -8241,6 +8451,7 @@ const STORES = [
    {
     "key": "problem-solver",
     "label": "Specific need / reassurance",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.2s",
     "success": 14,
     "successTxt": "14%",
@@ -8544,20 +8755,178 @@ const STORES = [
   "turns": []
  },
  {
-  "id": "meta-cottonon-shopping-pending",
+  "id": "meta-cottonon-shopping-2026-07-01",
   "date": "2026-07-01",
   "vendor": "Meta AI",
   "store": "Cotton On",
   "site": "cottonon.com/US",
   "url": "https://cottonon.com/US/",
-  "method": "pending",
+  "method": "new",
   "us": false,
   "lat": "—",
-  "success": null,
-  "successTxt": "pending",
-  "successCls": "p-na",
-  "what": "Not captured in a cold run yet — pending.",
-  "turns": []
+  "latPct": 0,
+  "success": 0,
+  "successTxt": "0%",
+  "avgTurns": 7,
+  "timed": 0,
+  "attempted": 14,
+  "ticket": null,
+  "what": "Cold private run (2 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
+  "themes": [
+   {
+    "key": "everyday-value",
+    "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": null,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "I want something for everyday use, good quality, and I care about value for money.",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "I'd like to stay within a sensible budget — what are my best options?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "Can you compare your two most popular options and tell me which is better for me?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "Which one is your overall best seller, and is it well reviewed?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "Okay, can you add your top recommendation to my cart?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     },
+     {
+      "q": "What's my total, and do you offer free shipping or a first-order discount?",
+      "a": "AI replied (streamed past timing window)",
+      "by": "ai",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "gift",
+    "label": "Gift shopper",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Hi! I'm looking for a gift for someone and I'm not sure what to pick — can you help?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "It's for someone who likes quality but isn't fussy; I want something they'll actually use.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "My budget is moderate — what would make a good gift in that range?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Between your top two gift ideas, which feels more special?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there a gift set or bundle that looks nicer than a single item?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can it arrive gift-ready, and how fast can it ship?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Great — add your top gift pick to my cart and tell me the total.",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   }
+  ],
+  "turns": [
+   {
+    "q": "Hi! I'm shopping but not sure what's right for me — can you help me choose?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "I want something for everyday use, good quality, and I care about value for money.",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "I'd like to stay within a sensible budget — what are my best options?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "Can you compare your two most popular options and tell me which is better for me?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "Which one is your overall best seller, and is it well reviewed?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "Okay, can you add your top recommendation to my cart?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   },
+   {
+    "q": "What's my total, and do you offer free shipping or a first-order discount?",
+    "a": "AI replied (streamed past timing window)",
+    "by": "ai",
+    "lat": null
+   }
+  ]
  },
  {
   "id": "meta-quip-shopping-pending",
@@ -8609,10 +8978,12 @@ const STORES = [
   "attempted": 7,
   "ticket": null,
   "what": "Cold private run (1 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "everyday-value",
     "label": "Everyday value buyer",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -9071,10 +9442,12 @@ const SUPPORT = [
    "conv": "b728b8cc-2098-4ee1-9100-66d222b71341"
   },
   "what": "5 cold private conversations (support themes). Handover in 3/5 themes. Avg end-to-end latency ~16.8s across 18 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.7s",
     "success": 29,
     "successTxt": "29%",
@@ -9132,6 +9505,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -9189,6 +9563,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~21.5s",
     "success": 29,
     "successTxt": "29%",
@@ -9246,6 +9621,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~15.4s",
     "success": 100,
     "successTxt": "100%",
@@ -9303,6 +9679,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.9s",
     "success": 100,
     "successTxt": "100%",
@@ -9433,10 +9810,12 @@ const SUPPORT = [
    "conv": "50f223bb-3936-4b4f-a970-8bf306ce1ea8"
   },
   "what": "5 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~11.7s across 16 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.6s",
     "success": 43,
     "successTxt": "43%",
@@ -9494,6 +9873,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~8s",
     "success": 29,
     "successTxt": "29%",
@@ -9551,6 +9931,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~8.8s",
     "success": 29,
     "successTxt": "29%",
@@ -9608,6 +9989,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~7.6s",
     "success": 29,
     "successTxt": "29%",
@@ -9665,6 +10047,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~13.4s",
     "success": 100,
     "successTxt": "100%",
@@ -9795,10 +10178,12 @@ const SUPPORT = [
    "conv": null
   },
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -9856,6 +10241,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -9913,6 +10299,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -9970,6 +10357,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -10027,6 +10415,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -10149,10 +10538,12 @@ const SUPPORT = [
    "conv": "3478af08-2803-431c-bdee-ab0ef8506532"
   },
   "what": "5 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~16.1s across 32 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.3s",
     "success": 86,
     "successTxt": "86%",
@@ -10210,6 +10601,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.2s",
     "success": 86,
     "successTxt": "86%",
@@ -10267,6 +10659,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.2s",
     "success": 86,
     "successTxt": "86%",
@@ -10324,6 +10717,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~18s",
     "success": 100,
     "successTxt": "100%",
@@ -10381,6 +10775,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~17.2s",
     "success": 100,
     "successTxt": "100%",
@@ -10511,10 +10906,12 @@ const SUPPORT = [
    "conv": "b3148380-f38f-4768-85e3-4b2fa6f1394c"
   },
   "what": "5 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~16.1s across 34 AI-timed turns.",
+  "datetime": "2026-07-01T14:41:06+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~15.1s",
     "success": 100,
     "successTxt": "100%",
@@ -10572,6 +10969,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~15.4s",
     "success": 100,
     "successTxt": "100%",
@@ -10629,6 +11027,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~16.4s",
     "success": 86,
     "successTxt": "86%",
@@ -10686,6 +11085,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.6s",
     "success": 100,
     "successTxt": "100%",
@@ -10743,6 +11143,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~18.9s",
     "success": 100,
     "successTxt": "100%",
@@ -10860,23 +11261,25 @@ const SUPPORT = [
   "url": "https://www.shoebacca.com/",
   "method": "new",
   "us": true,
-  "lat": "~17.7s",
-  "latPct": 71,
-  "success": 34,
-  "successTxt": "34%",
-  "avgTurns": 7,
-  "timed": 12,
-  "attempted": 35,
+  "lat": "~14.7s",
+  "latPct": 59,
+  "success": 21,
+  "successTxt": "21%",
+  "avgTurns": 5.6,
+  "timed": 6,
+  "attempted": 28,
   "ticket": {
    "sub": "shoebacca-prod",
    "acct": "112738",
-   "conv": "17a4f132-6967-4870-8f66-e76fbfe0fc4c"
+   "conv": "8b071d0f-16e1-4723-8e80-4098277681a0"
   },
-  "what": "5 cold private conversations (support themes). Handover in 2/5 themes. Avg end-to-end latency ~17.7s across 12 AI-timed turns.",
+  "what": "5 cold private conversations (support themes). Handover in 2/5 themes. Avg end-to-end latency ~14.7s across 6 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~15s",
     "success": 57,
     "successTxt": "57%",
@@ -10934,6 +11337,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -10991,6 +11395,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "~14.1s",
     "success": 29,
     "successTxt": "29%",
@@ -11048,6 +11453,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T14:41:06+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11105,59 +11511,13 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
-    "lat": "~20.7s",
-    "success": 86,
-    "successTxt": "86%",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": null,
+    "successTxt": "—",
     "handoverTurn": null,
-    "ticket": {
-     "sub": "shoebacca-prod",
-     "acct": "112738",
-     "conv": "17a4f132-6967-4870-8f66-e76fbfe0fc4c"
-    },
-    "turns": [
-     {
-      "q": "My discount code isn't applying at checkout — what are the usual reasons?",
-      "a": "…want to use the welcome code, make sure you're signed in with the same email and your subtotal is at least $60. Ready to try it again and complete your order? 08:53 AM",
-      "by": "ai",
-      "lat": 20.3
-     },
-     {
-      "q": "Do you have any current promotions or a first-order discount?",
-      "a": "…best place to catch any current sale, and the welcome offer is the best one to use on your first order. Ready to grab your pair and use the welcome discount? 08:53 AM",
-      "by": "ai",
-      "lat": 28
-     },
-     {
-      "q": "Do you ship internationally, and who covers customs or duties?",
-      "a": "(streamed past timing window) …If you're shipping within the continental U.S., standard shipping is free, so you can shop without extra delivery cost. Ready to pick out your order? 08:54 AM",
-      "by": "ai",
-      "lat": null
-     },
-     {
-      "q": "What payment methods do you accept?",
-      "a": "…methods shown at checkout. If you want, tell us the one you plan to use and we’ll help you confirm whether it should work so you can place your order today. 08:54 AM",
-      "by": "ai",
-      "lat": 20.6
-     },
-     {
-      "q": "Is there a loyalty or rewards program?",
-      "a": "…for 365 days, and members can have tier levels like Shoebacca Fan, Super Fan, Mega Fan, and Ultimate Fan. Ready to join and start earning on your next order? 08:55 AM",
-      "by": "ai",
-      "lat": 22.6
-     },
-     {
-      "q": "Where can I find your full shipping and returns policy?",
-      "a": "…for eligible unworn items. If you want, tell us what you’re planning to order and we’ll point you to the quickest shipping option to get it checked out today. 08:55 AM",
-      "by": "ai",
-      "lat": 16.7
-     },
-     {
-      "q": "Can I use more than one discount code on an order?",
-      "a": "…one discount code can be used per order. If you're choosing between codes, use the one that gives you the best savings and complete checkout while it applies. 08:56 AM",
-      "by": "ai",
-      "lat": 15.9
-     }
-    ]
+    "ticket": null,
+    "turns": []
    }
   ],
   "quality": {
@@ -11231,10 +11591,12 @@ const SUPPORT = [
   "attempted": 35,
   "ticket": null,
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11288,6 +11650,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11341,6 +11704,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11394,6 +11758,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11447,6 +11812,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11561,10 +11927,12 @@ const SUPPORT = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (support themes). Handover in 3/5 themes. Avg end-to-end latency ~10.2s across 12 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.1s",
     "success": 14,
     "successTxt": "14%",
@@ -11618,6 +11986,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.1s",
     "success": 100,
     "successTxt": "100%",
@@ -11671,6 +12040,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.6s",
     "success": 43,
     "successTxt": "43%",
@@ -11724,6 +12094,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -11777,6 +12148,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.4s",
     "success": 14,
     "successTxt": "14%",
@@ -11899,10 +12271,12 @@ const SUPPORT = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~10.7s across 35 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~8.5s",
     "success": 100,
     "successTxt": "100%",
@@ -11956,6 +12330,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~14.7s",
     "success": 100,
     "successTxt": "100%",
@@ -12009,6 +12384,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~9.3s",
     "success": 100,
     "successTxt": "100%",
@@ -12062,6 +12438,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~11.3s",
     "success": 100,
     "successTxt": "100%",
@@ -12115,6 +12492,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10s",
     "success": 100,
     "successTxt": "100%",
@@ -12257,10 +12635,12 @@ const SUPPORT = [
    "conv": null
   },
   "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12318,6 +12698,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12375,6 +12756,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12432,6 +12814,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12489,6 +12872,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12615,10 +12999,12 @@ const SUPPORT = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (support themes). Handover in 3/5 themes. Avg end-to-end latency ~13.9s across 23 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~4.3s",
     "success": 100,
     "successTxt": "100%",
@@ -12672,6 +13058,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -12725,6 +13112,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~9.6s",
     "success": 86,
     "successTxt": "86%",
@@ -12778,6 +13166,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~22.6s",
     "success": 71,
     "successTxt": "71%",
@@ -12831,6 +13220,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~23.8s",
     "success": 71,
     "successTxt": "71%",
@@ -12952,20 +13342,348 @@ const SUPPORT = [
   "turns": []
  },
  {
-  "id": "meta-dermalogica-support-pending",
+  "id": "meta-dermalogica-support-2026-07-01",
   "date": "2026-07-01",
   "vendor": "Meta AI",
   "store": "Dermalogica",
   "site": "dermalogica.com",
   "url": "https://www.dermalogica.com/",
-  "method": "pending",
+  "method": "new",
   "us": false,
   "lat": "—",
-  "success": null,
-  "successTxt": "pending",
-  "successCls": "p-na",
-  "what": "Not captured in a cold run yet — pending.",
-  "turns": []
+  "latPct": 0,
+  "success": 0,
+  "successTxt": "0%",
+  "avgTurns": 7,
+  "timed": 0,
+  "attempted": 35,
+  "ticket": null,
+  "what": "Cold private run (5 themes): a human owned every conversation — no AI self-service this session.",
+  "datetime": "2026-07-01T16:33:22+02:00",
+  "themes": [
+   {
+    "key": "tracking",
+    "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "I placed an order a few days ago and still have no tracking — where is it?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How long does it normally take to ship and send a tracking number?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Once it ships, how long is delivery?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there any way to speed it up if I need it sooner?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What should I do if the tracking never updates?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How do I find my tracking link?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can you check the status of my latest order?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "returns",
+    "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "What is your return policy?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How many days do I have to return something?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How do I start a return or an exchange?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Do I have to pay for return shipping?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How long until I get my refund once you receive it?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can I exchange for a different size or option instead of a refund?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Are any items final sale / non-returnable?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "damaged",
+    "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "My order arrived and one item is damaged — what do I do?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is a damaged item handled differently from a normal return?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Do you need photos, and where do I send them?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Will I get a replacement or a refund?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Do I have to pay anything to return the damaged item?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How long does the replacement take?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What if more than one item in my order is affected?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "order-mgmt",
+    "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "Can I change the shipping address on an order I just placed?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can I cancel an order after placing it, and is there a time window?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can I add an item to an order I already placed?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What happens if it already shipped — can it still be changed?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "How do I update my contact or account details?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "If I cancel, how long until I'm refunded?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can you check whether my latest order can still be modified?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   },
+   {
+    "key": "policy",
+    "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
+    "lat": "—",
+    "success": 0,
+    "successTxt": "0%",
+    "handoverTurn": 1,
+    "ticket": null,
+    "turns": [
+     {
+      "q": "My discount code isn't applying at checkout — what are the usual reasons?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Do you have any current promotions or a first-order discount?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Do you ship internationally, and who covers customs or duties?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "What payment methods do you accept?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Is there a loyalty or rewards program?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Where can I find your full shipping and returns policy?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     },
+     {
+      "q": "Can I use more than one discount code on an order?",
+      "a": "🚩 human took over",
+      "by": "human",
+      "lat": null
+     }
+    ]
+   }
+  ],
+  "quality": {
+   "r1": 26,
+   "r2": 13,
+   "r3": 25,
+   "r4": 9,
+   "total": 73,
+   "note": "Seed retained: this run's dermalogica support captures were all human takeover (no real AI-timed turns), so no better data to override."
+  },
+  "turns": [
+   {
+    "q": "I placed an order a few days ago and still have no tracking — where is it?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "How long does it normally take to ship and send a tracking number?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "Once it ships, how long is delivery?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "Is there any way to speed it up if I need it sooner?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "What should I do if the tracking never updates?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "How do I find my tracking link?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   },
+   {
+    "q": "Can you check the status of my latest order?",
+    "a": "🚩 human took over",
+    "by": "human",
+    "lat": null
+   }
+  ]
  },
  {
   "id": "ada-loop-support-2026-07-01",
@@ -12985,10 +13703,12 @@ const SUPPORT = [
   "attempted": 35,
   "ticket": null,
   "what": "5 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~9.8s across 15 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~4.6s",
     "success": 43,
     "successTxt": "43%",
@@ -13042,6 +13762,7 @@ const SUPPORT = [
    {
     "key": "returns",
     "label": "Returns & exchanges",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~11.7s",
     "success": 71,
     "successTxt": "71%",
@@ -13095,6 +13816,7 @@ const SUPPORT = [
    {
     "key": "damaged",
     "label": "Damaged / faulty item",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~10.7s",
     "success": 100,
     "successTxt": "100%",
@@ -13148,6 +13870,7 @@ const SUPPORT = [
    {
     "key": "order-mgmt",
     "label": "Modify / cancel order",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -13201,6 +13924,7 @@ const SUPPORT = [
    {
     "key": "policy",
     "label": "Discount / international / policy",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "—",
     "success": 0,
     "successTxt": "0%",
@@ -13314,130 +14038,20 @@ const SUPPORT = [
   "turns": []
  },
  {
-  "id": "yuma-tediber-support-2026-07-01",
+  "id": "yuma-tediber-support-pending",
   "date": "2026-07-01",
   "vendor": "Yuma",
   "store": "Tediber",
   "site": "tediber.com",
   "url": "https://www.tediber.com/",
-  "method": "new",
+  "method": "pending",
   "us": false,
   "lat": "—",
-  "latPct": 0,
-  "success": 0,
-  "successTxt": "0%",
-  "avgTurns": 7,
-  "timed": 0,
-  "attempted": 7,
-  "ticket": {
-   "sub": "matelas-tediber",
-   "acct": "153604",
-   "conv": "b92c660f-8808-4a2d-8f68-890e393beb3a"
-  },
-  "what": "Cold private run (1 themes): a human owned every conversation — no AI self-service this session.",
-  "themes": [
-   {
-    "key": "tracking",
-    "label": "Order tracking / delay",
-    "lat": "—",
-    "success": 0,
-    "successTxt": "0%",
-    "handoverTurn": 1,
-    "ticket": {
-     "sub": "matelas-tediber",
-     "acct": "153604",
-     "conv": "b92c660f-8808-4a2d-8f68-890e393beb3a"
-    },
-    "turns": [
-     {
-      "q": "I placed an order a few days ago and still have no tracking — where is it?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "How long does it normally take to ship and send a tracking number?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "Once it ships, how long is delivery?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "Is there any way to speed it up if I need it sooner?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "What should I do if the tracking never updates?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "How do I find my tracking link?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     },
-     {
-      "q": "Can you check the status of my latest order?",
-      "a": "🚩 human took over",
-      "by": "human",
-      "lat": null
-     }
-    ]
-   }
-  ],
-  "turns": [
-   {
-    "q": "I placed an order a few days ago and still have no tracking — where is it?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "How long does it normally take to ship and send a tracking number?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "Once it ships, how long is delivery?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "Is there any way to speed it up if I need it sooner?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "What should I do if the tracking never updates?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "How do I find my tracking link?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   },
-   {
-    "q": "Can you check the status of my latest order?",
-    "a": "🚩 human took over",
-    "by": "human",
-    "lat": null
-   }
-  ]
+  "success": null,
+  "successTxt": "pending",
+  "successCls": "p-na",
+  "what": "Not captured in a cold run yet — pending.",
+  "turns": []
  },
  {
   "id": "envive-kut-support-2026-07-01",
@@ -13461,10 +14075,12 @@ const SUPPORT = [
    "conv": "49790f5f-9531-4dfc-8dd2-5b322a06b829"
   },
   "what": "1 cold private conversations (support themes). No handover in any theme. Avg end-to-end latency ~13.6s across 7 AI-timed turns.",
+  "datetime": "2026-07-01T16:33:22+02:00",
   "themes": [
    {
     "key": "tracking",
     "label": "Order tracking / delay",
+    "datetime": "2026-07-01T16:33:22+02:00",
     "lat": "~13.6s",
     "success": 100,
     "successTxt": "100%",
@@ -14482,11 +15098,49 @@ function showConv(id){
   }
 }
 function themeDot(v){ return v==null?'#9ca3af':v>=70?'#16a34a':v>=40?'#d97706':'#dc2626'; }
+function fmtDT(iso){
+  if(!iso) return '';
+  const d=new Date(iso); if(isNaN(d)) return '';
+  return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+let CF_ITEMS=[];
 function renderConv(){
-  const CONV = CONVS();
-  document.getElementById('conv-tabs').innerHTML = CONV.map((s,i)=>'<button class="tab" data-id="'+s.id+'" aria-selected="'+(i===0)+'" onclick="showConv(\''+s.id+'\')">'+s.store+' · '+s.vendor+(s.us?' (us)':'')+'</button>').join('');
-  if(CONV.length){ showConv(CONV[0].id); }
-  else { document.getElementById('conv-head').innerHTML=''; document.getElementById('conv-body').innerHTML='<div class="note">No recorded conversation for this mode yet.</div>'; }
+  // Flatten every conversation for this mode into one list, newest first.
+  CF_ITEMS=[];
+  CONVS().forEach(s=>{
+    const list = (s.themes&&s.themes.length) ? s.themes
+      : [{label:'conversation', turns:s.turns, lat:s.lat, success:s.success, successTxt:s.successTxt, handoverTurn:null, datetime:s.datetime}];
+    list.forEach(th=>{
+      if(!(th.turns&&th.turns.length)) return;
+      CF_ITEMS.push({ vendor:s.vendor, store:s.store, us:s.us, label:th.label||'conversation',
+        datetime: th.datetime||s.datetime||null, lat:th.lat, success:th.success,
+        successTxt:th.successTxt, handoverTurn:th.handoverTurn, turns:th.turns });
+    });
+  });
+  CF_ITEMS.sort((a,b)=> (b.datetime||'').localeCompare(a.datetime||''));   // ISO sorts chronologically
+  const feed=document.getElementById('conv-feed');
+  if(!CF_ITEMS.length){ feed.innerHTML='<div class="note" style="padding:16px">No recorded conversation for this mode yet.</div>'; return; }
+  feed.innerHTML = CF_ITEMS.map((it,i)=>{
+    const pill='<span class="pill '+themePillCls(it.success)+'">'+(it.successTxt||'—')+'</span>';
+    const ho= it.handoverTurn?'<span class="lat" style="color:var(--danger);background:#fdeaea">🚩 @T'+it.handoverTurn+'</span>':'';
+    return '<div class="cf-item">'+
+      '<button class="cf-row" onclick="toggleCF('+i+')">'+
+        '<span class="vdot" style="background:'+(COL[it.vendor]||'#888')+'"></span>'+
+        '<span class="cf-store">'+it.store+(it.us?'<span class="us-tag">US</span>':'')+'</span>'+
+        '<span class="cf-meta">'+it.vendor+' · '+it.label+'</span>'+
+        '<span class="cf-dt">'+(fmtDT(it.datetime)||'—')+'</span>'+
+        '<span class="lat">'+(it.lat||'—')+'</span>'+pill+ho+
+        '<span class="cf-caret" id="cf-caret-'+i+'">▸</span>'+
+      '</button>'+
+      '<div class="cf-body" id="cf-body-'+i+'" hidden></div>'+
+    '</div>';
+  }).join('');
+}
+function toggleCF(i){
+  const body=document.getElementById('cf-body-'+i), caret=document.getElementById('cf-caret-'+i);
+  if(!body) return;
+  if(body.hidden){ if(!body.dataset.filled){ body.innerHTML=turnsHtml((CF_ITEMS[i]||{}).turns||[]); body.dataset.filled='1'; } body.hidden=false; if(caret)caret.textContent='▾'; }
+  else { body.hidden=true; if(caret)caret.textContent='▸'; }
 }
 function renderFilter(){
   const vendors = [...new Set(AS().map(s=>s.vendor))];
