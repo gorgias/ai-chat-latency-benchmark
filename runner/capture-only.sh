@@ -21,7 +21,7 @@ echo "▶ CAPTURE-ONLY ($MODE_ARG) — run-date $DATE — static report (no auto
 CONC=3; [ "$1" = "headed" ] && CONC=2
 for i in $(seq 1 200); do
   echo "── pass $i @ $(date +%H:%M:%S) ──"
-  OUT=$(TURN_TIMEOUT_MS=60000 RUN_DATE="$DATE" node run.js $MODE_ARG --concurrency $CONC 2>&1)
+  OUT=$(TURN_TIMEOUT_MS=70000 RUN_DATE="$DATE" node run.js $MODE_ARG --concurrency $CONC 2>&1)
   echo "$OUT" | grep -E "RESUME|Running [0-9]|✔ \[|Done|ALL DONE" | tail -20
   if echo "$OUT" | grep -q "ALL DONE"; then echo "✅ COMPLETE — every drivable conversation captured."; break; fi
   sleep 3
