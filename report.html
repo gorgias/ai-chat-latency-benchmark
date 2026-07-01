@@ -246,6 +246,7 @@
 <div class="modebar">
   <button class="modebtn" data-m="shopping" aria-selected="true" onclick="setMode('shopping')">🛍️ Shopping Assistant</button>
   <button class="modebtn" data-m="support" aria-selected="false" onclick="setMode('support')">🎧 Support</button>
+  <button class="modebtn" data-m="best" aria-selected="false" onclick="setMode('best')">🏆 Best AI Agent</button>
 </div>
 <p class="lead" id="mode-note" style="text-align:center;margin:0 auto 6px">Shopping-discovery conversations that must end in a real product recommendation.</p>
 
@@ -268,7 +269,7 @@
   <span class="snap" id="live-badge" title="Static snapshot of the captured conversations">snapshot</span>
 </div>
 
-<section>
+<section id="summary-sec">
   <h2 class="sec">Summary — by vendor</h2>
   <p class="lead">One line per vendor, <strong>averaged across the stores tested in this mode</strong>. Drill into individual stores in the table below. (Legacy single-store success is mapped to a proxy: completed = 100%, partial = 50%, handover = 0%.)</p>
   <div class="card" style="overflow:hidden">
@@ -303,7 +304,7 @@
   <p class="best-note"><strong>Why coverage matters:</strong> we only average turns we could time cleanly. Competitors' <em>slow</em> turns (product rec, add-to-cart) are the ones most likely to stream past the window or break the widget, so they drop out — leaving mostly fast early turns and making a rival look quicker than it is. Gorgias is measured on ~71% of its turns; several competitors on far fewer. A vendor below the coverage bar is listed but <strong>not ranked on speed</strong>. Read latency next to coverage, not alone.</p>
 </section>
 
-<section>
+<section id="results-sec">
   <h2 class="sec">Results — per store</h2>
   <p class="lead">Each row is one live store. <strong>Latency</strong> = time to a full answer. <strong>Success</strong> = % of the 10 turns the AI answered itself with no human handover. Stores marked <span class="pill p-na">legacy</span> were measured earlier on a single conversation and are pending a standardized re-test; their success figure reflects observed handover behavior, not a precise 10-turn rate.</p>
   <div class="toggle-tabs" id="store-filter"></div>
@@ -330,7 +331,7 @@
   </div>
 </section>
 
-<section>
+<section id="conv-sec">
   <h2 class="sec">Recorded conversations — drill down by store</h2>
   <p class="lead">Pick a store to see the actual ~10-turn conversation, turn by turn, with the AI's answers, the <strong>per-message latency</strong>, and where a <span style="color:var(--danger);font-weight:700">human handover</span> occurred (human replies are never timed).</p>
   <div class="toggle-tabs" id="conv-tabs"></div>
@@ -340,7 +341,7 @@
   </div>
 </section>
 
-<section>
+<section id="method-sec">
   <h2 class="sec">Method &amp; caveats</h2>
   <div class="note card" style="padding:16px 18px">
     <p>• <strong>One standardized shopping script per store</strong> — open ask → needs/context → budget → compare two → objection → secondary need → bundle → best-seller → add to cart → total/shipping — adapted to each catalog so it's apples-to-apples. We <strong>never request a human</strong>; any handover is therefore unprompted.</p>
@@ -14564,26 +14565,41 @@ function renderBest(){
   renderBestPanel('best-shopping', aggVendors(STORES));
   renderBestPanel('best-support', aggVendors(SUPPORT));
 }
+let VIEW='shopping';                       // top-level tab: shopping | support | best
+function applyView(){
+  const isBest = VIEW==='best';
+  const show=(id,on)=>{ const e=document.getElementById(id); if(e) e.style.display = on?'':'none'; };
+  show('best-sec', isBest);                // ranking view = its own page
+  show('summary-sec', !isBest);
+  show('results-sec', !isBest);
+  show('conv-sec', !isBest);
+  show('caps-sec', !isBest && MODE==='shopping');
+  // method & caveats stays visible in every view
+  document.getElementById('mode-note').textContent = isBest
+    ? 'The single best on-site AI agent for each job — ranked by success + speed, gated on measurement coverage. Use the sub-toggle to switch job.'
+    : (MODE==='shopping'
+        ? 'Shopping-discovery conversations that must end in a real product recommendation.'
+        : 'Support conversations — shipping, delivery, returns & policy. Success = answered without a spontaneous human handover.');
+  if(isBest) setBest(BESTMODE);            // make sure the right sub-panel is showing
+}
 function renderAll(){
   renderSummary(); renderResults(); renderMatrix(); renderConv(); renderFilter(); renderBest(); carets();
   // Quality column shows in both modes (Relevance rubric for shopping, Resolution for support)
   document.querySelectorAll('.qcol-h').forEach(e=>{ const sc=e.querySelector('.sc'); e.firstChild.textContent = (MODE==='shopping'?'Relevance quality':'Resolution quality'); });
-  document.getElementById('caps-sec').style.display = (MODE==='shopping') ? '' : 'none';
-  document.getElementById('mode-note').textContent = (MODE==='shopping')
-    ? 'Shopping-discovery conversations that must end in a real product recommendation.'
-    : 'Support conversations — shipping, delivery, returns & policy. Success = answered without a spontaneous human handover.';
+  applyView();
   saveState();
 }
 function setMode(m){
-  MODE=m;
-  document.querySelectorAll('.modebtn[data-m]').forEach(b=>b.setAttribute('aria-selected', b.dataset.m===m));
+  VIEW=m;
+  if(m!=='best') MODE=m;                    // keep MODE a valid data mode for the tables
+  document.querySelectorAll('.modebtn[data-m]').forEach(b=>b.setAttribute('aria-selected', b.dataset.m===VIEW));
   renderAll();
 }
-// --- persist view (mode / sort / date window) so the live auto-reload keeps your place ---
-function saveState(){ try{ localStorage.setItem('sb.v1', JSON.stringify({mode:MODE, ss:SSORT, rs:RSORT, from:DATE_FROM, to:DATE_TO})); }catch(e){} }
-function loadState(){ try{ const s=JSON.parse(localStorage.getItem('sb.v1')||'null'); if(!s) return null; if(s.mode) MODE=s.mode; if(s.ss) SSORT=s.ss; if(s.rs) RSORT=s.rs; return s; }catch(e){ return null; } }
+// --- persist tab / mode / sort / date window ---
+function saveState(){ try{ localStorage.setItem('sb.v1', JSON.stringify({view:VIEW, mode:MODE, ss:SSORT, rs:RSORT, from:DATE_FROM, to:DATE_TO})); }catch(e){} }
+function loadState(){ try{ const s=JSON.parse(localStorage.getItem('sb.v1')||'null'); if(!s) return null; if(s.mode) MODE=s.mode; VIEW = s.view || s.mode || 'shopping'; if(s.ss) SSORT=s.ss; if(s.rs) RSORT=s.rs; return s; }catch(e){ return null; } }
 const _saved = loadState();
-document.querySelectorAll('.modebtn[data-m]').forEach(b=>b.setAttribute('aria-selected', b.dataset.m===MODE));
+document.querySelectorAll('.modebtn[data-m]').forEach(b=>b.setAttribute('aria-selected', b.dataset.m===VIEW));
 if (_saved && ('from' in _saved)) { DATE_FROM=_saved.from||null; DATE_TO=_saved.to||null; dpLabel(); dateNote(); document.addEventListener('click', ()=>closeCal()); }
 else { initDates(); }
 renderAll();
