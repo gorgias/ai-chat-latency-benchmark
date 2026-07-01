@@ -147,6 +147,7 @@ function measuredEntry(site, mode, agg, date) {
     lat: avgS != null ? `~${avgS}s` : "—", latPct: avgS != null ? Math.min(100, Math.round(avgS / 25 * 100)) : 0,
     success, successTxt: success != null ? success + "%" : "—",
     avgTurns: st.avg_turns,
+    timed: st.answered_no_handover, attempted: st.turns_total,   // latency-measurement coverage
     ticket: tk(agg.ticket),
     what,
     themes: agg.themes.map(t => ({
